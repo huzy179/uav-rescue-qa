@@ -1,0 +1,7 @@
+# Chạy để đánh giá AP/recall: ngưỡng conf rất thấp, không lưu ảnh, thêm imgsz 1920.
+source: data/samples
+model: yolo26s.pt
+imgsz: [640, 1280, 1920]
+conf: 0.001
+no_images: true
+output: runs/eval_preds/full

@@ -1,0 +1,9 @@
+services:
+  uavdet:
+    build: .
+    image: uav-flood-person:cpu
+    # Gắn cả thư mục dự án: mã nguồn sửa là dùng ngay, data/, runs/ và file trọng số nằm trên máy thật.
+    volumes:
+      - .:/app
+    # PyTorch dùng /dev/shm; mặc định 64 MB của Docker là quá ít.
+    shm_size: "2gb"

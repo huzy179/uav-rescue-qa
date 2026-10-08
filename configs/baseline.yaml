@@ -1,0 +1,7 @@
+# Dùng: python scripts/run_baseline.py --config configs/baseline.yaml
+# Tham số gõ trên dòng lệnh được ưu tiên hơn giá trị trong file này.
+source: data/samples
+model: yolo26s.pt
+imgsz: [640, 1280]
+conf: 0.25
+output: runs/baseline

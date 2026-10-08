@@ -1,0 +1,8 @@
+# Dùng: python scripts/run_sahi.py --config configs/sahi_eval.yaml
+source: data/samples
+model: yolo26s.pt
+slice_size: 640
+overlap: 0.2
+conf: 0.001
+no_images: true
+output: runs/eval_preds/sahi_640

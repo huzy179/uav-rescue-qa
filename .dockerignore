@@ -1,0 +1,8 @@
+.venv/
+.git/
+data/
+runs/
+notebooks/
+*.pt
+__pycache__/
+.DS_Store
