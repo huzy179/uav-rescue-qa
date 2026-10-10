@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from PIL import Image
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from uavdet.metrics import (  # noqa: E402
+from eval.metrics import (
     ALL_SIZES,
     SIZE_RANGES,
     MatchResult,
@@ -23,7 +21,7 @@ from uavdet.metrics import (  # noqa: E402
     operating_point,
     pr_curve,
 )
-from uavdet.report import (  # noqa: E402
+from eval.report import (
     GRID_COLOR,
     MUTED_COLOR,
     SERIES_COLORS,
@@ -32,7 +30,7 @@ from uavdet.report import (  # noqa: E402
     TEXT_COLOR,
     write_run_config,
 )
-from uavdet.sources import IMAGE_EXTS  # noqa: E402
+from edge.sampler import IMAGE_EXTS
 
 
 def parse_args() -> argparse.Namespace:
@@ -43,6 +41,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--images", type=Path, required=True, help="Thư mục ảnh gốc (để lấy kích thước ảnh)")
     parser.add_argument("--labels", type=Path, required=True, help="Thư mục nhãn YOLO (.txt cùng tên với ảnh)")
+    parser.add_argument(
+        "--ignore", type=Path, default=None, help="Thư mục vùng bỏ qua dạng YOLO (.txt cùng tên ảnh), ví dụ của VisDrone"
+    )
     parser.add_argument("--gt-classes", type=int, nargs="+", default=[0], help="Các mã lớp trong nhãn được coi là người")
     parser.add_argument("--iou", type=float, default=0.5, help="Ngưỡng IoU để coi là phát hiện đúng")
     parser.add_argument("--conf", type=float, default=0.25, help="Ngưỡng conf của điểm vận hành (recall, precision)")
@@ -50,8 +51,10 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_ground_truth(image_names: list[str], images_dir: Path, labels_dir: Path, classes: list[int]) -> dict[str, Any]:
-    """Đọc nhãn của từng ảnh, quy đổi về pixel; ảnh không có file nhãn được coi là không có người."""
+def load_ground_truth(
+    image_names: list[str], images_dir: Path, labels_dir: Path, classes: list[int], ignore_dir: Path | None = None
+) -> dict[str, Any]:
+    """Đọc nhãn (và vùng bỏ qua nếu có) của từng ảnh, quy đổi về pixel; ảnh không có file nhãn coi như không có người."""
     by_stem = {p.stem: p for p in images_dir.iterdir() if p.suffix.lower() in IMAGE_EXTS}
     ground_truth = {}
     missing_images = []
@@ -65,7 +68,10 @@ def load_ground_truth(image_names: list[str], images_dir: Path, labels_dir: Path
             width, height = img.size
         label_path = labels_dir / f"{stem}.txt"
         n_missing_labels += not label_path.is_file()
-        ground_truth[name] = load_yolo_labels(label_path, width, height, classes)
+        ignore = (
+            load_yolo_labels(ignore_dir / f"{stem}.txt", width, height, [0]) if ignore_dir is not None else None
+        )
+        ground_truth[name] = (load_yolo_labels(label_path, width, height, classes), ignore)
     if missing_images:
         raise FileNotFoundError(
             f"{len(missing_images)} ảnh trong per_image.csv không có trong {images_dir}, ví dụ: {missing_images[:3]}"
@@ -84,7 +90,7 @@ def evaluate_config(
     results = {}
     for size_label, size_range in SIZE_RANGES.items():
         parts = []
-        for name, gt_boxes in ground_truth.items():
+        for name, (gt_boxes, ignore_regions) in ground_truth.items():
             preds = preds_by_image.get(name, empty)
             parts.append(
                 match_image(
@@ -93,6 +99,7 @@ def evaluate_config(
                     gt_boxes,
                     size_range,
                     iou_thr,
+                    ignore_regions,
                 )
             )
         results[size_label] = merge_matches(parts)
@@ -163,7 +170,9 @@ def main() -> None:
     curves: dict[str, MatchResult] = {}
     for (method, imgsz), image_group in images.groupby(["method", "imgsz"], sort=False):
         config = f"{method} imgsz={imgsz}"
-        ground_truth = load_ground_truth(image_group["image"].tolist(), args.images, args.labels, args.gt_classes)
+        ground_truth = load_ground_truth(
+            image_group["image"].tolist(), args.images, args.labels, args.gt_classes, args.ignore
+        )
         config_boxes = boxes[(boxes["method"] == method) & (boxes["imgsz"] == imgsz)]
         results = evaluate_config(config_boxes, ground_truth, args.iou)
         curves[config] = results[ALL_SIZES]

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "floodeye"
+version = "0.2.0"
+description = "Phát hiện người kích thước nhỏ từ ảnh UAV trong vùng ngập lụt, hướng tới xử lý trên thiết bị biên"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic==2.14.0",
+    "PyYAML==6.0.3",
+]
+
+[project.optional-dependencies]
+# Chạy trên UAV. Trên Jetson, cài torch bản của NVIDIA trước rồi mới cài nhóm này.
+edge = [
+    "ultralytics==8.4.174",
+    "opencv-python==5.0.0.93",
+]
+# Trạm mặt đất: không cần torch.
+ground = [
+    "fastapi==0.143.0",
+    "uvicorn==0.54.0",
+]
+# Phát triển và thí nghiệm trên máy cá nhân.
+dev = [
+    "floodeye[edge,ground]",
+    "sahi==0.12.8",
+    "pandas==3.0.6",
+    "matplotlib==3.11.2",
+    "httpx==0.28.1",
+    "pytest==9.1.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["shared*", "edge*", "ground*", "sim*", "eval*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

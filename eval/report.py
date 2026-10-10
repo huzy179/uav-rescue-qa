@@ -69,8 +69,8 @@ def write_csvs(
 
 
 def short_side(boxes: pd.DataFrame) -> pd.Series:
-    """Cạnh ngắn của từng box (pixel)."""
-    return boxes[["width_px", "height_px"]].min(axis=1)
+    """Cạnh ngắn của từng box (pixel), làm tròn 0,01 px như phần đánh giá."""
+    return boxes[["width_px", "height_px"]].min(axis=1).round(2)
 
 
 def summarize(boxes: pd.DataFrame, images: pd.DataFrame) -> pd.DataFrame:

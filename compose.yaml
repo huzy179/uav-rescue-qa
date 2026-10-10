@@ -1,7 +1,9 @@
 services:
-  uavdet:
-    build: .
-    image: uav-flood-person:cpu
+  dev:
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    image: floodeye-dev:cpu
     # Gắn cả thư mục dự án: mã nguồn sửa là dùng ngay, data/, runs/ và file trọng số nằm trên máy thật.
     volumes:
       - .:/app

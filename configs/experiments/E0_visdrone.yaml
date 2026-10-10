@@ -1,0 +1,8 @@
+# E0: YOLO26s COCO, imgsz 640, chưa huấn luyện. Dự đoán ở conf rất thấp để tính AP.
+source: data/processed/visdrone/images/val
+model: yolo26s.pt
+imgsz: [640]
+conf: 0.001
+max_det: 1000
+no_images: true
+output: runs/visdrone/E0

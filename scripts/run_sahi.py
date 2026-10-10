@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 import argparse
-import sys
 import time
 from pathlib import Path
 from typing import Any
 
 import cv2
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from uavdet.cli import parse_args_with_config  # noqa: E402
-from uavdet.device import pick_device  # noqa: E402
-from uavdet.draw import draw_boxes  # noqa: E402
-from uavdet.report import (  # noqa: E402
+from shared.config import parse_args_with_config
+from edge.device import pick_device
+from eval.draw import draw_boxes
+from eval.report import (
     PERSON_CLASS_ID,
     box_rows,
     plot_size_histogram,
@@ -24,7 +22,7 @@ from uavdet.report import (  # noqa: E402
     write_csvs,
     write_run_config,
 )
-from uavdet.sources import iter_frames  # noqa: E402
+from edge.sampler import iter_frames
 
 METHOD = "sahi"
 

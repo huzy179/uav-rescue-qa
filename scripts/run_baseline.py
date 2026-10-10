@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 import argparse
-import sys
 import time
 from pathlib import Path
 from typing import Any
 
 import cv2
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from uavdet.cli import parse_args_with_config  # noqa: E402
-from uavdet.device import pick_device  # noqa: E402
-from uavdet.draw import draw_boxes  # noqa: E402
-from uavdet.report import (  # noqa: E402
+from shared.config import parse_args_with_config
+from edge.device import pick_device
+from eval.draw import draw_boxes
+from eval.report import (
     PERSON_CLASS_ID,
     box_rows,
     plot_size_histogram,
@@ -24,7 +22,7 @@ from uavdet.report import (  # noqa: E402
     write_csvs,
     write_run_config,
 )
-from uavdet.sources import iter_frames  # noqa: E402
+from edge.sampler import iter_frames
 
 METHOD = "full"
 
@@ -36,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default="yolo26s.pt", help="Tên hoặc đường dẫn trọng số")
     parser.add_argument("--imgsz", type=int, nargs="+", default=[640, 1280], help="Danh sách kích thước suy luận")
     parser.add_argument("--conf", type=float, default=0.25, help="Ngưỡng độ tin cậy")
+    parser.add_argument("--max-det", type=int, default=1000, help="Số box tối đa mỗi ảnh (mặc định 300 của ultralytics là thiếu với đám đông)")
     parser.add_argument("--device", default=None, help="Ví dụ: cuda:0, mps, cpu (mặc định: tự chọn)")
     parser.add_argument("--output", type=Path, default=Path("runs/baseline"), help="Thư mục kết quả")
     parser.add_argument("--vid-stride", type=int, default=1, help="Với video: lấy 1 khung hình mỗi N khung")
@@ -51,7 +50,9 @@ def run_one_imgsz(
     image_dir = args.output / f"imgsz_{imgsz}"
     if not args.no_images:
         image_dir.mkdir(parents=True, exist_ok=True)
-    predict_kwargs = dict(imgsz=imgsz, conf=args.conf, classes=[PERSON_CLASS_ID], device=device, verbose=False)
+    predict_kwargs = dict(
+        imgsz=imgsz, conf=args.conf, classes=[PERSON_CLASS_ID], max_det=args.max_det, device=device, verbose=False
+    )
     box_records: list[dict[str, Any]] = []
     image_records: list[dict[str, Any]] = []
     warmed_up = False

@@ -17,12 +17,12 @@ HEAD_WIDTH_M = 0.2  # đầu người khi thân đã ngập dưới nước
 def parse_args() -> argparse.Namespace:
     """Đọc tham số dòng lệnh."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--fov-deg", type=float, default=84.0, help="Góc nhìn của camera (độ)")
+    parser.add_argument("--fov-deg", type=float, default=82.0, help="Góc nhìn của camera (độ); mặc định: camera góc rộng Matrice 4T")
     parser.add_argument(
         "--fov-type",
         choices=["horizontal", "diagonal"],
-        default="horizontal",
-        help="--fov-deg là góc ngang hay góc chéo (thông số của nhiều hãng là góc chéo)",
+        default="diagonal",
+        help="--fov-deg là góc ngang hay góc chéo (DJI ghi thông số theo góc chéo)",
     )
     parser.add_argument("--width-px", type=int, default=3840, help="Bề rộng ảnh gốc (px)")
     parser.add_argument("--height-px", type=int, default=2160, help="Chiều cao ảnh gốc (px), dùng khi FOV là góc chéo")
@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
         "--tilt-deg", type=float, default=0.0, help="Góc nghiêng camera so với phương thẳng đứng (0 = chụp thẳng xuống)"
     )
     parser.add_argument(
-        "--altitudes", type=float, nargs="+", default=[30, 50, 80, 100, 120], help="Các độ cao bay (m)"
+        "--altitudes", type=float, nargs="+", default=[30, 50, 80, 100], help="Các độ cao bay (m)"
     )
     parser.add_argument("--imgsz", type=int, default=640, help="Bề rộng ảnh sau khi thu nhỏ để suy luận (px)")
     parser.add_argument("--output", type=Path, default=Path("runs/gsd/gsd_table.csv"), help="File CSV kết quả")

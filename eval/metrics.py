@@ -8,7 +8,7 @@ from typing import Sequence
 
 import numpy as np
 
-from uavdet.report import SIZE_BIN_EDGES, SIZE_BIN_LABELS
+from eval.report import SIZE_BIN_EDGES, SIZE_BIN_LABELS
 
 ALL_SIZES = "all"
 # Mỗi nhóm kích thước là một khoảng [cận dưới, cận trên) của cạnh ngắn, tính bằng pixel.
@@ -55,9 +55,26 @@ def iou_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return np.where(union > 0, inter / np.maximum(union, 1e-12), 0.0)
 
 
+def ioa_matrix(a: np.ndarray, regions: np.ndarray) -> np.ndarray:
+    """Tỉ lệ diện tích của mỗi box trong `a` nằm trong từng vùng của `regions`, kích thước (len(a), len(regions))."""
+    if len(a) == 0 or len(regions) == 0:
+        return np.zeros((len(a), len(regions)))
+    x1 = np.maximum(a[:, None, 0], regions[None, :, 0])
+    y1 = np.maximum(a[:, None, 1], regions[None, :, 1])
+    x2 = np.minimum(a[:, None, 2], regions[None, :, 2])
+    y2 = np.minimum(a[:, None, 3], regions[None, :, 3])
+    inter = np.clip(x2 - x1, 0, None) * np.clip(y2 - y1, 0, None)
+    area_a = (a[:, 2] - a[:, 0]) * (a[:, 3] - a[:, 1])
+    return inter / np.maximum(area_a[:, None], 1e-12)
+
+
 def _short_side(boxes: np.ndarray) -> np.ndarray:
-    """Cạnh ngắn của từng box xyxy."""
-    return np.minimum(boxes[:, 2] - boxes[:, 0], boxes[:, 3] - boxes[:, 1])
+    """Cạnh ngắn của từng box xyxy, làm tròn 0,01 px.
+
+    Nhãn YOLO lưu toạ độ chuẩn hoá 6 chữ số, nên box rộng đúng 8 px có thể đọc lại thành 7,9999 px và rơi
+    sang nhóm "<8". Làm tròn để box nằm đúng nhóm như khi đo trên nhãn gốc.
+    """
+    return np.round(np.minimum(boxes[:, 2] - boxes[:, 0], boxes[:, 3] - boxes[:, 1]), 2)
 
 
 def match_image(
@@ -66,12 +83,17 @@ def match_image(
     gt_boxes: np.ndarray,
     size_range: tuple[float, float],
     iou_thr: float,
+    ignore_regions: np.ndarray | None = None,
+    ioa_thr: float = 0.5,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """So khớp tham lam theo conf giảm dần trên một ảnh, theo quy ước của COCO cho từng nhóm kích thước.
 
     Nhãn ngoài nhóm được coi là "bỏ qua": dự đoán khớp với chúng không bị tính là sai. Dự đoán không khớp
     nhãn nào và bản thân nằm ngoài nhóm cũng được bỏ qua. Trả về (conf, is_tp) của các dự đoán được tính
     và số nhãn thuộc nhóm.
+
+    Dự đoán không khớp nhãn nào mà có ít nhất `ioa_thr` diện tích nằm trong một vùng bỏ qua (ví dụ vùng
+    "ignored" của VisDrone) cũng không bị tính là sai.
     """
     lo, hi = size_range
     gt_side = _short_side(gt_boxes)
@@ -81,6 +103,11 @@ def match_image(
 
     order = np.argsort(-pred_confs)
     ious = iou_matrix(pred_boxes, gt_boxes)
+    in_ignored = (
+        ioa_matrix(pred_boxes, ignore_regions).max(axis=1) >= ioa_thr
+        if ignore_regions is not None and len(ignore_regions)
+        else np.zeros(len(pred_boxes), dtype=bool)
+    )
     gt_taken = np.zeros(len(gt_boxes), dtype=bool)
     confs: list[float] = []
     is_tp: list[bool] = []
@@ -93,7 +120,7 @@ def match_image(
             if gt_in_range[best]:
                 confs.append(float(pred_confs[i]))
                 is_tp.append(True)
-        elif pred_in_range[i]:
+        elif pred_in_range[i] and not in_ignored[i]:
             confs.append(float(pred_confs[i]))
             is_tp.append(False)
     return np.asarray(confs), np.asarray(is_tp, dtype=bool), int(gt_in_range.sum())

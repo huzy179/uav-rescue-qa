@@ -1,4 +1,5 @@
-# Ảnh chạy bằng CPU cho các script baseline (không dùng được GPU của máy Mac bên trong container).
+# Ảnh CPU để chạy các script đánh giá (không dùng được GPU của máy Mac bên trong container).
+# Ảnh edge, ground và edge-jetson sẽ được thêm khi hai gói đó có mã (xem docs/ROADMAP.md, mục 2).
 FROM python:3.13-slim
 
 ENV PIP_NO_CACHE_DIR=1 \
@@ -14,12 +15,18 @@ RUN apt-get update \
 WORKDIR /app
 
 # Cài torch bản CPU trước để pip không kéo bản CUDA nặng vài GB.
-COPY requirements.txt .
-RUN pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu \
-    && pip install -r requirements.txt
+RUN pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
 
-COPY src ./src
+COPY pyproject.toml .
+COPY shared ./shared
+COPY edge ./edge
+COPY ground ./ground
+COPY sim ./sim
+COPY eval ./eval
+RUN pip install -e ".[dev]"
+
 COPY scripts ./scripts
+COPY tools ./tools
 
 ENTRYPOINT ["python"]
 CMD ["scripts/gsd_calc.py"]

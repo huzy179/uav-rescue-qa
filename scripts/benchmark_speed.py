@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 import time
 from pathlib import Path
 
@@ -11,10 +10,9 @@ import cv2
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from uavdet.device import pick_device  # noqa: E402
-from uavdet.report import PERSON_CLASS_ID, write_run_config  # noqa: E402
+from edge.device import pick_device
+from eval.report import PERSON_CLASS_ID, write_run_config
 
 
 def parse_args() -> argparse.Namespace:
