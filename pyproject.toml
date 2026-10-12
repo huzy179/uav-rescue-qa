@@ -38,3 +38,7 @@ include = ["shared*", "edge*", "ground*", "sim*", "eval*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

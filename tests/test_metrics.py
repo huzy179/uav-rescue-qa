@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from eval.metrics import SIZE_RANGES, average_precision, match_image, merge_matches, operating_point
+from eval.metrics import SIZE_RANGES, average_precision, bootstrap_ci, match_image, merge_matches, operating_point
 
 GT = np.array([[0, 0, 10, 10], [100, 100, 140, 140.0]])  # một người 10 px, một người 40 px
 PREDS = np.array([[100, 100, 140, 141], [300, 300, 320, 320], [0, 0, 10, 11.0]])
@@ -38,3 +38,15 @@ def test_integer_box_on_bin_edge_stays_in_its_bin() -> None:
     gt = np.array([[100.000004, 50.0, 107.999998, 60.0]])
     match = merge_matches([match_image(np.zeros((0, 4)), np.zeros(0), gt, SIZE_RANGES["8-16"], 0.5)])
     assert match.n_gt == 1
+
+
+def test_bootstrap_ci_collapses_on_identical_images_and_brackets_the_estimate() -> None:
+    """Mọi ảnh giống nhau thì mẫu nào cũng cho cùng AP; ảnh khác nhau thì khoảng tin cậy phải chứa giá trị ước lượng."""
+    part = match_image(PREDS, CONFS, GT, SIZE_RANGES["all"], 0.5)
+    same = bootstrap_ci([part] * 5, [average_precision], n_boot=50)
+    assert same[0] == pytest.approx([average_precision(merge_matches([part]))] * 2)
+
+    miss = match_image(np.zeros((0, 4)), np.zeros(0), GT, SIZE_RANGES["all"], 0.5)  # ảnh bỏ sót cả hai người
+    parts = [part] * 5 + [miss] * 5
+    lo, hi = bootstrap_ci(parts, [lambda m: operating_point(m, 0.25)[0]], n_boot=200)[0]
+    assert lo < operating_point(merge_matches(parts), 0.25)[0] < hi

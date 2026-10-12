@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Callable, Sequence
 
 import numpy as np
 
@@ -132,6 +132,38 @@ def merge_matches(parts: list[tuple[np.ndarray, np.ndarray, int]]) -> MatchResul
     is_tp = np.concatenate([p[1] for p in parts]) if parts else np.zeros(0, dtype=bool)
     order = np.argsort(-confs, kind="stable")
     return MatchResult(confs[order], is_tp[order], sum(p[2] for p in parts))
+
+
+def bootstrap_ci(
+    parts: list[tuple[np.ndarray, np.ndarray, int]],
+    metrics: Sequence[Callable[[MatchResult], float]],
+    n_boot: int = 1000,
+    seed: int = 0,
+) -> np.ndarray:
+    """Khoảng tin cậy 95% của từng chỉ số, bootstrap theo ảnh; trả về mảng (len(metrics), 2) gồm cận dưới, cận trên.
+
+    Lấy mẫu lại theo ảnh chứ không theo box, vì các box trong cùng một ảnh không độc lập. Cùng `seed` thì mọi
+    cấu hình được lấy mẫu trên cùng dãy ảnh.
+    """
+    if not parts or n_boot <= 0:
+        return np.full((len(metrics), 2), np.nan)
+    confs = np.concatenate([p[0] for p in parts])
+    is_tp = np.concatenate([p[1] for p in parts])
+    image_of = np.repeat(np.arange(len(parts)), [len(p[0]) for p in parts])
+    order = np.argsort(-confs, kind="stable")
+    confs, is_tp, image_of = confs[order], is_tp[order], image_of[order]
+    n_gt = np.array([p[2] for p in parts])
+    rng = np.random.default_rng(seed)
+    values = np.empty((n_boot, len(metrics)))
+    for b in range(n_boot):
+        # Số lần mỗi ảnh được rút; lặp từng dự đoán theo số lần đó giữ nguyên thứ tự conf, khỏi sắp lại.
+        counts = np.bincount(rng.integers(0, len(parts), len(parts)), minlength=len(parts))
+        repeats = counts[image_of]
+        sample = MatchResult(np.repeat(confs, repeats), np.repeat(is_tp, repeats), int(counts @ n_gt))
+        values[b] = [metric(sample) for metric in metrics]
+    if np.isnan(values).all():
+        return np.full((len(metrics), 2), np.nan)
+    return np.nanpercentile(values, [2.5, 97.5], axis=0).T
 
 
 def pr_curve(match: MatchResult) -> tuple[np.ndarray, np.ndarray]:

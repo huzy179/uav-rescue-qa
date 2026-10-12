@@ -1,0 +1,11 @@
+# E2, seed 0, lượt 1: fine-tune YOLO26s ở imgsz 1280 trên VisDrone train (một lớp person).
+# Thêm data/processed/finland/images/{train,val} vào hai danh sách khi có FinlandProper.
+train: [data/processed/visdrone/images/train]
+val: [data/processed/visdrone/images/val]
+model: yolo26s.pt
+imgsz: 1280
+epochs: 100
+patience: 20
+batch: 8
+seed: 0
+output: runs/train/E2_s0

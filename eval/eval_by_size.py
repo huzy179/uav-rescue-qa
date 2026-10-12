@@ -15,6 +15,7 @@ from eval.metrics import (
     SIZE_RANGES,
     MatchResult,
     average_precision,
+    bootstrap_ci,
     load_yolo_labels,
     match_image,
     merge_matches,
@@ -47,6 +48,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gt-classes", type=int, nargs="+", default=[0], help="Các mã lớp trong nhãn được coi là người")
     parser.add_argument("--iou", type=float, default=0.5, help="Ngưỡng IoU để coi là phát hiện đúng")
     parser.add_argument("--conf", type=float, default=0.25, help="Ngưỡng conf của điểm vận hành (recall, precision)")
+    parser.add_argument(
+        "--bootstrap", type=int, default=1000, help="Số lần lấy mẫu lại theo ảnh để tính khoảng tin cậy 95%% (0 để tắt)"
+    )
     parser.add_argument("--output", type=Path, default=Path("runs/eval"), help="Thư mục kết quả")
     return parser.parse_args()
 
@@ -83,8 +87,8 @@ def load_ground_truth(
 
 def evaluate_config(
     boxes: pd.DataFrame, ground_truth: dict[str, Any], iou_thr: float
-) -> dict[str, MatchResult]:
-    """So khớp dự đoán của một cấu hình với nhãn, cho từng nhóm kích thước."""
+) -> dict[str, list[tuple[Any, Any, int]]]:
+    """So khớp dự đoán của một cấu hình với nhãn, cho từng nhóm kích thước; mỗi nhóm giữ kết quả riêng của từng ảnh."""
     preds_by_image = {name: group for name, group in boxes.groupby("image")}
     empty = boxes.iloc[0:0]
     results = {}
@@ -102,7 +106,7 @@ def evaluate_config(
                     ignore_regions,
                 )
             )
-        results[size_label] = merge_matches(parts)
+        results[size_label] = parts
     return results
 
 
@@ -175,10 +179,15 @@ def main() -> None:
         )
         config_boxes = boxes[(boxes["method"] == method) & (boxes["imgsz"] == imgsz)]
         results = evaluate_config(config_boxes, ground_truth, args.iou)
-        curves[config] = results[ALL_SIZES]
-        for size_label, match in results.items():
+        for size_label, parts in results.items():
+            match = merge_matches(parts)
+            if size_label == ALL_SIZES:
+                curves[config] = match
             recall, precision = operating_point(match, args.conf)
             recall_max, _ = operating_point(match, 0.0)
+            (ap_lo, ap_hi), (recall_lo, recall_hi) = bootstrap_ci(
+                parts, [average_precision, lambda m: operating_point(m, args.conf)[0]], args.bootstrap
+            )
             rows.append(
                 {
                     "config": config,
@@ -189,6 +198,10 @@ def main() -> None:
                     "recall": round(recall, 4),
                     "precision": round(precision, 4),
                     "recall_max": round(recall_max, 4),
+                    "AP_lo": round(ap_lo, 4),
+                    "AP_hi": round(ap_hi, 4),
+                    "recall_lo": round(recall_lo, 4),
+                    "recall_hi": round(recall_hi, 4),
                 }
             )
 
@@ -196,7 +209,10 @@ def main() -> None:
     table.to_csv(args.output / "eval_by_size.csv", index=False)
     plot_results(curves, table, args.iou, args.conf, args.output / "eval_by_size.png")
     write_run_config(args.output, Path(__file__).name, None, None, vars(args))
-    print(f"IoU ≥ {args.iou:g}; recall và precision tại conf ≥ {args.conf:g}; recall_max là recall khi giữ mọi dự đoán.")
+    print(
+        f"IoU ≥ {args.iou:g}; recall và precision tại conf ≥ {args.conf:g}; recall_max là recall khi giữ mọi dự đoán; "
+        f"_lo và _hi là khoảng tin cậy 95% ({args.bootstrap} lần bootstrap theo ảnh)."
+    )
     print(table.to_string(index=False))
     print(f"\nKết quả lưu tại: {args.output}")
 

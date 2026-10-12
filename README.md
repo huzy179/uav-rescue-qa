@@ -106,6 +106,7 @@ Tham số gõ trên dòng lệnh được ưu tiên hơn giá trị trong file c
 | `AP` | AP nội suy 101 điểm tại ngưỡng `--iou` |
 | `recall`, `precision` | tại ngưỡng `--conf` (mặc định 0,25) |
 | `recall_max` | recall khi giữ mọi dự đoán |
+| `AP_lo`, `AP_hi`, `recall_lo`, `recall_hi` | khoảng tin cậy 95%, bootstrap 1.000 lần theo ảnh (`--bootstrap 0` để tắt) |
 
 Quy ước theo nhóm kích thước giống COCO: nhãn ngoài nhóm được bỏ qua. Dự đoán rơi vào vùng bỏ qua (`--ignore`) không bị tính là sai.
 
@@ -114,6 +115,18 @@ Quy ước theo nhóm kích thước giống COCO: nhãn ngoài nhóm được b
 - Dự đoán để tính AP chạy với `conf: 0.001` và `max_det: 1000`.
 - `infer_ms` là thời gian một lần gọi suy luận, gồm tiền và hậu xử lý, bỏ lượt làm nóng. Đo trên Mac chỉ để so sánh tương đối.
 - SAHI mặc định gộp thêm một lượt suy luận toàn ảnh; `--no-standard-pred` tắt lượt này.
+
+## Huấn luyện
+
+Huấn luyện thật chạy trên Kaggle bằng [notebooks/kaggle_train.ipynb](notebooks/kaggle_train.ipynb); notebook chỉ lấy mã, chuẩn bị dữ liệu và gọi lệnh dưới. Trên Mac chỉ chạy thử để kiểm tra mã:
+
+```bash
+python training/train.py --config configs/experiments/E2_s0.yaml          # cần VisDrone train đã chuyển nhãn
+python training/train.py --config configs/experiments/E2_s0.yaml --imgsz 320 --epochs 1 --fraction 0.05   # chạy thử
+python training/train.py --config configs/experiments/E2_s0.yaml --resume # chạy tiếp khi bị ngắt
+```
+
+Thư mục `--output` chứa trọng số (`weights/best.pt`), `results.csv`, `data.yaml` và `run_config.json`.
 
 ## Công cụ khác
 
