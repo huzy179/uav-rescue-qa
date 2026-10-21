@@ -1,0 +1,12 @@
+# E2 lượt 2, seed 0: fine-tune YOLO26s ở imgsz 1280 trên VisDrone + C2A (một lớp person). C2A phóng to khoảng 3 lần khi
+# vào mô hình, bù phần người lớn mà VisDrone thiếu (TECHNICAL mục 13.4). FinlandProper, AFO thêm khi có (tạo file mới).
+train: [data/processed/visdrone/images/train, data/processed/c2a/images/train]
+val: [data/processed/visdrone/images/val, data/processed/c2a/images/val]
+model: yolo26s.pt
+imgsz: 1280
+epochs: 100
+patience: 20
+batch: 8
+seed: 0
+scale: 0.5
+output: runs/train/E2b_s0

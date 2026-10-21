@@ -8,8 +8,8 @@ Ghi ra --dst theo cùng bố cục với tools/convert_visdrone.py: images/<spli
 ignore/<split> (các lớp trong --ignore-classes), stats.json.
 
 Ví dụ:
-    .venv/bin/python tools/convert_yolo_subset.py --src data/raw/c2a/C2A_Dataset --dst data/processed/c2a \\
-        --keep human --splits train val test
+    .venv/bin/python tools/convert_yolo_subset.py --src data/raw/c2a/new_dataset3 --dst data/processed/c2a \\
+        --class-names human --keep human --splits train val test
     .venv/bin/python tools/convert_yolo_subset.py --src data/raw/afo --dst data/processed/afo \\
         --keep human --splits train:train val:validation test:test
 """
@@ -36,6 +36,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--keep", nargs="+", required=True, help="Tên các lớp được coi là người (gộp về lớp 0)")
     parser.add_argument("--ignore-classes", nargs="*", default=[], help="Tên các lớp ghi thành vùng bỏ qua")
     parser.add_argument("--names-file", type=Path, default=None, help="File tên lớp; mặc định tự tìm trong --src")
+    parser.add_argument(
+        "--class-names", nargs="+", default=None,
+        help="Khai báo tên lớp theo thứ tự mã số khi bộ dữ liệu không có file tên lớp (C2A: một lớp, mã 0 là người)",
+    )
     parser.add_argument(
         "--splits", nargs="+", default=["train", "val", "test"],
         help="Tên tập đích, hoặc <đích>:<tên thư mục nguồn> khi khác nhau (ví dụ val:valid)",
@@ -92,7 +96,7 @@ def convert_label_lines(lines: list[str], keep_ids: set[int], ignore_ids: set[in
 def main() -> None:
     """Đọc tên lớp, kiểm tra tên yêu cầu có thật, chuyển từng tập."""
     args = parse_args()
-    names = read_class_names(args.names_file or find_names_file(args.src))
+    names = args.class_names or read_class_names(args.names_file or find_names_file(args.src))
     missing = [n for n in args.keep + args.ignore_classes if n not in names]
     if missing:
         raise SystemExit(f"Lớp {missing} không có trong bộ dữ liệu; các lớp hiện có: {names}")

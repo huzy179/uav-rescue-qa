@@ -900,6 +900,8 @@ val:   [visdrone/images/val, finland/images/val]
 names: {0: person}
 ```
 
+**C2A** (tải 21/10 từ Google Drive của tác giả, `data/raw/c2a/`; trên Kaggle gắn dataset `c2a-dataset`): 10.215 ảnh (train 6.129, val 2.043, test 2.043), bốn loại cảnh (lũ, cháy, nhà sập, tai nạn giao thông, mỗi loại khoảng một phần tư), một lớp người, khoảng 34 người mỗi ảnh. Người là hình ghép lên ảnh thảm hoạ thật, nên chỉ dùng để **huấn luyện**, không dùng để kết luận về cảnh lũ. Chuyển bằng `tools/convert_yolo_subset.py --class-names human --keep human` (`data/processed/c2a/stats.json`). Ảnh nhỏ (cạnh dài trung vị khoảng 430 px), xem mục 13.4 về hệ quả. GitHub của C2A không ghi giấy phép (quyết định #11 của ROADMAP). Nền ảnh lấy từ bộ AIDER (ảnh thảm hoạ trên Internet): khi có tập test lũ phải chạy `tools/check_leakage.py` giữa tập test và C2A train.
+
 Chia theo video hoặc địa điểm (FinlandProper là khung trích từ video: các khung liền nhau gần như giống hệt, chia ngẫu nhiên sẽ làm rò rỉ val vào train và cho kết quả đẹp giả). Công cụ: `tools/split_by_video.py` và `tools/check_leakage.py` (mục 15.6).
 
 ### 13.2. Hai cách đưa người nhỏ vào mô hình khi huấn luyện
@@ -960,9 +962,12 @@ Sau đó box có cạnh dưới 2 px bị **xoá nhãn** (`box_candidates`, `wh_
 | 640 | 0,5 | **26,9%** | 44,4% | 25,0% | 3,5% | 0,2% | 0,0% |
 | 640 | 1,0 | 3,2% | 23,7% | 44,4% | 25,0% | 3,5% | 0,2% |
 
+Cùng phép đo trên C2A val (`runs/stats/c2a_val_1280/size_stats.csv`): ảnh C2A nhỏ nên ở imgsz 1280 bị **phóng to** khoảng 3 lần (ultralytics phóng cả ảnh nhỏ lên `imgsz`). Ở s = 1: 0,5% mất nhãn, 21,1% ở 8–16 px, 27,8% ở 16–32 px, 38,3% trên 32 px. Ngược với VisDrone (đa số 4–16 px), C2A nghiêng về người lớn; gộp hai bộ phủ khoảng 13–42 px của lúc triển khai. Cái giá: ảnh phóng to bị nhoè do nội suy, khác với ảnh 4K thật.
+
 Lúc triển khai (cắt ô ở độ phân giải gốc, video 4K, camera 82° chéo, `runs/gsd/m4t_diag82/gsd_table.csv`): người 42,2 px ở 30 m xuống 12,7 px ở 100 m; đầu người (thân đã ngập) 16,9 px xuống 5,1 px.
 
 Kết luận:
+- **E2 lượt 2 (`E2b_s0.yaml`) = VisDrone + C2A ở 1280**: hai bộ bù nhau về kích thước người (trên); FinlandProper và AFO thêm bằng file cấu hình mới khi có.
 - **E2 ở imgsz 1280 giữ `scale = 0.5`**: khoảng s từ 0,5 tới 1,5 phủ được từ đầu người 5 px tới người 42 px; mất nhãn chỉ đáng kể ở đầu dưới của khoảng s.
 - **Không huấn luyện ở imgsz 640 với `scale` mặc định**: tới 26,9% nhãn bị xoá ở s = 0,5. Nếu cần 640 (để batch lớn) thì dùng mảnh cắt (13.2), không thu cả ảnh.
 - `train.py` có `--scale` để giá trị này được ghi vào `run_config.json`; muốn thử giá trị khác thì tạo file cấu hình mới, không sửa E2_s0.
