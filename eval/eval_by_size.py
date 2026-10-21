@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 from PIL import Image
 
@@ -32,6 +33,7 @@ from eval.report import (
     write_run_config,
 )
 from edge.sampler import IMAGE_EXTS
+from eval.splits import group_of
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,6 +52,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--conf", type=float, default=0.25, help="Ngưỡng conf của điểm vận hành (recall, precision)")
     parser.add_argument(
         "--bootstrap", type=int, default=1000, help="Số lần lấy mẫu lại theo ảnh để tính khoảng tin cậy 95%% (0 để tắt)"
+    )
+    parser.add_argument(
+        "--cluster-pattern",
+        default=None,
+        help="Regex lấy mã video từ tên ảnh (nhóm bắt đầu tiên) để bootstrap theo video thay vì theo ảnh, ví dụ '^(\\d+)_' cho VisDrone",
     )
     parser.add_argument("--output", type=Path, default=Path("runs/eval"), help="Thư mục kết quả")
     return parser.parse_args()
@@ -83,6 +90,13 @@ def load_ground_truth(
     if n_missing_labels:
         print(f"[cảnh báo] {n_missing_labels}/{len(image_names)} ảnh không có file nhãn, coi như không có người.")
     return ground_truth
+
+
+def image_clusters(image_names: list[str], pattern: str | None) -> np.ndarray | None:
+    """Mã video của từng ảnh (theo thứ tự image_names) cho cluster bootstrap; pattern=None thì trả None (theo ảnh)."""
+    if pattern is None:
+        return None
+    return np.array([group_of(Path(name).stem, pattern) for name in image_names])
 
 
 def evaluate_config(
@@ -169,6 +183,14 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=True)
     boxes = pd.concat([pd.read_csv(run / "boxes.csv") for run in args.runs], ignore_index=True)
     images = pd.concat([pd.read_csv(run / "per_image.csv") for run in args.runs], ignore_index=True)
+    # Hai lần chạy cùng (method, imgsz) sẽ bị gộp box thành một cấu hình và cho số sai mà không báo gì.
+    duplicated = images[images.duplicated(["method", "imgsz", "image"])]
+    if not duplicated.empty:
+        first = duplicated.iloc[0]
+        raise SystemExit(
+            f"Có nhiều lần chạy cùng method={first['method']}, imgsz={first['imgsz']} (ví dụ ảnh {first['image']}); "
+            "đánh giá từng thư mục riêng."
+        )
 
     rows = []
     curves: dict[str, MatchResult] = {}
@@ -179,6 +201,7 @@ def main() -> None:
         )
         config_boxes = boxes[(boxes["method"] == method) & (boxes["imgsz"] == imgsz)]
         results = evaluate_config(config_boxes, ground_truth, args.iou)
+        clusters = image_clusters(list(ground_truth), args.cluster_pattern)
         for size_label, parts in results.items():
             match = merge_matches(parts)
             if size_label == ALL_SIZES:
@@ -186,7 +209,7 @@ def main() -> None:
             recall, precision = operating_point(match, args.conf)
             recall_max, _ = operating_point(match, 0.0)
             (ap_lo, ap_hi), (recall_lo, recall_hi) = bootstrap_ci(
-                parts, [average_precision, lambda m: operating_point(m, args.conf)[0]], args.bootstrap
+                parts, [average_precision, lambda m: operating_point(m, args.conf)[0]], args.bootstrap, clusters=clusters
             )
             rows.append(
                 {
@@ -211,7 +234,7 @@ def main() -> None:
     write_run_config(args.output, Path(__file__).name, None, None, vars(args))
     print(
         f"IoU ≥ {args.iou:g}; recall và precision tại conf ≥ {args.conf:g}; recall_max là recall khi giữ mọi dự đoán; "
-        f"_lo và _hi là khoảng tin cậy 95% ({args.bootstrap} lần bootstrap theo ảnh)."
+        f"_lo và _hi là khoảng tin cậy 95% ({args.bootstrap} lần bootstrap theo {'video' if args.cluster_pattern else 'ảnh'})."
     )
     print(table.to_string(index=False))
     print(f"\nKết quả lưu tại: {args.output}")

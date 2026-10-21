@@ -50,3 +50,42 @@ def test_bootstrap_ci_collapses_on_identical_images_and_brackets_the_estimate() 
     parts = [part] * 5 + [miss] * 5
     lo, hi = bootstrap_ci(parts, [lambda m: operating_point(m, 0.25)[0]], n_boot=200)[0]
     assert lo < operating_point(merge_matches(parts), 0.25)[0] < hi
+
+
+def _one_gt_per_image(hits: list[bool]) -> list[tuple[np.ndarray, np.ndarray, int]]:
+    """Mỗi ảnh một nhãn; hit thì có một dự đoán đúng conf 0,9, không thì không có dự đoán."""
+    return [(np.array([0.9]), np.array([True]), 1) if hit else (np.zeros(0), np.zeros(0, dtype=bool), 1) for hit in hits]
+
+
+def test_paired_bootstrap_identical_configs() -> None:
+    from eval.metrics import paired_bootstrap
+
+    parts = _one_gt_per_image([True] * 10 + [False] * 10)
+    d = paired_bootstrap(parts, parts, lambda m: operating_point(m, 0.25)[0], n_boot=200)
+    assert (d.diff, d.lo, d.hi, d.p_value) == (0.0, 0.0, 0.0, 1.0)
+
+
+def test_paired_bootstrap_detects_consistent_gain() -> None:
+    """B bắt thêm 10/20 người mà A bỏ sót: hiệu recall 0,5, khoảng tin cậy không chứa 0."""
+    from eval.metrics import paired_bootstrap
+
+    a = _one_gt_per_image([True] * 10 + [False] * 10)
+    b = _one_gt_per_image([True] * 20)
+    d = paired_bootstrap(a, b, lambda m: operating_point(m, 0.25)[0], n_boot=500)
+    assert d.diff == pytest.approx(0.5)
+    assert d.lo > 0 and d.p_value < 0.01
+    with pytest.raises(ValueError):
+        paired_bootstrap(a, b[:5], average_precision)
+
+
+def test_cluster_bootstrap_is_wider_when_images_correlated() -> None:
+    """20 ảnh từ 2 video: video 1 bắt hết, video 2 sót hết. Theo ảnh thì khoảng tin cậy hẹp giả; theo video thì
+    chỉ có 2 đơn vị độc lập nên recall có thể là 0, 0,5 hoặc 1."""
+    from eval.metrics import bootstrap_ci
+
+    parts = _one_gt_per_image([True] * 10 + [False] * 10)
+    recall = [lambda m: operating_point(m, 0.25)[0]]
+    by_image = bootstrap_ci(parts, recall, n_boot=500)[0]
+    by_video = bootstrap_ci(parts, recall, n_boot=500, clusters=np.array([1] * 10 + [2] * 10))[0]
+    assert 0.2 < by_image[0] < 0.5 < by_image[1] < 0.8
+    assert by_video.tolist() == [0.0, 1.0]

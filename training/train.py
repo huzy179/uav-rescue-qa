@@ -15,8 +15,8 @@ from shared.config import parse_args_with_config
 def parse_args() -> argparse.Namespace:
     """Đọc tham số dòng lệnh (có thể lấy mặc định từ --config)."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--train", type=Path, nargs="+", required=True, help="Các thư mục ảnh huấn luyện (.../images/train)")
-    parser.add_argument("--val", type=Path, nargs="+", required=True, help="Các thư mục ảnh kiểm định (.../images/val)")
+    parser.add_argument("--train", type=Path, nargs="+", required=True, help="Các thư mục ảnh huấn luyện (.../images/train) hoặc file .txt danh sách ảnh (tools/split_by_video.py)")
+    parser.add_argument("--val", type=Path, nargs="+", required=True, help="Các thư mục ảnh kiểm định (.../images/val) hoặc file .txt danh sách ảnh")
     parser.add_argument("--model", default="yolo26s.pt", help="Trọng số khởi đầu, hoặc yaml mô hình (E3)")
     parser.add_argument("--imgsz", type=int, default=1280, help="Kích thước ảnh huấn luyện")
     parser.add_argument("--epochs", type=int, default=100, help="Số epoch tối đa")
@@ -25,6 +25,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=0, help="Seed; mỗi cấu hình cuối chạy 3 seed")
     parser.add_argument("--flipud", type=float, default=0.5, help="Xác suất lật dọc (ảnh nhìn từ trên xuống không có chiều đứng)")
     parser.add_argument("--close-mosaic", type=int, default=10, help="Tắt mosaic ở N epoch cuối")
+    parser.add_argument(
+        "--scale", type=float, default=0.5,
+        help="Phóng to/thu nhỏ ngẫu nhiên hệ số [1 − scale, 1 + scale]; box dưới 2 px sau đó bị xoá nhãn (xem tools/label_size_stats.py)",
+    )
     parser.add_argument("--fraction", type=float, default=1.0, help="Tỉ lệ tập huấn luyện được dùng (nhỏ hơn 1 để chạy thử)")
     parser.add_argument("--workers", type=int, default=8, help="Số tiến trình đọc dữ liệu")
     parser.add_argument("--device", default=None, help="Ví dụ: 0, mps, cpu (mặc định: tự chọn)")
@@ -34,10 +38,13 @@ def parse_args() -> argparse.Namespace:
 
 
 def write_data_yaml(train: list[Path], val: list[Path], out_dir: Path) -> Path:
-    """Ghi data.yaml với đường dẫn tuyệt đối, để cùng một cấu hình chạy được trên Mac lẫn Kaggle."""
-    missing = [str(p) for p in train + val if not p.is_dir()]
+    """Ghi data.yaml với đường dẫn tuyệt đối, để cùng một cấu hình chạy được trên Mac lẫn Kaggle.
+
+    Mỗi mục là thư mục ảnh hoặc file .txt liệt kê đường dẫn ảnh; ultralytics nhận cả hai.
+    """
+    missing = [str(p) for p in train + val if not (p.is_dir() or (p.is_file() and p.suffix == ".txt"))]
     if missing:
-        raise FileNotFoundError(f"Không tìm thấy thư mục ảnh: {', '.join(missing)}")
+        raise FileNotFoundError(f"Không tìm thấy thư mục ảnh hoặc file .txt: {', '.join(missing)}")
     data = {
         "train": [str(p.resolve()) for p in train],
         "val": [str(p.resolve()) for p in val],
@@ -80,6 +87,7 @@ def main() -> None:
             cos_lr=True,
             close_mosaic=args.close_mosaic,
             flipud=args.flipud,
+            scale=args.scale,
             fraction=args.fraction,
             workers=args.workers,
             device=device,

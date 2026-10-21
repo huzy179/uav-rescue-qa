@@ -1,0 +1,10 @@
+# Đối chiếu bộ cắt ô riêng với E4 (SAHI): ô 640, chồng 0,2, có lượt toàn ảnh ở 640; gộp bằng NMS theo IOS 0,5 thay cho GREEDYNMM.
+source: data/processed/visdrone/images/val
+model: yolo26s.pt
+tile: 640
+overlap: 0.2
+full_pass: true
+imgsz: 640
+conf: 0.001
+no_images: true
+output: runs/visdrone/E4tiled

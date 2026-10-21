@@ -134,36 +134,99 @@ def merge_matches(parts: list[tuple[np.ndarray, np.ndarray, int]]) -> MatchResul
     return MatchResult(confs[order], is_tp[order], sum(p[2] for p in parts))
 
 
+def _flatten(parts: list[tuple[np.ndarray, np.ndarray, int]]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Gộp kết quả từng ảnh thành (conf, is_tp, chỉ số ảnh của mỗi dự đoán, số nhãn mỗi ảnh), sắp theo conf giảm dần."""
+    confs = np.concatenate([p[0] for p in parts])
+    is_tp = np.concatenate([p[1] for p in parts])
+    image_of = np.repeat(np.arange(len(parts)), [len(p[0]) for p in parts])
+    order = np.argsort(-confs, kind="stable")
+    return confs[order], is_tp[order], image_of[order], np.array([p[2] for p in parts])
+
+
+def _resample(flat: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], counts: np.ndarray) -> MatchResult:
+    """Mẫu bootstrap: ảnh i xuất hiện counts[i] lần; lặp từng dự đoán theo số lần đó giữ nguyên thứ tự conf, khỏi sắp lại."""
+    confs, is_tp, image_of, n_gt = flat
+    repeats = counts[image_of]
+    return MatchResult(np.repeat(confs, repeats), np.repeat(is_tp, repeats), int(counts @ n_gt))
+
+
+def _draw_counts(rng: np.random.Generator, n_images: int, clusters: np.ndarray | None) -> np.ndarray:
+    """Số lần mỗi ảnh được rút. clusters=None: rút có hoàn lại theo ảnh; có clusters (mã nhóm của từng ảnh, ví dụ
+    video): rút có hoàn lại theo nhóm, ảnh nhận số lần rút của nhóm mình (cluster bootstrap)."""
+    if clusters is None:
+        return np.bincount(rng.integers(0, n_images, n_images), minlength=n_images)
+    _, cluster_index = np.unique(clusters, return_inverse=True)
+    n_clusters = int(cluster_index.max()) + 1
+    return np.bincount(rng.integers(0, n_clusters, n_clusters), minlength=n_clusters)[cluster_index]
+
+
 def bootstrap_ci(
     parts: list[tuple[np.ndarray, np.ndarray, int]],
     metrics: Sequence[Callable[[MatchResult], float]],
     n_boot: int = 1000,
     seed: int = 0,
+    clusters: np.ndarray | None = None,
 ) -> np.ndarray:
     """Khoảng tin cậy 95% của từng chỉ số, bootstrap theo ảnh; trả về mảng (len(metrics), 2) gồm cận dưới, cận trên.
 
     Lấy mẫu lại theo ảnh chứ không theo box, vì các box trong cùng một ảnh không độc lập. Cùng `seed` thì mọi
-    cấu hình được lấy mẫu trên cùng dãy ảnh.
+    cấu hình được lấy mẫu trên cùng dãy ảnh. Có `clusters` thì lấy mẫu theo nhóm (video), xem _draw_counts.
     """
     if not parts or n_boot <= 0:
         return np.full((len(metrics), 2), np.nan)
-    confs = np.concatenate([p[0] for p in parts])
-    is_tp = np.concatenate([p[1] for p in parts])
-    image_of = np.repeat(np.arange(len(parts)), [len(p[0]) for p in parts])
-    order = np.argsort(-confs, kind="stable")
-    confs, is_tp, image_of = confs[order], is_tp[order], image_of[order]
-    n_gt = np.array([p[2] for p in parts])
+    flat = _flatten(parts)
     rng = np.random.default_rng(seed)
     values = np.empty((n_boot, len(metrics)))
     for b in range(n_boot):
-        # Số lần mỗi ảnh được rút; lặp từng dự đoán theo số lần đó giữ nguyên thứ tự conf, khỏi sắp lại.
-        counts = np.bincount(rng.integers(0, len(parts), len(parts)), minlength=len(parts))
-        repeats = counts[image_of]
-        sample = MatchResult(np.repeat(confs, repeats), np.repeat(is_tp, repeats), int(counts @ n_gt))
+        sample = _resample(flat, _draw_counts(rng, len(parts), clusters))
         values[b] = [metric(sample) for metric in metrics]
     if np.isnan(values).all():
         return np.full((len(metrics), 2), np.nan)
     return np.nanpercentile(values, [2.5, 97.5], axis=0).T
+
+
+@dataclass
+class PairedDiff:
+    """Hiệu số B − A của một chỉ số, cùng khoảng tin cậy 95% và p hai phía từ bootstrap cặp."""
+
+    a: float
+    b: float
+    diff: float
+    lo: float
+    hi: float
+    p_value: float
+
+
+def paired_bootstrap(
+    parts_a: list[tuple[np.ndarray, np.ndarray, int]],
+    parts_b: list[tuple[np.ndarray, np.ndarray, int]],
+    metric: Callable[[MatchResult], float],
+    n_boot: int = 1000,
+    seed: int = 0,
+    clusters: np.ndarray | None = None,
+) -> PairedDiff:
+    """So sánh hai cấu hình trên cùng tập ảnh: mỗi lần bootstrap rút một bộ ảnh rồi tính chỉ số của CẢ HAI trên bộ đó.
+
+    Vì cùng một ảnh khó thì khó cho cả hai cấu hình, hiệu số dao động ít hơn nhiều so với từng chỉ số riêng; hai
+    khoảng tin cậy riêng chồng nhau vẫn có thể có hiệu số khác 0 rõ ràng. parts_a[i] và parts_b[i] phải là cùng ảnh.
+    p_value: tỉ lệ mẫu có hiệu số trái dấu với hiệu số quan sát, nhân 2 (kiểm định hai phía, chặn ở 1).
+    """
+    if len(parts_a) != len(parts_b):
+        raise ValueError(f"Hai cấu hình phải trên cùng tập ảnh: {len(parts_a)} và {len(parts_b)} ảnh")
+    a, b = metric(merge_matches(parts_a)), metric(merge_matches(parts_b))
+    flat_a, flat_b = _flatten(parts_a), _flatten(parts_b)
+    rng = np.random.default_rng(seed)
+    diffs = np.empty(n_boot)
+    for i in range(n_boot):
+        counts = _draw_counts(rng, len(parts_a), clusters)
+        diffs[i] = metric(_resample(flat_b, counts)) - metric(_resample(flat_a, counts))
+    diffs = diffs[~np.isnan(diffs)]
+    observed = b - a
+    if diffs.size == 0:
+        return PairedDiff(a, b, observed, np.nan, np.nan, np.nan)
+    lo, hi = np.percentile(diffs, [2.5, 97.5])
+    opposite = np.mean(diffs <= 0) if observed > 0 else np.mean(diffs >= 0)
+    return PairedDiff(a, b, observed, float(lo), float(hi), float(min(1.0, 2 * opposite)))
 
 
 def pr_curve(match: MatchResult) -> tuple[np.ndarray, np.ndarray]:
