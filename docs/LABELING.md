@@ -11,6 +11,19 @@ Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 c
 - **Tên file:** `<video_id>_<số khung 6 chữ số>.jpg`. Lưu khung ở chất lượng gốc, không thu nhỏ.
 - Video dùng cho tập test không được dùng để huấn luyện hay chọn tham số.
 
+**Trích khung bằng `tools/extract_frames.py`** (làm đúng các quy tắc trên):
+
+```bash
+# đặt video vào data/raw/flood/videos/, ghi nguồn vào data/raw/flood/sources.csv trước
+.venv/bin/python tools/extract_frames.py --videos data/raw/flood/videos/*.mp4
+```
+
+- Lấy một khung mỗi 2 giây (`--min-gap-s`), bỏ khung gần trùng **mọi** khung đã giữ của cùng video (dHash lệch dưới 10 bit, `--min-hamming`), bỏ màn đen hoặc màn một màu, giữ tối đa 30 khung rải đều theo thời gian (`--max-frames`).
+- Khung ghi vào `data/raw/flood/frames/` với tên `<video_id>_<số khung>.jpg`; `video_id` lấy từ tên file video, đã bỏ dấu tiếng Việt và ký tự lạ (`Lũ Yagi.mp4` thành `Lu-Yagi`). Nên đặt tên file video ngắn, gọn trước khi chạy, vì `video_id` cũng là mã trong `sources.csv`.
+- `data/raw/flood/frames_manifest.csv` ghi lại mỗi khung lấy từ video nào, ở giây thứ mấy.
+- Chạy lại không ghi đè khung đã có (an toàn khi đã gán nhãn); muốn trích lại một video thì thêm `--overwrite`.
+- Công cụ không biết khung nào có người: vẫn phải xem qua, bỏ khung mờ nhoè hoặc không phải cảnh lũ trước khi đưa vào CVAT. Video dài, cảnh thay đổi chậm (bay lơ lửng) có thể cho ít khung; video quay nhanh cho nhiều khung gần giống về nội dung dù dHash khác, nên vẫn cần mắt người.
+
 ## 2. Công cụ
 
 CVAT, một dự án, hai nhãn dạng hình chữ nhật:
