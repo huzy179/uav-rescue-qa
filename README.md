@@ -22,7 +22,13 @@ data/, runs/        dữ liệu và kết quả chạy (không đưa lên git)
 
 `edge/` đã có đủ pipeline lấy mẫu → phát hiện → định vị → xác nhận → outbox cảnh báo; `ground/` nhận cảnh báo và hiện trên bản đồ. Xem lịch ở ROADMAP.
 
-Demo hai phía trên một máy:
+Demo hai phía trên một máy, một lệnh (trạm mặt đất + pipeline, rồi giữ bản đồ mở tới khi Ctrl+C):
+
+```bash
+scripts/demo.sh [video.mp4] [trọng số]    # mặc định data/raw/demo/afo_demo.mp4 và yolo26s.pt
+```
+
+Từng bước:
 
 ```bash
 # 1. Trạm mặt đất, mở http://localhost:8000 (hoặc: docker compose up ground)
