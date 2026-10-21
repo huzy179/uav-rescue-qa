@@ -9,3 +9,13 @@ services:
       - .:/app
     # PyTorch dùng /dev/shm; mặc định 64 MB của Docker là quá ít.
     shm_size: "2gb"
+
+  ground:
+    build:
+      context: .
+      dockerfile: docker/ground.Dockerfile
+    image: floodeye-ground
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./runs/ground:/data

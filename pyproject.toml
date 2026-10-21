@@ -36,6 +36,9 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["shared*", "edge*", "ground*", "sim*", "eval*"]
 
+[tool.setuptools.package-data]
+ground = ["*.html"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

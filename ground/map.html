@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FloodEye – trạm mặt đất</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+  #wrap { display: flex; height: 100%; }
+  #map { flex: 1; }
+  #side { width: 320px; overflow-y: auto; border-left: 1px solid #ccc; padding: 8px; box-sizing: border-box; }
+  #side h1 { font-size: 16px; margin: 4px 0 8px; }
+  .item { padding: 6px 4px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
+  .item:hover { background: #f3f3f3; }
+  @media (max-width: 700px) { #wrap { flex-direction: column; } #side { width: 100%; height: 40%; border-left: 0; } }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="map"></div>
+  <div id="side"><h1>Cảnh báo (<span id="count">0</span>)</h1><div id="list"></div></div>
+</div>
+<script>
+  // Ô bản đồ OpenStreetMap cần internet; khi mất mạng thật cần ô bản đồ ngoại tuyến (TECHNICAL mục 12.5).
+  const map = L.map("map").setView([21.0285, 105.8542], 15);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, attribution: "© OpenStreetMap" }).addTo(map);
+  const markers = {};
+  let fitted = false;
+
+  function popup(a) {
+    const crop = a.has_crop ? `<br><img src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" width="200">` : "<br><i>Chưa có ảnh cắt</i>";
+    return `<b>${a.alert_id}</b><br>Độ tin cậy ${a.confidence.toFixed(2)} · ${a.frames_confirmed} khung<br>`
+      + `Sai số ±${a.position_error_m.toFixed(1)} m · độ cao ${a.altitude_m.toFixed(0)} m${crop}`;
+  }
+
+  async function refresh() {
+    try {
+      const alerts = await (await fetch("/api/alerts")).json();
+      document.getElementById("count").textContent = alerts.length;
+      const list = document.getElementById("list");
+      list.replaceChildren();
+      for (const a of alerts) {
+        if (!markers[a.alert_id]) {
+          markers[a.alert_id] = L.circleMarker([a.lat, a.lon], { radius: 8, color: "#d62728", weight: 2 }).addTo(map);
+        }
+        markers[a.alert_id].bindPopup(popup(a));
+        const item = document.createElement("div");
+        item.className = "item";
+        item.textContent = `${a.alert_id} · ${a.lat.toFixed(6)}, ${a.lon.toFixed(6)} · ${a.confidence.toFixed(2)}`;
+        item.onclick = () => { map.setView([a.lat, a.lon], 19); markers[a.alert_id].openPopup(); };
+        list.appendChild(item);
+      }
+      if (!fitted && alerts.length) {
+        map.fitBounds(alerts.map(a => [a.lat, a.lon]), { maxZoom: 19, padding: [40, 40] });
+        fitted = true;
+      }
+    } catch (e) { console.error(e); }
+  }
+  // shortcut: hỏi lại mỗi 2 giây thay cho Server-Sent Events; đổi sang SSE nếu cần độ trễ hiển thị thấp hơn.
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>

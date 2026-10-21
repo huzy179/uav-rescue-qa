@@ -1,5 +1,5 @@
 # Ảnh CPU để chạy các script đánh giá (không dùng được GPU của máy Mac bên trong container).
-# Ảnh edge, ground và edge-jetson sẽ được thêm khi hai gói đó có mã (xem docs/ROADMAP.md, mục 2).
+# Ảnh ground ở docker/ground.Dockerfile; ảnh edge và edge-jetson sẽ được thêm sau (xem docs/ROADMAP.md, mục 2).
 FROM python:3.13-slim
 
 ENV PIP_NO_CACHE_DIR=1 \
