@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
-import platform
-import sys
-from datetime import datetime, timezone
-from importlib import metadata
 from pathlib import Path
 from typing import Any, Sequence
 
 import pandas as pd
+
+from shared.provenance import write_run_config  # noqa: F401  (giữ chỗ import cũ cho các script)
 
 PERSON_CLASS_ID = 0
 
@@ -169,49 +165,3 @@ def plot_size_histogram(boxes: pd.DataFrame, out_path: Path) -> None:
     fig.tight_layout()
     fig.savefig(out_path, dpi=150, bbox_inches="tight", facecolor=SURFACE_COLOR)
     plt.close(fig)
-
-
-def _package_version(name: str) -> str | None:
-    """Phiên bản của gói đã cài, hoặc None nếu chưa cài."""
-    try:
-        return metadata.version(name)
-    except metadata.PackageNotFoundError:
-        return None
-
-
-def _sha256(path: Path) -> str | None:
-    """Mã băm SHA-256 của file trọng số, để biết chính xác đã dùng file nào."""
-    if not path.is_file():
-        return None
-    digest = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def write_run_config(
-    out_dir: Path, script: str, model: str | None, device: str | None, args: dict[str, Any]
-) -> Path:
-    """Ghi run_config.json: phiên bản thư viện, tên model, thiết bị và toàn bộ tham số của lần chạy."""
-    config = {
-        "script": script,
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "command": " ".join(sys.argv),
-        "model": model,
-        "model_sha256": _sha256(Path(model)) if model else None,
-        "device": device,
-        "args": args,
-        "versions": {
-            "python": platform.python_version(),
-            "ultralytics": _package_version("ultralytics"),
-            "torch": _package_version("torch"),
-            "sahi": _package_version("sahi"),
-            "opencv-python": _package_version("opencv-python"),
-            "numpy": _package_version("numpy"),
-        },
-        "platform": platform.platform(),
-    }
-    path = out_dir / "run_config.json"
-    path.write_text(json.dumps(config, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
-    return path
