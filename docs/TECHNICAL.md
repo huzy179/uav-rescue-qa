@@ -344,6 +344,8 @@ VisDrone đánh dấu một số vùng là "ignored" (đám đông quá dày, v�
 
 ### 5.7. Recall theo loại nhiễu [Thiết kế]
 
+**[Đã có]** phần dữ liệu: `tools/convert_cvat.py` ghi `boxes_<split>.csv` (thuộc tính từng người) và `tags_<split>.csv` (thẻ từng ảnh). **[Thiết kế]** phần tính recall theo tập con.
+
 Tập test lũ được gắn thẻ nhiễu (lóa nước, rác trôi, ngập một phần, che khuất, thời tiết, nhòe). Hai mức gắn thẻ:
 - **Theo ảnh** (lóa, thời tiết, nhòe): tính recall trên tập con các ảnh có thẻ.
 - **Theo box** (ngập một phần, che khuất): thêm một cột thẻ cho từng nhãn, tính recall trên tập con các nhãn có thẻ.
@@ -379,7 +381,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 
 **Trạm mặt đất (`ground/`):** `app.py` (FastAPI: nhận cảnh báo, bỏ trùng theo `alert_id`, lưu SQLite), `map.html` (bản đồ Leaflet). Chỉ import `shared/`.
 
-**Giả lập (`sim/`):** `flight.py` (`StraightFlight`, telemetry giả lập), `netem.py` (`NetemTransport`, mạng mất gói và mất sóng, có seed).
+**Giả lập (`sim/`):** `flight.py` (`StraightFlight`, telemetry giả lập), `scenario.py` (người, nhãn theo thời gian, nhiễu GPS, detector giả), `make_rq3.py` (sinh trọn một kịch bản RQ3), `netem.py` (`NetemTransport`, mạng mất gói và mất sóng, có seed).
 
 **Dùng chung (`shared/`):** `schema.py` (`Telemetry`, `Detection`, `Confirmation`, `Alert`, `AlertCrop`), `config.py` (`--config file.yaml`), `provenance.py` (`run_config.json` có commit git và máy chạy).
 
@@ -391,11 +393,12 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `eval/compare_runs.py` | So sánh hai lần chạy bằng bootstrap cặp (15.3) |
 | `eval/metrics.py` | IoU, IoA, ghép, AP, điểm vận hành, `bootstrap_ci`, `paired_bootstrap` (5, 15.3) |
 | `eval/splits.py` | Nhóm theo video, chia tập, dHash tìm ảnh gần trùng (15.6) |
+| `eval/rq3_metrics.py` | Chỉ số RQ3 từ log pipeline và nhãn theo thời gian (15.4) |
 | `eval/report.py`, `eval/draw.py` | Ghi CSV, tóm tắt, histogram; vẽ box |
 
 **Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
 
-**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `split_by_video.py` (chia tập theo video), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
+**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `split_by_video.py` (chia tập theo video), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
@@ -773,9 +776,24 @@ Mẹo quan trọng: **tách phát hiện khỏi phần còn lại**. Chạy dete
 
 Thời gian xử lý thật (cho RQ2 và cho demo) đo riêng bằng `perf_counter`, ghi vào `timings.jsonl`. Khi demo trực tiếp, có chế độ "thời gian thực" chờ đúng nhịp khung.
 
-### 11.3. `flight.py`: chuyến bay giả lập [Thiết kế]
+### 11.3. `flight.py`, `scenario.py`: chuyến bay và kịch bản giả lập [Đã có một phần]
 
-**[Đã có]** `StraightFlight`: bay thẳng, không nhiễu.
+**[Đã có]** `sim/flight.py` (`StraightFlight`), `sim/scenario.py`, `sim/make_rq3.py`: bay thẳng; người đứng yên hoặc trôi; nhiễu GPS Gauss–Markov; phát hiện giả theo recall cố định và báo nhầm Poisson. **[Thiết kế]** đường zig-zag, nhiễu độ cao, nhiễu hướng, nghiêng camera, recall theo kích thước người.
+
+**Luồng một kịch bản RQ3 hoàn toàn giả lập:**
+
+```
+sim/make_rq3.py ──► ground_truth.json   (người thật, ai ở khung nào: theo đường bay THẬT)
+                ├─► telemetry.csv       (đường bay thật + nhiễu GPS: thứ UAV THẤY)
+                ├─► detections.jsonl    (detector giả: recall, báo nhầm)
+                └─► frames.mp4          (khung đen đúng kích thước camera, để pipeline chạy y nguyên)
+edge/main.py --telemetry telemetry.csv --replay detections.jsonl --confirm ... ──► alerts.jsonl, alerts_sent.jsonl
+eval/rq3_metrics.py --run ... --truth ground_truth.json ──► rq3_eval/rq3_metrics.json
+```
+
+Ba lớp tách riêng (sự thật, cảm biến, detector) vì mỗi lớp là một nguồn sai số riêng của RQ3. Pipeline không biết mình đang chạy trên dữ liệu giả: cùng mã `edge/` sẽ chạy trên video thật.
+
+**Nhiễu GPS Gauss–Markov** (`GaussMarkovGps`): `e(t+dt) = e(t)·exp(−dt/τ) + σ·√(1 − exp(−2dt/τ))·N(0,1)` cho mỗi trục. Độ lệch chuẩn dài hạn là σ, nhưng giữa hai khung cách `dt` chỉ thay đổi khoảng `σ·√(1 − exp(−2dt/τ))`. Với σ = 3 m, τ = 30 s, dt = 0,5 s, thay đổi giữa hai khung khoảng 0,55 m.
 
 - Đường bay thẳng hoặc zig-zag, tham số: điểm bắt đầu, độ cao, vận tốc, hướng, khoảng cách dải, tần số mẫu telemetry.
 - Nhiễu: GPS Gauss–Markov (mục 8.4), nhiễu độ cao, nhiễu hướng, nghiêng camera cố định.
@@ -990,6 +1008,8 @@ Tập test lũ lấy tối đa 30 khung mỗi video (docs/LABELING.md), nên cù
 
 ### 15.4. Định nghĩa chỉ số RQ3
 
+**[Đã có]** `eval/rq3_metrics.py` (hàm thuần `compute_metrics`, có ví dụ tính tay trong `tests/test_rq3.py`). Kết quả ghi vào `<run>/rq3_eval/`, không ghi đè `run_config.json` của pipeline.
+
 Cho một video với nhãn theo thời gian (mỗi người thật có khoảng thời gian xuất hiện `[t_in, t_out]` và toạ độ):
 
 | Chỉ số | Định nghĩa |
@@ -1003,11 +1023,19 @@ Cho một video với nhãn theo thời gian (mỗi người thật có khoảng
 | Tỉ lệ mất | Cảnh báo không bao giờ tới trạm (khi kết thúc mô phỏng) / tổng cảnh báo |
 | KB mỗi cảnh báo | Tổng byte gửi (gồm cả gửi lại) / số cảnh báo |
 
+Cách ghép cảnh báo với người thật: tại thời điểm cảnh báo, tính khoảng cách mặt đất tới vị trí lúc đó của mọi người thật (người trôi thì lấy vị trí đã trôi); cảnh báo thuộc về người gần nhất trong `r_eval`.
+
+Giới hạn của định nghĩa, cần ghi trong luận văn:
+- **Hai người đứng gần nhau hơn `r_eval`** thì mọi cảnh báo về họ đều bị tính là gộp nhầm, kể cả khi hệ thống cảnh báo đúng từng người. Chọn `r_eval` nhỏ hơn khoảng cách thường gặp giữa các nhóm người, và báo kết quả ở vài giá trị `r_eval`.
+- **Sai số vị trí có một phần cố định**: `georef.locate` lấy tâm đáy box (chân người đứng), còn mô phỏng đặt người ở tâm box, nên dù không nhiễu vẫn lệch nửa bề ngang người (0,25 m). Với người nhìn từ trên xuống, phần lệch này nhỏ so với sai số GPS.
+
+**Chạy thử (không phải kết quả RQ3)**: một kịch bản 60 s, 10 người, recall 0,7, 0,5 báo nhầm mỗi khung, seed 0, quét σ GPS (`runs/rq3/smoke_gps*`, `runs/rq3/sweep_gps*`). `geo` bắt đủ 10/10 người ở mọi σ đã thử (0 đến 3 m); `bytetrack` không bắt được ai; `bytetrack_cmc` bắt đủ tới σ = 0,25 m, bỏ sót 20% ở 0,5 m, 90% ở 1 m, 100% ở 3 m. Đúng với lập luận ở mục 9.3: bù chuyển động bằng telemetry cần GPS dao động giữa hai khung nhỏ hơn bề ngang người (cỡ GPS RTK). Báo nhầm ngẫu nhiên không thành cảnh báo nào nhờ yêu cầu 3 lần thấy. Kết luận chính thức phải chạy đủ lưới tham số ở ROADMAP mục 4, nhiều seed.
+
 ### 15.5. Nhãn theo thời gian cho RQ3
 
 Hai nguồn:
 1. Chuỗi khung của FinlandProper, nếu nhãn được gán liên tục và có định danh người qua các khung (cần kiểm tra khi tải về).
-2. Mô phỏng (mục 11.3): người đặt tại toạ độ cố định, nhãn suy ra bằng `gps_to_pixel`.
+2. Mô phỏng (mục 11.3): người đặt tại toạ độ cố định, nhãn suy ra bằng `gps_to_pixel`. **[Đã có]** `sim/make_rq3.py`.
 
 Nếu tự gán nhãn vài đoạn video lũ cho RQ3, gán ở 2 FPS và gán thêm định danh người (cùng một người giữ cùng một số qua các khung); CVAT hỗ trợ chế độ gán nhãn theo track.
 

@@ -22,7 +22,9 @@ CVAT, một dự án, hai nhãn dạng hình chữ nhật:
 
 Thẻ theo ảnh (tag của CVAT): `glare`, `weather`, `blur`, `floating_debris`.
 
-Xuất định dạng "CVAT for images 1.1" (XML), vì định dạng YOLO làm mất thuộc tính và thẻ.
+Xuất định dạng "CVAT for images 1.1" (XML), vì định dạng YOLO làm mất thuộc tính và thẻ. Chuyển sang YOLO bằng `tools/convert_cvat.py`: script báo lỗi nếu gặp nhãn, thuộc tính hoặc thẻ không có trong bảng trên (để lỗi đánh máy trong CVAT không lặng lẽ biến thành mất nhãn), và cảnh báo các khung có trong thư mục mà không có trong XML.
+
+Lưu ý: file XML của CVAT liệt kê mọi ảnh của task, kể cả ảnh chưa ai mở. Ảnh không có box trong XML có thể là "đã xem, không có người" hoặc "chưa gán". Trước khi xuất để khoá, đánh dấu mọi job là hoàn thành trong CVAT.
 
 ## 3. Thế nào là một người
 

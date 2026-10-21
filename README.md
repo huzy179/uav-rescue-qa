@@ -164,6 +164,17 @@ python eval/compare_runs.py --a runs/visdrone/E4 --b runs/visdrone/E4tiled \
     --ignore data/processed/visdrone/ignore/val --output runs/visdrone/compare_E4_E4tiled
 ```
 
+RQ3 bằng mô phỏng (TECHNICAL mục 11.3, 15.4): sinh kịch bản, chạy pipeline với một chiến lược xác nhận, chấm điểm:
+
+```bash
+python -m sim.make_rq3 --output runs/rq3/demo --gps-sigma-m 3 --seed 0
+python -m edge.main --config configs/edge.yaml --source runs/rq3/demo/frames.mp4 --telemetry runs/rq3/demo/telemetry.csv \
+    --replay runs/rq3/demo/detections.jsonl --confirm geo --output runs/rq3/demo/geo
+python eval/rq3_metrics.py --run runs/rq3/demo/geo --truth runs/rq3/demo/ground_truth.json   # ghi runs/rq3/demo/geo/rq3_eval/
+```
+
+Nhãn tập lũ từ CVAT: `python tools/convert_cvat.py --xml annotations.xml --images data/raw/flood/frames --dst data/processed/flood --split test`.
+
 Dữ liệu: chia theo video, kiểm tra rò rỉ, xem kích thước người khi huấn luyện (TECHNICAL mục 13.4, 15.6):
 
 ```bash
