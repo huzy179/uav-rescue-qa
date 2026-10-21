@@ -82,13 +82,16 @@ docker compose run --rm dev scripts/run_baseline.py --source data/samples
 ### VisDrone2019-DET
 
 ```bash
-mkdir -p data/raw/visdrone && cd data/raw/visdrone
-curl -LO https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-val.zip
-unzip -q VisDrone2019-DET-val.zip && cd ../../..
-python tools/convert_visdrone.py --src data/raw/visdrone/VisDrone2019-DET-val --split val
+mkdir -p data/raw/visdrone
+for split in train val; do      # chỉ cần đánh giá thì để mỗi val
+  (cd data/raw/visdrone && curl -LO https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-$split.zip \
+    && unzip -q VisDrone2019-DET-$split.zip && rm VisDrone2019-DET-$split.zip)
+  python tools/convert_visdrone.py --src data/raw/visdrone/VisDrone2019-DET-$split --split $split
+done
+python tools/check_visdrone.py  # đối chiếu với nhãn gốc từng ảnh; ghi runs/data/visdrone_check.json
 ```
 
-Kết quả trong `data/processed/visdrone/`: `images/val`, `labels/val` (một lớp `person`, gộp `pedestrian` và `people`), `ignore/val` (vùng bỏ qua của VisDrone, dùng khi đánh giá) và `stats_val.json`.
+Kết quả trong `data/processed/visdrone/`: `images/<tập>`, `labels/<tập>` (một lớp `person`, gộp `pedestrian` và `people`), `ignore/<tập>` (vùng bỏ qua của VisDrone, dùng khi đánh giá) và `stats_<tập>.json`. `check_visdrone.py` thoát với mã 1 nếu có ảnh mà số người khác nhãn gốc hoặc nhãn sai định dạng (TECHNICAL mục 6.7).
 
 ## Chạy thí nghiệm
 
@@ -138,7 +141,22 @@ Quy ước theo nhóm kích thước giống COCO: nhãn ngoài nhóm được b
 
 ## Huấn luyện
 
-Huấn luyện thật chạy trên Kaggle bằng [notebooks/kaggle_train.ipynb](notebooks/kaggle_train.ipynb); notebook chỉ lấy mã, chuẩn bị dữ liệu và gọi lệnh dưới. Trên Mac chỉ chạy thử để kiểm tra mã:
+Huấn luyện thật chạy trên Kaggle bằng [notebooks/kaggle_train.ipynb](notebooks/kaggle_train.ipynb); notebook chỉ lấy mã, chuẩn bị dữ liệu và gọi lệnh dưới.
+
+### Trên Kaggle
+
+1. Tài khoản phải xác minh số điện thoại (để bật GPU và Internet).
+2. **Create → New Notebook → File → Import Notebook**, dán link GitHub của `notebooks/kaggle_train.ipynb`. Khung bên phải: **Accelerator: GPU T4**, bật **Internet**.
+3. Ô đầu: `COMMIT` là mã commit đầy đủ của mã huấn luyện, `CONFIG` là thí nghiệm cần chạy.
+4. **Chạy thử:** để `MODE = "smoke"`, bấm **Run All** (1 epoch trên 1/4 dữ liệu, bật mosaic, khoảng 15 phút kể cả tải dữ liệu). Log phải có `Using 4 dataloader workers` và không có `out of memory`. Xong bấm **Stop session**.
+5. **Chạy thật:** đổi `MODE = "train"`, đặt `EPOCHS` sao cho cả lần chạy dưới khoảng 10 giờ, rồi **Save Version → Save & Run All (Commit)**. Có thể đóng trình duyệt; theo dõi ở tab Versions.
+6. Chạy xong, tải `runs/train/<mã>/` trong Output về cùng chỗ trên máy.
+
+Các thông báo lỗi bỏ qua được và hành vi của ultralytics cần biết khi chạy trên Kaggle: TECHNICAL mục 13.5.
+
+### Trên máy cá nhân
+
+Chỉ chạy thử để kiểm tra mã:
 
 ```bash
 python training/train.py --config configs/experiments/E2_s0.yaml          # cần VisDrone train đã chuyển nhãn

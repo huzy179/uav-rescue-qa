@@ -399,7 +399,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 
 **Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
 
-**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `split_by_video.py` (chia tập theo video), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
+**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
@@ -438,6 +438,44 @@ Mỗi dòng nhãn gốc: `trái, trên, rộng, cao, score, category, truncation
 ### 6.6. Đóng gói
 
 `pyproject.toml` định nghĩa gói `floodeye` gồm `shared`, `edge`, `ground`, `sim`, `eval`, với ba nhóm phụ thuộc. `pip install -e ".[dev]"` cài ở chế độ editable: sửa mã có hiệu lực ngay, và script chạy được từ bất kỳ thư mục nào mà không cần chỉnh `sys.path`. Phiên bản thư viện được ghim chính xác để tái lập.
+
+### 6.7. Kiểm tra dữ liệu VisDrone sau khi chuyển [Đã có]
+
+Một lần fine-tune tốn nhiều giờ trong hạn mức GPU hằng tuần; phát hiện lỗi nhãn sau khi chạy thì mất cả lần đó. Vì vậy, trước E2, nhãn đã chuyển được đối chiếu lại với nhãn gốc bằng `tools/check_visdrone.py`:
+
+```bash
+python tools/check_visdrone.py      # ghi runs/data/visdrone_check.json; mã thoát 1 nếu có lỗi
+```
+
+Script kiểm tra:
+1. Số ảnh gốc, số ảnh đã chuyển và số file nhãn bằng nhau; mọi ảnh mở được.
+2. **Từng ảnh**: số box YOLO bằng số box `pedestrian` + `people` có `score` = 1 trong nhãn gốc.
+3. Mỗi dòng nhãn có đúng 5 cột, lớp 0, box nằm trong ảnh (cho phép sai số làm tròn dưới 10⁻⁵).
+4. Box trùng hệt nhau, box có cạnh dưới 2 px, số người nhiều nhất trong một ảnh.
+
+Rò rỉ giữa train và val là việc của `tools/check_leakage.py` (mục 15.6).
+
+Kết quả (đọc từ `runs/data/visdrone_check.json`, chạy ngày 22/10/2026; `convert_visdrone.py` không đổi từ commit `e25b81d` tới commit `6b7064e` mà E2 dùng):
+
+| | train | val |
+|---|---|---|
+| Ảnh | 6.471 | 548 |
+| `pedestrian` / `people` trong nhãn gốc | 79.337 / 27.059 | 8.844 / 5.125 |
+| Box `person` sau chuyển | 106.396 | 13.969 |
+| Ảnh không có người | 787 | 17 |
+| Nhiều người nhất trong một ảnh | 888 | 175 |
+| Box trùng hệt nhau | 2 | 0 |
+| Box có cạnh dưới 2 px | 40 | 16 |
+| Vùng bỏ qua (lớp 0) | 8.813 | 1.378 |
+| Người theo cạnh ngắn: <8 / 8–16 / 16–32 / >32 px | 22.952 / 43.596 / 31.001 / 8.847 | 3.306 / 6.364 / 3.793 / 506 |
+
+Kết luận: **nhãn đã chuyển khớp nhãn gốc ở từng ảnh, không có lỗi.** Các điểm nhỏ đã được giải thích:
+- **Box "tràn" khỏi ảnh** tối đa 5,0·10⁻⁷ chiều ảnh (dưới 0,001 px), do làm tròn toạ độ 6 chữ số; nhãn gốc không có box nào tràn.
+- **2 box trùng** có sẵn trong nhãn gốc; ultralytics tự bỏ khi nạp dữ liệu (dòng `duplicate labels removed` trong log huấn luyện).
+- **787 ảnh train không có người** (chỉ có xe): giữ lại, vì chúng là ví dụ âm giúp giảm báo nhầm.
+- **Vùng bỏ qua**: 1.378 là số box lớp 0 của val; con số 1.410 trong `docs/results/visdrone_baseline.md` gồm thêm các box `score` = 0 của lớp khác, cũng được đưa vào `ignore/` (mục 6.5).
+- **888 người trong một ảnh train** là lý do ultralytics in cảnh báo `max_det` khi huấn luyện (mục 13.5).
+- Kiểm tra bằng mắt hai ảnh train ngẫu nhiên có vẽ nhãn: box khớp người; người đi xe máy không có nhãn, đúng quy tắc ở mục 6.5.
 
 ---
 
@@ -872,16 +910,34 @@ Chia theo video hoặc địa điểm (FinlandProper là khung trích từ video
 
 Quy tắc khi cắt mảnh: box bị cắt còn dưới 50% diện tích thì bỏ (hoặc đưa vào vùng bỏ qua); giữ một tỉ lệ mảnh không có người để mô hình học nền (sóng, rác, mái nhà).
 
-### 13.3. Siêu tham số khởi đầu
+### 13.3. `training/train.py` và siêu tham số [Đã có]
 
 ```bash
-yolo detect train model=yolo26s.pt data=data.yaml imgsz=1280 epochs=100 patience=20 \
-     batch=8 seed=0 deterministic=True cos_lr=True close_mosaic=10 project=runs/train name=E2_s0
+python training/train.py --config configs/experiments/E2_s0.yaml
+# ≈ yolo detect train model=yolo26s.pt imgsz=1280 epochs=100 patience=20 batch=8 seed=0 \
+#       deterministic=True cos_lr=True close_mosaic=10 flipud=0.5 scale=0.5
 ```
 
-- `mosaic` (ghép 4 ảnh) mặc định bật, có lợi cho vật thể nhỏ; tắt ở 10 epoch cuối (`close_mosaic`) để mô hình quen với ảnh thật.
-- Tăng cường dữ liệu nên thêm: xoay 90°/180° (nhìn từ trên xuống không có "chiều đứng"), lật dọc (`flipud=0.5`), thay đổi màu nhẹ (mặt nước đục, phản chiếu).
-- E3 dùng `model=yolo26s-p2.yaml` khởi tạo từ trọng số `yolo26s.pt` (ultralytics chuyển phần khớp).
+| Tham số | Giá trị | Nguồn | Ghi chú |
+|---|---|---|---|
+| `model` | `yolo26s.pt` | cấu hình | Trọng số COCO; ultralytics thay đầu 80 lớp bằng đầu 1 lớp và chuyển trọng số lớp `person` sang |
+| `imgsz` | 1280 | cấu hình | Theo kết quả E1: 640 làm mất người nhỏ (mục 3.3, 13.4) |
+| `epochs`, `patience` | 100, 20 | cấu hình | Dừng sớm sau 20 epoch không cải thiện; E2 lượt 1 ghi đè `epochs` từ notebook (mục 13.5) |
+| `batch` | 8 | cấu hình | Vừa bộ nhớ một T4 ở 1280 |
+| `seed` | 0 | cấu hình | Ba seed cho cấu hình cuối (mục 15.2) |
+| `deterministic`, `cos_lr` | bật | cố định trong mã | Lặp lại được; tốc độ học giảm theo cosin |
+| `flipud` | 0,5 | mặc định của script | Ảnh nhìn từ trên xuống không có chiều đứng, nên lật dọc là hợp lệ |
+| `close_mosaic` | 10 | mặc định của script | Mosaic (ghép 4 ảnh, có lợi cho vật thể nhỏ) tắt ở 10 epoch cuối để mô hình quen với ảnh nguyên |
+| `scale` | 0,5 | mặc định của script | Bằng mặc định của ultralytics; ghi ra để có trong `run_config.json` (mục 13.4) |
+| `workers` | 8 | mặc định của script | Ultralytics tự giảm theo số CPU (mục 13.5) |
+| `optimizer` | `auto` | mặc định của ultralytics | Ultralytics tự chọn bộ tối ưu và tốc độ học theo độ dài lần chạy; giá trị thật in ở đầu log |
+
+Những việc script làm thêm so với gọi `yolo train` trực tiếp:
+- **`data.yaml` sinh tự động** trong thư mục kết quả, với đường dẫn tuyệt đối (thư mục ảnh hoặc file `.txt` danh sách ảnh), nên cùng một file cấu hình chạy được trên Mac lẫn Kaggle. Đường dẫn không tồn tại thì báo lỗi ngay.
+- **Chặn `--resume` sai.** Checkpoint của lần chạy đã xong không còn trạng thái optimizer; khi đó ultralytics không báo lỗi mà lặng lẽ huấn luyện bộ mẫu `coco8`. Script kiểm tra trước và dừng kèm thông báo.
+- **Ghi `run_config.json`** cạnh trọng số, có commit git và máy chạy (`shared/provenance.py`).
+
+Chưa làm: xoay 90°/180° (ultralytics không có sẵn phép xoay góc vuông; `degrees` là xoay ngẫu nhiên liên tục, làm box phình ra). E3 dùng `model=yolo26s-p2.yaml` khởi tạo từ `yolo26s.pt` (ultralytics chuyển phần khớp).
 
 ### 13.4. Thang kích thước khi huấn luyện và augmentation `scale`
 
@@ -910,12 +966,44 @@ Kết luận:
 - **Không huấn luyện ở imgsz 640 với `scale` mặc định**: tới 26,9% nhãn bị xoá ở s = 0,5. Nếu cần 640 (để batch lớn) thì dùng mảnh cắt (13.2), không thu cả ảnh.
 - `train.py` có `--scale` để giá trị này được ghi vào `run_config.json`; muốn thử giá trị khác thì tạo file cấu hình mới, không sửa E2_s0.
 
-### 13.5. Kaggle
+### 13.5. Kaggle [Đã có]
 
-- GPU T4 16 GB; hạn mức theo tuần (khoảng 30 giờ, cần kiểm tra), mỗi phiên tối đa khoảng 12 giờ.
-- Lưu checkpoint vào `/kaggle/working` và dùng `resume=True` khi phiên bị ngắt.
-- Notebook chỉ clone kho mã ở một commit cố định, cài gói, gọi `training/train.py`. Mọi logic nằm trong mã có phiên bản.
-- Kết quả (trọng số, `results.csv`, `run_config.json`) lưu thành Kaggle Dataset có phiên bản, rồi tải về `runs/train/`.
+Notebook `notebooks/kaggle_train.ipynb` là lớp vỏ mỏng: mọi logic nằm trong mã có phiên bản. Các ô:
+
+| Ô | Việc |
+|---|---|
+| Tham số | `COMMIT` (mã commit đầy đủ của mã huấn luyện), `CONFIG`, `MODE` (`smoke` hoặc `train`), `EPOCHS` |
+| Lấy mã | Clone kho nếu chưa có, checkout `COMMIT`, cài `.[dev]`. Chạy lại không lỗi |
+| Kiểm tra | In phiên bản torch, opencv, ultralytics, số GPU; dừng nếu không có GPU |
+| Dữ liệu | Tải VisDrone train và val (bỏ qua nếu đã có), chạy `tools/convert_visdrone.py` |
+| Huấn luyện | Gọi `training/train.py`, in thời gian chạy |
+| Dọn dẹp | Xoá `data/` để Output chỉ còn mã và `runs/train/` |
+
+**Quy trình:**
+1. **Chạy thử** (`MODE = "smoke"`, Run All trong phiên tương tác): 1 epoch trên 1/4 dữ liệu, bật mosaic, ghi vào `runs/train/smoke`. Ở chế độ này `EPOCHS` bị bỏ qua. Xong thì **Stop session**: phiên tương tác vẫn trừ hạn mức khi ngồi không.
+2. **Chạy thật** (`MODE = "train"`, **Save Version → Save & Run All**): chạy nền, tiếp tục khi đóng trình duyệt. Một lần chạy nền bị cắt ở 12 giờ; hạn mức GPU hiển thị ở khung Session options (30 giờ mỗi tuần với tài khoản hiện tại).
+3. Tải `runs/train/<mã>/` trong Output về cùng chỗ trên máy, hoặc lưu thành Kaggle Dataset có phiên bản.
+
+`COMMIT` trỏ tới mã huấn luyện, không phải tới chính notebook: notebook được import từ `main`, còn mã được checkout ở commit đã ghim. Chỉ đổi `COMMIT` khi `training/train.py`, `tools/convert_visdrone.py`, phụ thuộc hoặc cấu hình thí nghiệm thay đổi.
+
+**Hành vi của ultralytics 8.4.174 cần biết** (đọc trực tiếp từ mã nguồn của thư viện):
+- **Số tiến trình đọc dữ liệu** = `min(số CPU // số GPU thấy được, workers, …)` (`ultralytics/data/build.py`). Kaggle "GPU T4 x2" có 4 CPU và 2 GPU, nên chỉ còn 2 tiến trình dù chỉ huấn luyện trên một GPU. Notebook đặt `CUDA_VISIBLE_DEVICES=0` để ultralytics chỉ thấy một GPU và dùng đủ 4 tiến trình; log phải có `Using 4 dataloader workers`.
+- **Khi tràn bộ nhớ GPU** (`ultralytics/engine/trainer.py`): chỉ trong **epoch đầu**, với một GPU, ultralytics tự giảm batch một nửa (tối đa 3 lần) rồi chạy tiếp; từ epoch thứ hai trở đi thì dừng hẳn. Giảm batch âm thầm làm sai cấu hình thí nghiệm, nên thấy dòng `Reducing to batch=` thì phải dừng lại. Riêng bộ gán nhãn (`TaskAlignedAssigner`, `ultralytics/utils/tal.py`) có cách xử lý riêng khi tràn bộ nhớ: gán từng ảnh một, giữ nguyên batch. Nhờ vậy ảnh rất đông người (888 người, mục 6.7) làm chậm chứ không làm hỏng lần chạy.
+- **Vì sao chạy thử phải bật mosaic:** khi số epoch không lớn hơn `close_mosaic`, ultralytics tắt mosaic ngay từ đầu (dòng `Closing dataloader mosaic`), nên chạy thử 1 epoch mặc định không giống điều kiện thật. Chế độ `smoke` truyền `--close-mosaic 0`.
+- **`max_det` khi kiểm định** (`ultralytics/models/yolo/detect/val.py`): nếu để mặc định 300 mà dữ liệu có ảnh nhiều đối tượng hơn, ultralytics tự nâng lên bằng số đối tượng nhiều nhất và in cảnh báo. Việc này chỉ ảnh hưởng mAP trong `results.csv`. Số báo cáo luôn tính lại bằng `eval/eval_by_size.py` với `max_det` 1000 (mục 5).
+
+**Thông báo trong log bỏ qua được:**
+
+| Thông báo | Vì sao vô hại |
+|---|---|
+| `ERROR: pip's dependency resolver …` khi cài gói | Gói Kaggle cài sẵn mà dự án không dùng (`bigframes`, `google-colab`, `cudf`, …) xung đột với bản `pandas`, `matplotlib` được ghim; ô kiểm tra xác nhận các gói thật sự cần |
+| `Exception in thread … plot_images … ValueError: y1 must be greater than or equal to y0` | Luồng phụ vẽ ảnh xem trước `val_batch*_pred.jpg` gặp box dự đoán lộn ngược của mô hình mới học; luồng chính vẫn kiểm định, lưu trọng số bình thường. Nhiều nhất là thiếu một ảnh xem trước |
+| `ray … get_trial_id … UserWarning` | Thư viện `ray` cài sẵn trên Kaggle, không liên quan |
+| `New https://pypi.org/project/ultralytics/… available` | Phiên bản được ghim có chủ đích |
+
+**Hai điểm phải nhớ khi viết kết quả E2:**
+- **mAP in trong log lần chạy thử không phải kết quả.** Nó chỉ sau một phần epoch, và do ultralytics tính. Số của E2 tính bằng `eval_by_size.py` sau khi tải trọng số về.
+- **`best.pt` được chọn theo mAP trên VisDrone val**, nên VisDrone val không còn là tập kiểm tra độc lập cho E2. So E2 với E0/E1 trên chính tập này sẽ hơi thiên vị E2. Cách khắc phục: chạy cả ba mô hình trên VisDrone test-dev (có nhãn công khai; chỉ cần dự đoán). Quyết định #11 ở ROADMAP.
 
 ### 13.6. E6: recall theo số pixel trên người
 
@@ -971,6 +1059,8 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 | Tập test lũ | **Tập chính** cho kết luận về cảnh lũ | Khoá bằng mã băm trước khi chạy E3; không dùng để chọn tham số |
 
 Mọi lựa chọn (ngưỡng conf, epoch, siêu tham số) làm trên val. Tập test lũ chỉ chạy một lần cho mỗi cấu hình cuối cùng.
+
+Hệ quả cho VisDrone: từ E2 trở đi, `best.pt` được chọn theo VisDrone val, nên tập này thành tập kiểm định chứ không còn là tập kiểm tra. So sánh trên VisDrone giữa mô hình đã và chưa fine-tune nên làm trên VisDrone test-dev (mục 13.5).
 
 ### 15.2. Lặp và seed
 
