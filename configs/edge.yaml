@@ -1,0 +1,13 @@
+# Cấu hình mặc định của pipeline UAV (edge/main.py). Tham số gõ trên dòng lệnh được ưu tiên.
+model: yolo26s.pt
+mode: tiled
+tile: 640
+overlap: 0.2
+conf: 0.1
+fps: 2.0
+fov_deg: 82.0
+fov_type: diagonal
+radius_m: 3.0
+n_confirm: 3
+window_s: 5.0
+expire_s: 6.0
