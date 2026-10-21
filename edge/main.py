@@ -33,8 +33,8 @@ CONFIRMED_COLOR_BGR = (0, 200, 0)
 SYNTHETIC_NOTE = "TELEMETRY GIA LAP - vi tri chi minh hoa"  # cv2.putText không vẽ được dấu tiếng Việt
 
 
-def parse_args() -> argparse.Namespace:
-    """Đọc tham số dòng lệnh (có thể lấy mặc định từ --config)."""
+def build_parser() -> argparse.ArgumentParser:
+    """Khai báo tham số dòng lệnh; tách riêng để sim/sweep_rq3.py kiểm tra tên khoá trước khi chạy."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", type=Path, required=True, help="File video hoặc thư mục chuỗi khung")
     parser.add_argument("--source-fps", type=float, default=None, help="FPS của chuỗi khung (bắt buộc khi nguồn là thư mục)")
@@ -72,7 +72,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=0, help="Seed cho giả lập mạng và nhiễu thời gian chờ gửi lại")
     parser.add_argument("--output", type=Path, default=Path("runs/edge/demo"), help="Thư mục log")
     parser.add_argument("--save-video", action="store_true", help="Ghi annotated.mp4: box đỏ là phát hiện, vòng xanh là người đã xác nhận")
-    return parse_args_with_config(parser)
+    return parser
+
+
+def parse_args() -> argparse.Namespace:
+    """Đọc tham số dòng lệnh (có thể lấy mặc định từ --config)."""
+    return parse_args_with_config(build_parser())
 
 
 def write_jsonl(f: IO[str], record: dict[str, Any]) -> None:

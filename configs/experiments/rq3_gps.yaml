@@ -1,0 +1,14 @@
+# RQ3 thử: ba chiến lược xác nhận theo nhiễu GPS, kịch bản giả lập 60 s, 10 người, recall 0,7, 0,5 báo nhầm mỗi khung, 3 seed.
+output: runs/rq3/gps
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  recall: 0.7
+  fp_per_frame: 0.5
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+grid:
+  scenario.gps_sigma_m: [0, 0.25, 0.5, 1, 3]
+  pipeline.confirm: [geo, bytetrack, bytetrack_cmc]

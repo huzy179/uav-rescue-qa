@@ -170,7 +170,7 @@ Notebook chỉ làm ba việc: clone kho mã ở một commit cố định, cài
 
 ### Kiểm thử tối thiểu
 
-`tests/` gồm: vòng `georef` đi và về; `confirm` với chuỗi phát hiện định sẵn; outbox khi mất mạng rồi có lại; schema của gói cảnh báo; các phép tính AP/recall (đã có ví dụ tính tay). Thêm GitHub Actions chạy `pytest` mỗi lần push; không cần GPU vì không đụng tới mô hình.
+`tests/` gồm: vòng `georef` đi và về; `confirm` với chuỗi phát hiện định sẵn; outbox khi mất mạng rồi có lại; schema của gói cảnh báo; các phép tính AP/recall (đã có ví dụ tính tay). GitHub Actions chạy `pytest` mỗi lần push (đã có, `.github/workflows/tests.yml`); không cần GPU vì không đụng tới mô hình.
 
 ---
 

@@ -85,10 +85,26 @@ class GaussMarkovGps:
         return self._error
 
 
-def noisy_telemetry(tel: Telemetry, gps: GaussMarkovGps) -> Telemetry:
-    """Telemetry UAV thấy: vị trí thật cộng sai số GPS."""
+def noisy_telemetry(tel: Telemetry, gps: GaussMarkovGps, yaw_bias_deg: float = 0.0) -> Telemetry:
+    """Telemetry UAV thấy: vị trí thật cộng sai số GPS, hướng thật cộng sai số la bàn cố định."""
     north, east = gps.step(tel.t)
     lat, lon = offset_gps(tel.lat, tel.lon, north, east)
+    return tel.model_copy(update={"lat": lat, "lon": lon, "yaw_deg": (tel.yaw_deg + yaw_bias_deg) % 360.0})
+
+
+def tilted_view(tel: Telemetry, tilt_deg: float) -> Telemetry:
+    """Telemetry "ảo" nhìn thẳng xuống có cùng vùng chụp với camera thật nghiêng tilt_deg về phía trước.
+
+    Camera nghiêng θ thì tâm ảnh nhìn vào điểm cách điểm dưới UAV h·tanθ về phía trước; pipeline vẫn giả định
+    nhìn thẳng xuống nên mọi toạ độ lệch khoảng đó (TECHNICAL mục 8.4).
+    shortcut: chỉ dời tâm vùng chụp, bỏ méo phối cảnh (vùng xa camera to hơn); đủ cho θ vài độ, dùng phép chiếu
+    tổng quát ở mục 8.3 nếu cần góc lớn.
+    """
+    if tilt_deg == 0:
+        return tel
+    forward = tel.alt_agl_m * math.tan(math.radians(tilt_deg))
+    yaw = math.radians(tel.yaw_deg)
+    lat, lon = offset_gps(tel.lat, tel.lon, forward * math.cos(yaw), forward * math.sin(yaw))
     return tel.model_copy(update={"lat": lat, "lon": lon})
 
 

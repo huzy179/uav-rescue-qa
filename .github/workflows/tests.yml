@@ -1,0 +1,26 @@
+# Chạy pytest mỗi lần push và pull request. Test không cần mô hình, GPU hay data/ (CLAUDE.md).
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Thư viện hệ thống cho opencv
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0
+      # Cài torch bản CPU trước để pip không kéo bản CUDA nặng vài GB (giống docker/dev.Dockerfile).
+      - name: Cài torch CPU
+        run: pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+      - name: Cài gói
+        run: pip install -e ".[dev]"
+      - name: pytest
+        run: pytest -q

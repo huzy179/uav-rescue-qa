@@ -116,3 +116,33 @@ def test_simulated_detection_rates() -> None:
     false = sum(sum(d.box_px != boxes[0][1] for d in frame) for frame in dets)
     assert hits / 4000 == pytest.approx(0.7, abs=0.03)
     assert false / 4000 == pytest.approx(0.5, abs=0.05)
+
+
+def test_yaw_bias_and_tilt() -> None:
+    """Lệch hướng chỉ đổi yaw; nghiêng 1° ở 50 m dời vùng chụp 50·tan 1° ≈ 0,87 m về phía trước."""
+    from sim.scenario import tilted_view
+
+    tel = Telemetry(t=0.0, lat=LAT0, lon=LON0, alt_agl_m=50.0, yaw_deg=359.0)
+    noisy = noisy_telemetry(tel, GaussMarkovGps(0.0, 30.0, 0), yaw_bias_deg=3.0)
+    assert (noisy.lat, noisy.yaw_deg) == (tel.lat, pytest.approx(2.0))
+    view = tilted_view(tel.model_copy(update={"yaw_deg": 90.0}), 1.0)
+    assert ground_offset_m(LAT0, LON0, view.lat, view.lon) == pytest.approx((0.0, 0.8727), abs=1e-3)
+    assert tilted_view(tel, 0.0) is tel
+
+
+def test_sweep_summary_and_config_validation(tmp_path) -> None:
+    from pydantic import ValidationError
+
+    from sim.sweep_rq3 import METRICS, SweepConfig, summarize, validate
+
+    rows = [{"confirm": "geo", "seed": s, **{m: None for m in METRICS}, "missed_rate": v} for s, v in enumerate([0.0, 0.2, 0.4])]
+    item = summarize(rows, ["confirm"])[0]
+    assert (item["n_seeds"], item["missed_rate_mean"], item["missed_rate_std"]) == (3, 0.2, 0.2)
+    assert item["time_to_alert_s_median_mean"] is None and item["time_to_alert_s_median_n"] == 0
+
+    with pytest.raises(ValidationError):
+        SweepConfig(output=tmp_path, grid={"gps_sigma_m": [1]})  # thiếu tiền tố scenario./pipeline.
+    with pytest.raises(SystemExit, match="không tồn tại"):
+        validate(SweepConfig(output=tmp_path, grid={"pipeline.confrim": ["geo"]}))
+    with pytest.raises(SystemExit, match="tự đặt"):
+        validate(SweepConfig(output=tmp_path, scenario={"seed": 3}))

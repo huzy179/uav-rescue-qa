@@ -173,6 +173,10 @@ python -m edge.main --config configs/edge.yaml --source runs/rq3/demo/frames.mp4
 python eval/rq3_metrics.py --run runs/rq3/demo/geo --truth runs/rq3/demo/ground_truth.json   # ghi runs/rq3/demo/geo/rq3_eval/
 ```
 
+Quét cả lưới tham số × seed từ một file YAML, chạy tiếp được khi bị ngắt: `python -m sim.sweep_rq3 --config configs/experiments/rq3_gps.yaml --jobs 4` (kết quả `runs/rq3/gps/summary.csv`).
+
+Thời gian từng chặng (RQ2): `python eval/timing_summary.py --runs runs/edge/demo --output runs/edge/timing.csv`.
+
 Nhãn tập lũ từ CVAT: `python tools/convert_cvat.py --xml annotations.xml --images data/raw/flood/frames --dst data/processed/flood --split test`.
 
 Dữ liệu: chia theo video, kiểm tra rò rỉ, xem kích thước người khi huấn luyện (TECHNICAL mục 13.4, 15.6):

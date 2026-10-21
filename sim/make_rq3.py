@@ -29,11 +29,11 @@ from edge.georef import Camera
 from shared.config import parse_args_with_config
 from shared.provenance import write_run_config
 from sim.flight import StraightFlight
-from sim.scenario import GaussMarkovGps, noisy_telemetry, place_people, simulate_detections, visible_boxes
+from sim.scenario import GaussMarkovGps, noisy_telemetry, place_people, simulate_detections, tilted_view, visible_boxes
 
 
-def parse_args() -> argparse.Namespace:
-    """Đọc tham số dòng lệnh (có thể lấy mặc định từ --config)."""
+def build_parser() -> argparse.ArgumentParser:
+    """Khai báo tham số dòng lệnh; tách riêng để sim/sweep_rq3.py kiểm tra tên khoá trước khi chạy."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--output", type=Path, required=True, help="Thư mục kịch bản")
     parser.add_argument("--duration-s", type=float, default=60.0, help="Thời lượng chuyến bay (giây)")
@@ -52,10 +52,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--drift-mps", type=float, default=0.0, help="Vận tốc trôi theo dòng nước (m/s), hướng ngẫu nhiên")
     parser.add_argument("--gps-sigma-m", type=float, default=0.0, help="Độ lệch chuẩn nhiễu GPS mỗi trục (m)")
     parser.add_argument("--gps-tau-s", type=float, default=30.0, help="Thời gian tương quan của nhiễu GPS (giây)")
+    parser.add_argument("--yaw-bias-deg", type=float, default=0.0, help="Sai số cố định của hướng trong telemetry (độ)")
+    parser.add_argument("--tilt-deg", type=float, default=0.0, help="Camera thật nghiêng về phía trước (độ); pipeline vẫn giả định nhìn thẳng xuống")
     parser.add_argument("--recall", type=float, default=0.7, help="Xác suất phát hiện một người có trong khung")
     parser.add_argument("--fp-per-frame", type=float, default=0.5, help="Số báo nhầm trung bình mỗi khung")
     parser.add_argument("--seed", type=int, default=0, help="Seed cho vị trí người, nhiễu GPS và detector giả")
-    return parse_args_with_config(parser)
+    return parser
+
+
+def parse_args() -> argparse.Namespace:
+    """Đọc tham số dòng lệnh (có thể lấy mặc định từ --config)."""
+    return parse_args_with_config(build_parser())
 
 
 def main() -> None:
@@ -84,9 +91,9 @@ def main() -> None:
         for frame_id in range(n_frames):
             t = frame_id / args.fps
             true_tel = flight.at(t)
-            seen = noisy_telemetry(true_tel, gps)
+            seen = noisy_telemetry(true_tel, gps, args.yaw_bias_deg)
             tel_writer.writerow([t, f"{seen.lat:.9f}", f"{seen.lon:.9f}", seen.alt_agl_m, seen.yaw_deg])
-            boxes = visible_boxes(people, true_tel, cam, t)
+            boxes = visible_boxes(people, tilted_view(true_tel, args.tilt_deg), cam, t)
             frames_truth.append({"frame_id": frame_id, "t": t, "visible": [{"person_id": pid, "box_px": box} for pid, box in boxes]})
             for det in simulate_detections(frame_id, t, boxes, cam, args.recall, args.fp_per_frame, rng):
                 det_file.write(det.model_dump_json() + "\n")

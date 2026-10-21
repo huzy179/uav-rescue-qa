@@ -381,7 +381,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 
 **Trạm mặt đất (`ground/`):** `app.py` (FastAPI: nhận cảnh báo, bỏ trùng theo `alert_id`, lưu SQLite), `map.html` (bản đồ Leaflet). Chỉ import `shared/`.
 
-**Giả lập (`sim/`):** `flight.py` (`StraightFlight`, telemetry giả lập), `scenario.py` (người, nhãn theo thời gian, nhiễu GPS, detector giả), `make_rq3.py` (sinh trọn một kịch bản RQ3), `netem.py` (`NetemTransport`, mạng mất gói và mất sóng, có seed).
+**Giả lập (`sim/`):** `flight.py` (`StraightFlight`, telemetry giả lập), `scenario.py` (người, nhãn theo thời gian, nhiễu GPS, detector giả), `make_rq3.py` (sinh trọn một kịch bản RQ3), `sweep_rq3.py` (quét lưới tham số × seed, tổng hợp), `netem.py` (`NetemTransport`, mạng mất gói và mất sóng, có seed).
 
 **Dùng chung (`shared/`):** `schema.py` (`Telemetry`, `Detection`, `Confirmation`, `Alert`, `AlertCrop`), `config.py` (`--config file.yaml`), `provenance.py` (`run_config.json` có commit git và máy chạy).
 
@@ -394,6 +394,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `eval/metrics.py` | IoU, IoA, ghép, AP, điểm vận hành, `bootstrap_ci`, `paired_bootstrap` (5, 15.3) |
 | `eval/splits.py` | Nhóm theo video, chia tập, dHash tìm ảnh gần trùng (15.6) |
 | `eval/rq3_metrics.py` | Chỉ số RQ3 từ log pipeline và nhãn theo thời gian (15.4) |
+| `eval/timing_summary.py` | Thời gian từng chặng, p50/p95, FPS đạt được (14) |
 | `eval/report.py`, `eval/draw.py` | Ghi CSV, tóm tắt, histogram; vẽ box |
 
 **Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
@@ -778,7 +779,7 @@ Thời gian xử lý thật (cho RQ2 và cho demo) đo riêng bằng `perf_count
 
 ### 11.3. `flight.py`, `scenario.py`: chuyến bay và kịch bản giả lập [Đã có một phần]
 
-**[Đã có]** `sim/flight.py` (`StraightFlight`), `sim/scenario.py`, `sim/make_rq3.py`: bay thẳng; người đứng yên hoặc trôi; nhiễu GPS Gauss–Markov; phát hiện giả theo recall cố định và báo nhầm Poisson. **[Thiết kế]** đường zig-zag, nhiễu độ cao, nhiễu hướng, nghiêng camera, recall theo kích thước người.
+**[Đã có]** `sim/flight.py` (`StraightFlight`), `sim/scenario.py`, `sim/make_rq3.py`, `sim/sweep_rq3.py`: bay thẳng; người đứng yên hoặc trôi; nhiễu GPS Gauss–Markov; lệch hướng cố định (`--yaw-bias-deg`); camera nghiêng về phía trước (`--tilt-deg`, xấp xỉ bằng dời tâm vùng chụp h·tanθ, bỏ méo phối cảnh); phát hiện giả theo recall cố định và báo nhầm Poisson. **[Thiết kế]** đường zig-zag, nhiễu độ cao, recall theo kích thước người.
 
 **Luồng một kịch bản RQ3 hoàn toàn giả lập:**
 
@@ -790,6 +791,8 @@ sim/make_rq3.py ──► ground_truth.json   (người thật, ai ở khung nà
 edge/main.py --telemetry telemetry.csv --replay detections.jsonl --confirm ... ──► alerts.jsonl, alerts_sent.jsonl
 eval/rq3_metrics.py --run ... --truth ground_truth.json ──► rq3_eval/rq3_metrics.json
 ```
+
+**Quét lưới** (`sim/sweep_rq3.py`): một file YAML (`configs/experiments/rq3_*.yaml`) khai báo tham số mặc định, các trục của lưới và danh sách seed; đọc bằng Pydantic và đối chiếu tên khoá với tham số của `make_rq3` và `edge/main` trước khi chạy. Mỗi lần chạy có thư mục riêng chứa đúng file cấu hình đã dùng; kịch bản dùng chung giữa các tổ hợp pipeline nên các chiến lược so trên cùng người, cùng nhiễu; lần chạy đã có kết quả được bỏ qua. Kết quả: `results.csv` (từng lần chạy) và `summary.csv` (trung bình, độ lệch chuẩn qua các seed). Một lần chạy kịch bản 60 s mất khoảng 1 giây trên Mac, nên lưới vài trăm tổ hợp × 3 seed chạy trong vài phút với `--jobs 4`.
 
 Ba lớp tách riêng (sự thật, cảm biến, detector) vì mỗi lớp là một nguồn sai số riêng của RQ3. Pipeline không biết mình đang chạy trên dữ liệu giả: cùng mã `edge/` sẽ chạy trên video thật.
 
@@ -922,7 +925,7 @@ Kết luận:
 
 ## 14. Jetson và RQ2
 
-**[Thiết kế]**
+**[Thiết kế]** phần Jetson và TensorRT. **[Đã có]** đo từng chặng: `edge/main.py` ghi `timings.jsonl` (cắt ô, suy luận, gộp, georef, confirm, mỗi khung), `eval/timing_summary.py` tổng hợp trung bình, p50, p95 từng chặng và FPS đạt được theo p95, kèm máy chạy lấy từ `run_config.json` (cảnh báo khi là Mac).
 
 ### 14.1. TensorRT
 
@@ -1029,7 +1032,24 @@ Giới hạn của định nghĩa, cần ghi trong luận văn:
 - **Hai người đứng gần nhau hơn `r_eval`** thì mọi cảnh báo về họ đều bị tính là gộp nhầm, kể cả khi hệ thống cảnh báo đúng từng người. Chọn `r_eval` nhỏ hơn khoảng cách thường gặp giữa các nhóm người, và báo kết quả ở vài giá trị `r_eval`.
 - **Sai số vị trí có một phần cố định**: `georef.locate` lấy tâm đáy box (chân người đứng), còn mô phỏng đặt người ở tâm box, nên dù không nhiễu vẫn lệch nửa bề ngang người (0,25 m). Với người nhìn từ trên xuống, phần lệch này nhỏ so với sai số GPS.
 
-**Chạy thử (không phải kết quả RQ3)**: một kịch bản 60 s, 10 người, recall 0,7, 0,5 báo nhầm mỗi khung, seed 0, quét σ GPS (`runs/rq3/smoke_gps*`, `runs/rq3/sweep_gps*`). `geo` bắt đủ 10/10 người ở mọi σ đã thử (0 đến 3 m); `bytetrack` không bắt được ai; `bytetrack_cmc` bắt đủ tới σ = 0,25 m, bỏ sót 20% ở 0,5 m, 90% ở 1 m, 100% ở 3 m. Đúng với lập luận ở mục 9.3: bù chuyển động bằng telemetry cần GPS dao động giữa hai khung nhỏ hơn bề ngang người (cỡ GPS RTK). Báo nhầm ngẫu nhiên không thành cảnh báo nào nhờ yêu cầu 3 lần thấy. Kết luận chính thức phải chạy đủ lưới tham số ở ROADMAP mục 4, nhiều seed.
+**Chạy thử theo nhiễu GPS (chưa phải kết quả RQ3)**: `configs/experiments/rq3_gps.yaml`, kịch bản 60 s, 10 người, recall 0,7, 0,5 báo nhầm mỗi khung, N = 3, 3 seed (`runs/rq3/gps/summary.csv`). Tỉ lệ bỏ sót, trung bình ± độ lệch chuẩn qua 3 seed:
+
+| σ GPS | `geo` | `bytetrack` | `bytetrack_cmc` |
+|---|---|---|---|
+| 0 m | 0,000 ± 0,000 | 1,000 ± 0,000 | 0,000 ± 0,000 |
+| 0,25 m | 0,000 ± 0,000 | 1,000 ± 0,000 | 0,033 ± 0,058 |
+| 0,5 m | 0,000 ± 0,000 | 1,000 ± 0,000 | 0,200 ± 0,000 |
+| 1 m | 0,000 ± 0,000 | 1,000 ± 0,000 | 0,767 ± 0,153 |
+| 3 m | 0,033 ± 0,058 | 1,000 ± 0,000 | 1,000 ± 0,000 |
+
+Đọc bảng:
+- `bytetrack` không xác nhận được ai ở mọi mức nhiễu: gãy vì chuyển động camera (mục 9.2), không vì GPS.
+- `bytetrack_cmc` tốt như `geo` khi GPS gần như không nhiễu, rồi tụt nhanh từ σ = 0,5 m. Thực nghiệm khoanh vùng nguyên nhân (σ = 0,5 m, seed 0, một lần chạy mỗi biến thể; `runs/rq3/diag_cmc/missed.txt`, `fuse_score_check.txt`): bỏ sót chỉ xuất hiện khi có **đồng thời** detector bỏ sót khung (recall 0,7) **và** sai số GPS thay đổi theo thời gian (τ = 30 s). Recall 1 thì không bỏ sót ai; GPS lệch cố định (τ rất lớn) cũng không. Giữa hai khung, sai số GPS chỉ đổi khoảng 0,09 m (khoảng 5 px), nhỏ hơn nhiều so với box 25 px, nên **cơ chế chưa được xác nhận**. Giả thuyết đang xét: sau một khung bị bỏ sót, track ở trạng thái "mất" và vị trí dự đoán của Kalman dùng vận tốc ước lượng từ phần dư nhiễu; cộng với `fuse_score` (IoU nhân conf, conf giả lập 0,3–0,9) làm ngưỡng ghép rất chặt với box nhỏ. Tắt `fuse_score` chỉ cứu thêm 1/10 người, nên đó chỉ là một phần. Cần điều tra tiếp trước khi viết kết luận về cơ chế; còn kết luận thực nghiệm (cần GPS rất ổn định, cỡ RTK) thì vẫn đứng.
+- `geo` gần như không bị ảnh hưởng tới σ = 3 m vì gom theo bán kính 3 m trên mặt đất và nhiễu GPS tương quan theo thời gian (mục 8.4); đổi lại sai số vị trí của cảnh báo tăng theo σ (trung vị 0,25 m ở σ = 0 lên 3,96 m ở σ = 3 m).
+- Không có báo động giả nào: báo nhầm ngẫu nhiên không lặp lại ở cùng một chỗ 3 lần.
+- Gộp nhầm khoảng 1 lần mỗi lượt chạy ở mọi chiến lược, kể cả khi không nhiễu: 10 người rải ngẫu nhiên trên dải rộng 50 m nên đôi khi hai người cách nhau dưới `r_eval` = 10 m, rơi vào giới hạn của định nghĩa ở trên. Bảng chính thức cần kịch bản đặt người cách nhau có kiểm soát, hoặc báo ở nhiều `r_eval`.
+
+Giới hạn: recall giả lập không phụ thuộc kích thước người, mới có đường bay thẳng, 3 seed. Kết luận chính thức chạy đủ lưới ở ROADMAP mục 4.
 
 ### 15.5. Nhãn theo thời gian cho RQ3
 
@@ -1068,9 +1088,9 @@ Chạy `check_leakage.py` với một tập (không có `--train`) thì tìm ả
 
 `pytest` chạy trong vài giây, không cần mô hình hay GPU:
 - **Đã có:** AP bằng ví dụ tính tay; nhóm kích thước; vùng bỏ qua; lỗi biên làm tròn.
-- **Sẽ thêm:** georef đi và về; nội suy góc hướng; confirm với chuỗi phát hiện định sẵn (hai người gần nhau, một người biến mất rồi xuất hiện lại); outbox khi mất mạng rồi có lại (không mất, không trùng); netem với seed cố định cho cùng chuỗi sự kiện; schema JSON của gói cảnh báo.
+- **Đã có thêm:** georef đi và về, `frame_motion`; nội suy góc hướng, đọc SRT; confirm với chuỗi phát hiện định sẵn và ByteTrack thật trên cảnh dựng tay; outbox khi mất mạng rồi có lại (không mất, không trùng); netem với seed cố định; API trạm mặt đất; bootstrap cặp và theo video; chia tập, dHash; chỉ số RQ3 bằng ví dụ tính tay; chuyển nhãn CVAT; tổng hợp thời gian.
 
-GitHub Actions chạy `pytest` mỗi lần push.
+**[Đã có]** GitHub Actions (`.github/workflows/tests.yml`) chạy `pytest` mỗi lần push, trên Ubuntu với torch bản CPU.
 
 ### 16.3. Docker
 
