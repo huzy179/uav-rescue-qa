@@ -20,7 +20,27 @@ docker/             Dockerfile
 data/, runs/        dữ liệu và kết quả chạy (không đưa lên git)
 ```
 
-`edge/` và `ground/` hiện mới có phần khung; xem lịch ở ROADMAP.
+`edge/` đã có đủ pipeline lấy mẫu → phát hiện → định vị → xác nhận → outbox cảnh báo; `ground/` nhận cảnh báo và hiện trên bản đồ. Xem lịch ở ROADMAP.
+
+Demo hai phía trên một máy:
+
+```bash
+# 1. Trạm mặt đất, mở http://localhost:8000 (hoặc: docker compose up ground)
+FLOODEYE_GROUND_DB=runs/ground/ground.sqlite .venv/bin/python -m uvicorn --factory ground.app:default_app --port 8000
+
+# 2. UAV phát lại video; telemetry giả lập bay thẳng, hoặc --telemetry file.csv / file.SRT của DJI
+.venv/bin/python -m edge.main --config configs/edge.yaml --source video.mp4 --output runs/edge/demo \
+    --ground-url http://localhost:8000 --save-video
+# thêm --net-loss 0.2 --net-outage 30 90 để giả lập mạng chập chờn
+
+# 3. Chạy lại phần sau detector mà không cần mô hình (RQ3): đọc lại phát hiện đã lưu
+.venv/bin/python -m edge.main --config configs/edge.yaml --source video.mp4 --replay runs/edge/demo/detections.jsonl \
+    --n-confirm 5 --output runs/edge/demo_n5
+```
+
+Có file `.SRT` mới thì kiểm tra trước bộ đọc có hiểu định dạng không: `.venv/bin/python -m edge.telemetry DJI_0001.SRT`. Khi chạy với telemetry giả lập, video có dòng chữ "TELEMETRY GIA LAP" và `run_config.json` ghi `telemetry_source`.
+
+Mỗi lần chạy ghi vào `--output`: `detections.jsonl`, `confirmations.jsonl`, `alerts.jsonl`, `alerts_sent.jsonl` (từng lần gửi, kể cả thất bại), `timings.jsonl` (ms từng chặng), `outbox.sqlite`, `run_config.json`.
 
 ## Cài đặt
 
@@ -134,6 +154,25 @@ Thư mục `--output` chứa trọng số (`weights/best.pt`), `results.csv`, `d
 python scripts/gsd_calc.py                                  # mặc định: 82° góc chéo (Matrice 4T), video 4K
 python scripts/gsd_calc.py --fov-type horizontal --fov-deg 74 --tilt-deg 30
 python scripts/benchmark_speed.py --model yolo26s.pt --imgsz 640 1280
+```
+
+So sánh hai lần chạy có ý nghĩa thống kê không (bootstrap cặp; thêm `--cluster-pattern '^(\d+)_'` để lấy mẫu theo video):
+
+```bash
+python eval/compare_runs.py --a runs/visdrone/E4 --b runs/visdrone/E4tiled \
+    --images data/processed/visdrone/images/val --labels data/processed/visdrone/labels/val \
+    --ignore data/processed/visdrone/ignore/val --output runs/visdrone/compare_E4_E4tiled
+```
+
+Dữ liệu: chia theo video, kiểm tra rò rỉ, xem kích thước người khi huấn luyện (TECHNICAL mục 13.4, 15.6):
+
+```bash
+python tools/split_by_video.py --images data/processed/finland/images/all --names train val --ratios 0.8 0.2 \
+    --output data/processed/finland/splits            # ghi train.txt, val.txt dùng thẳng cho training/train.py
+python tools/check_leakage.py --train data/processed/visdrone/images/train --eval data/processed/flood/images/test \
+    --output runs/leakage/flood_test                   # thoát mã 1 nếu có video trùng hoặc ảnh gần trùng
+python tools/label_size_stats.py --images data/processed/visdrone/images/val \
+    --labels data/processed/visdrone/labels/val --imgsz 1280 --output runs/stats/visdrone_val_1280
 ```
 
 Trên Jetson (chưa chạy thử, cần thiết bị):

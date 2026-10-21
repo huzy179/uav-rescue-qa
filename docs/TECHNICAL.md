@@ -256,7 +256,9 @@ Vì sao IOS chứ không phải IoU: người nằm ở mép ô bị cắt thàn
 
 Kết quả E4: AP50 0,460, thấp hơn E1 (imgsz 1280) là 0,497, lại chậm gấp 4 lần. 75% ảnh VisDrone val rộng 1360 px, nên imgsz 1280 đã gần như giữ nguyên độ phân giải gốc: cắt ô không thêm chi tiết, chỉ thêm box bị cắt ở mép ô làm giảm precision (0,78 so với 0,83). Với video 4K tình hình đảo ngược: imgsz 1280 thu nhỏ 3 lần, còn cắt ô giữ nguyên. **E4 phải được đánh giá lại trên dữ liệu độ phân giải cao.**
 
-### 4.5. Bộ cắt ô riêng trong `edge/detector.py` [Thiết kế]
+### 4.5. Bộ cắt ô riêng trong `edge/detector.py` [Đã có]
+
+Đã cài đủ 6 bước (gộp bằng NMS tham lam theo IOS, ngưỡng 0,5, viết bằng numpy; lượt toàn ảnh bật bằng `full_pass`). Đã đối chiếu với SAHI trên VisDrone val bằng bootstrap cặp (mục 15.3): AP50 thấp hơn 0,008 (khoảng tin cậy −0,011 đến −0,003), chủ yếu ở người trên 32 px; ở người dưới 8 px thì cao hơn; ở IoU 0,3 cao hơn 0,016. Box tìm đúng chỗ nhưng kém khít hơn. Xem [results/visdrone_tiled_vs_sahi.md](results/visdrone_tiled_vs_sahi.md). Hợp nhất toạ độ kiểu NMM đã thử và bỏ (AP50 tụt dưới 0,05).
 
 SAHI gọi mô hình từng ô một và gắn với cách nạp mô hình của nó. Bộ cắt ô riêng:
 
@@ -354,21 +356,50 @@ Báo động giả do rác trôi đo bằng số FP trên ảnh có thẻ "vật
 
 ### 6.1. Bản đồ module [Đã có]
 
+Xếp theo đường đi của dữ liệu. Mũi tên là "đưa kết quả cho".
+
+**Trên UAV (`edge/`), một khung đi qua:**
+
+```
+sampler ──(frame_id, t, ảnh)──► detector ──Detection──► georef ──Detection có lat/lon──► confirm ──Confirmation──► alerts ──HTTP──► ground
+    ▲                                                     ▲                                                           │
+    └── video/thư mục khung          telemetry.at(t) ─────┘                                              outbox SQLite, gửi lại khi mất mạng
+```
+
+| File | Vai trò | Kỹ thuật chính (mục) |
+|---|---|---|
+| `edge/sampler.py` | Đọc video/thư mục ảnh; `iter_timed_frames` lấy mẫu ở F FPS, `t` tính từ chỉ số khung | Đồng hồ mô phỏng (11.2) |
+| `edge/telemetry.py` | `SampledTelemetry` từ CSV hoặc `.SRT` DJI, nội suy theo `t`; `python -m edge.telemetry file.SRT` để kiểm tra file | Nội suy góc theo đường ngắn nhất (7.3) |
+| `edge/detector.py` | `YoloDetector` toàn ảnh hoặc cắt ô theo lô, gộp NMS theo IOS; `ReplayDetector` đọc lại `detections.jsonl`. Nơi duy nhất import ultralytics | Cắt ô (4.5) |
+| `edge/georef.py` | `pixel_to_gps`, `gps_to_pixel` (hàm ngược), `Camera.from_fov` | Chiếu nadir (8) |
+| `edge/confirm.py` | `GeoConfirmer`: gom phát hiện theo vị trí mặt đất qua nhiều khung | Xác nhận N khung (9.4) |
+| `edge/alerts.py` | `Outbox` SQLite, `HttpTransport`, `FakeTransport`, cắt ảnh JPEG | Outbox, gửi lại lùi theo hàm mũ (10) |
+| `edge/main.py` | Nối các khối, ghi log JSONL; không chứa logic | (7.5) |
+| `edge/device.py` | Chọn thiết bị: CUDA → MPS → CPU | |
+
+**Trạm mặt đất (`ground/`):** `app.py` (FastAPI: nhận cảnh báo, bỏ trùng theo `alert_id`, lưu SQLite), `map.html` (bản đồ Leaflet). Chỉ import `shared/`.
+
+**Giả lập (`sim/`):** `flight.py` (`StraightFlight`, telemetry giả lập), `netem.py` (`NetemTransport`, mạng mất gói và mất sóng, có seed).
+
+**Dùng chung (`shared/`):** `schema.py` (`Telemetry`, `Detection`, `Confirmation`, `Alert`, `AlertCrop`), `config.py` (`--config file.yaml`), `provenance.py` (`run_config.json` có commit git và máy chạy).
+
+**Đánh giá (`eval/`), chạy sau, đọc kết quả đã lưu:**
+
 | File | Vai trò |
 |---|---|
-| `scripts/run_baseline.py` | Suy luận toàn ảnh ở nhiều imgsz, xuất CSV, tóm tắt, histogram |
-| `scripts/run_sahi.py` | Suy luận cắt ô bằng SAHI, cùng định dạng đầu ra |
-| `scripts/gsd_calc.py` | Bảng GSD (mục 2) |
-| `scripts/benchmark_speed.py` | Đo tốc độ `.pt`, `.onnx`, `.engine` ở nhiều imgsz |
-| `eval/eval_by_size.py` | AP, recall, precision theo nhóm kích thước; biểu đồ PR |
-| `eval/metrics.py` | IoU, IoA, ghép, AP, điểm vận hành (mục 5) |
-| `eval/report.py` | Ghi CSV, tóm tắt, histogram, `run_config.json` |
-| `eval/draw.py` | Vẽ box lên ảnh (nét mảnh để không che người nhỏ) |
-| `edge/sampler.py` | Đọc khung từ thư mục ảnh hoặc video (hiện là `iter_frames`) |
-| `edge/device.py` | Chọn thiết bị: CUDA → MPS → CPU |
-| `shared/config.py` | `--config file.yaml` làm giá trị mặc định cho argparse |
-| `tools/convert_visdrone.py` | VisDrone → YOLO một lớp, kèm vùng bỏ qua |
-| `tests/test_metrics.py` | Kiểm thử AP bằng ví dụ tính tay, nhóm kích thước, vùng bỏ qua, lỗi biên |
+| `eval/eval_by_size.py` | AP, recall, precision theo nhóm kích thước, khoảng tin cậy bootstrap (theo ảnh hoặc theo video), biểu đồ PR |
+| `eval/compare_runs.py` | So sánh hai lần chạy bằng bootstrap cặp (15.3) |
+| `eval/metrics.py` | IoU, IoA, ghép, AP, điểm vận hành, `bootstrap_ci`, `paired_bootstrap` (5, 15.3) |
+| `eval/splits.py` | Nhóm theo video, chia tập, dHash tìm ảnh gần trùng (15.6) |
+| `eval/report.py`, `eval/draw.py` | Ghi CSV, tóm tắt, histogram; vẽ box |
+
+**Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
+
+**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `split_by_video.py` (chia tập theo video), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
+
+**Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
+
+**Kiểm thử (`tests/`):** chạy không cần mô hình, GPU hay `data/`; mỗi khối thuần có test (georef đi–về, outbox khi mất mạng, AP tính tay, bootstrap…).
 
 ### 6.2. Định dạng dữ liệu trao đổi
 
@@ -378,11 +409,11 @@ Báo động giả do rác trôi đo bằng số FP trên ảnh có thẻ "vật
 image, method, imgsz, conf, width_px, height_px, x1, y1, x2, y2
 ```
 
-`method` là `full` hoặc `sahi`; với SAHI, `imgsz` là kích thước ô. Thiết kế này cho phép nối CSV của nhiều lần chạy rồi so sánh bằng pandas.
+`method` là `full`, `sahi` hoặc `tiled`; với SAHI và `tiled`, `imgsz` là kích thước ô. Thiết kế này cho phép nối CSV của nhiều lần chạy rồi so sánh bằng pandas.
 
 **`per_image.csv`**: `image, method, imgsz, n_persons, infer_ms`. `eval_by_size.py` dùng file này để biết **ảnh nào đã được xử lý**: ảnh không có dự đoán vẫn phải tính vào mẫu số của recall.
 
-**`run_config.json`**: lệnh chạy, toàn bộ tham số, phiên bản Python, ultralytics, torch, sahi, opencv, numpy, tên và **mã băm SHA-256 của file trọng số**, thiết bị, hệ điều hành. Mã băm quan trọng vì `yolo26s.pt` có thể được Ultralytics cập nhật mà giữ nguyên tên.
+**`run_config.json`** (`shared/provenance.py`): lệnh chạy, toàn bộ tham số, phiên bản Python, ultralytics, torch, sahi, opencv, numpy, tên và **mã băm SHA-256 của file trọng số**, thiết bị, hệ điều hành, kiến trúc máy (`machine`: `arm64` là Mac, `aarch64` là Jetson), **commit git** và cờ `dirty` (còn sửa chưa commit). Lần chạy cho số liệu chính thức phải có `dirty: false`, nếu không thì không biết chính xác mã nào sinh ra số. Mã băm quan trọng vì `yolo26s.pt` có thể được Ultralytics cập nhật mà giữ nguyên tên.
 
 ### 6.3. Đo thời gian
 
@@ -408,7 +439,7 @@ Mỗi dòng nhãn gốc: `trái, trên, rộng, cao, score, category, truncation
 
 ## 7. Pipeline trên UAV
 
-**[Thiết kế]** Phần này đặc tả `edge/` trước khi viết mã.
+**[Đã có]** `schema` (`Telemetry`, `Detection`, `Confirmation`, `Alert`, `AlertCrop`), `sampler.iter_timed_frames`, `SampledTelemetry` (CSV và SRT), `YoloDetector`, `ReplayDetector` (đọc lại `detections.jsonl`) và `main.py` đủ các chặng tới gửi cảnh báo. Khác thiết kế: `Alert` mang `t` (giây theo đồng hồ chuyến bay) thay cho `time: datetime`, vì pipeline không đọc đồng hồ máy; `alert_id` và `uav_id` chỉ nhận chữ, số, `_`, `.`, `-`.
 
 ### 7.1. Kiểu dữ liệu chính (`shared/schema.py`)
 
@@ -451,9 +482,9 @@ Một giao diện, nhiều nguồn:
 
 | Nguồn | Mô tả | Trạng thái |
 |---|---|---|
-| `CsvTelemetry` | File CSV `t, lat, lon, alt_agl_m, yaw_deg, …` | Làm trước |
+| `SampledTelemetry.from_csv` | File CSV `t, lat, lon, alt_agl_m, yaw_deg, …` | Đã có |
 | `SyntheticFlight` (`sim/flight.py`) | Sinh đường bay: thẳng hoặc zig-zag (lawnmower) theo độ cao, vận tốc, khoảng cách dải; có thể cộng nhiễu | Làm trước |
-| `SrtTelemetry` | File phụ đề `.SRT` đi kèm video DJI | Cần một file mẫu thật |
+| `SampledTelemetry.from_srt` | File phụ đề `.SRT` đi kèm video DJI | Đã có, theo định dạng Mavic 3/Mini/M30 và Phantom 4; chưa thử với file thật. Kiểm tra file mới bằng `python -m edge.telemetry file.SRT`. Cần xác minh `gb_yaw` là hướng tuyệt đối (so với Bắc) hay so với thân máy bay trên dòng máy dùng thật |
 | `MavlinkTelemetry` | Bộ điều khiển bay PX4/ArduPilot | Hướng phát triển |
 
 Truy vấn `at(t)` nội suy tuyến tính giữa hai mẫu gần nhất; riêng góc hướng nội suy theo đường ngắn nhất trên vòng tròn (từ 359° sang 1° là +2°, không phải −358°).
@@ -475,28 +506,35 @@ class YoloDetector:
 - Trả về thêm dict thời gian từng phần cho RQ2.
 - Ultralytics chỉ được import trong file này; các module khác làm việc với `Detection`.
 
-### 7.5. `main.py`
+### 7.5. `main.py` [Đã có]
 
-Vòng lặp chính, nối các khối qua giao diện:
+Vòng lặp chính, nối các khối qua giao diện (`Detector`, `TelemetrySource`, `Transport` đều là `Protocol`, có bản giả để kiểm thử):
 
 ```python
-for frame_id, t, frame in sampler:
-    tel = telemetry.at(t)
-    dets, timings = detector.detect(frame)
-    dets = [georef.locate(d, tel, camera) for d in dets]
-    for confirmation in confirmer.update(dets, t):
-        alerts.enqueue(make_alert(confirmation, frame, tel))
-    alerts.pump(now=t)               # gửi những gì có thể gửi
-    log.write(frame_id, t, dets, timings)
+for frame_id, t, frame in iter_timed_frames(source, fps):      # t = frame_id / fps_video
+    tel = telemetry.at(t)                                       # CSV, SRT hoặc StraightFlight
+    dets, timings = detector.detect(frame, frame_id, t)         # YOLO hoặc ReplayDetector
+    dets = [locate(d, tel, cam) for d in dets]                  # điền lat/lon
+    for c in confirmer.update(dets, t):                         # cụm vừa đủ N lần thấy
+        outbox.enqueue(make_alert(c, ...), crop_jpeg(frame, c.box_px), t)
+    outbox.pump(t)                                              # gửi những gì đến hạn
+    ghi detections.jsonl, confirmations.jsonl, alerts.jsonl, alerts_sent.jsonl, timings.jsonl
+sau khung cuối: pump thêm mỗi giây, tối đa --drain-s giây, để gửi bù phần còn lại
 ```
 
-Mọi khối nhận thời gian `t` từ ngoài vào, không tự gọi đồng hồ (mục 11.2).
+Mọi khối nhận thời gian `t` từ ngoài vào, không tự gọi đồng hồ (mục 11.2). Thời gian xử lý thật đo bằng `perf_counter` và chỉ ghi vào `timings.jsonl`.
 
----
+Ba chế độ chạy thường dùng:
+
+| Mục đích | Lệnh (thêm `--config configs/edge.yaml --source video.mp4`) | Ghi chú |
+|---|---|---|
+| Demo đủ hai phía | `--ground-url http://localhost:8000 --save-video` | Không có `--telemetry` thì video có dòng "TELEMETRY GIA LAP" |
+| Thử mạng chập chờn | `--net-loss 0.2 --net-outage 30 90 --seed 1` | `NetemTransport` bọc ngoài transport |
+| Quét tham số RQ3 không cần GPU | `--replay runs/.../detections.jsonl --n-confirm 5 --radius-m 2` | Phát hiện đọc lại từ lần chạy trước; georef, confirm, alerts chạy lại |
 
 ## 8. Định vị (georef)
 
-**[Thiết kế]** Hàm thuần, không trạng thái, kiểm thử được bằng tay.
+**[Đã có]** mục 8.1–8.2 trong `edge/georef.py`, kiểm thử trong `tests/test_georef.py`. Hàm thuần, không trạng thái, kiểm thử được bằng tay.
 
 ### 8.1. Pixel → mặt đất, camera nhìn thẳng xuống
 
@@ -586,7 +624,9 @@ Trước khi ghép, dời mọi track của khung trước theo chuyển động
 
 Sau khi bù, box của cùng một người ở hai khung gần trùng nhau và ByteTrack hoạt động bình thường.
 
-### 9.4. `geo`: gom theo vị trí mặt đất
+### 9.4. `geo`: gom theo vị trí mặt đất [Đã có]
+
+Cài trong `edge/confirm.py` (`GeoConfirmer`). Khác thiết kế: bước 2 ghép tham lam theo khoảng cách tăng dần thay cho thuật toán Hungary, vì chưa có scipy.
 
 Thuật toán trực tuyến:
 
@@ -622,7 +662,7 @@ Vì xác nhận nhiều khung lọc được báo nhầm ngẫu nhiên, `detecto
 
 ## 10. Cảnh báo (alerts)
 
-**[Thiết kế]** Cơ chế "lưu và gửi bù, toạ độ trước, ảnh sau" của đề cương.
+**[Đã có]** trong `edge/alerts.py` (`Outbox`, `FakeTransport`, `HttpTransport`), kiểm thử trong `tests/test_alerts.py`. Cơ chế "lưu và gửi bù, toạ độ trước, ảnh sau" của đề cương. Ảnh cắt chỉ được gửi sau khi gói toạ độ cùng `alert_id` đã được ack; lượt gửi dừng ở lần thất bại đầu tiên. Chưa có giới hạn băng thông.
 
 ### 10.1. Mẫu outbox
 
@@ -689,7 +729,9 @@ class Transport(Protocol):
 
 ## 11. Giả lập (sim/)
 
-### 11.1. `netem.py`: mạng chập chờn [Thiết kế]
+### 11.1. `netem.py`: mạng chập chờn [Đã có một phần]
+
+Đã có mất gói Bernoulli và khoảng mất sóng. Chưa có Gilbert–Elliott, độ trễ, băng thông.
 
 `NetemTransport(inner, …)` bọc một Transport và quyết định mỗi lần gửi có thành công không, trễ bao lâu:
 
@@ -715,6 +757,8 @@ Thời gian xử lý thật (cho RQ2 và cho demo) đo riêng bằng `perf_count
 
 ### 11.3. `flight.py`: chuyến bay giả lập [Thiết kế]
 
+**[Đã có]** `StraightFlight`: bay thẳng, không nhiễu.
+
 - Đường bay thẳng hoặc zig-zag, tham số: điểm bắt đầu, độ cao, vận tốc, hướng, khoảng cách dải, tần số mẫu telemetry.
 - Nhiễu: GPS Gauss–Markov (mục 8.4), nhiễu độ cao, nhiễu hướng, nghiêng camera cố định.
 - Kịch bản người: danh sách toạ độ người (đứng yên hoặc trôi chậm theo dòng nước) và kích thước. Dùng hàm ngược `gps_to_pixel` để sinh nhãn theo thời gian: ở khung nào, pixel nào, ai đang trong tầm nhìn.
@@ -727,7 +771,7 @@ Hai cách dùng:
 
 ## 12. Trạm mặt đất
 
-**[Thiết kế]** Tối giản: FastAPI + SQLite + một trang Leaflet.
+**[Đã có]** `ground/app.py` và `ground/map.html`: API mục 12.1 trừ `/api/stream` (trang bản đồ hỏi lại mỗi 2 giây), bảng `alerts` và `crops`. **[Thiết kế]** bảng `incidents`, gộp nhiều drone (12.3), xếp ưu tiên (12.4). Tối giản: FastAPI + SQLite + một trang Leaflet.
 
 ### 12.1. API
 
@@ -765,7 +809,7 @@ Leaflet hiển thị incident theo màu ưu tiên, bấm để xem ảnh cắt v
 
 ## 13. Huấn luyện
 
-**[Thiết kế]**
+**[Đã có]** `training/train.py` và notebook Kaggle. **[Thiết kế]** `tools/make_tiles.py` (13.2).
 
 ### 13.1. Dữ liệu huấn luyện
 
@@ -778,7 +822,7 @@ val:   [visdrone/images/val, finland/images/val]
 names: {0: person}
 ```
 
-Chia theo video hoặc địa điểm (FinlandProper là khung trích từ video: các khung liền nhau gần như giống hệt, chia ngẫu nhiên sẽ làm rò rỉ val vào train và cho kết quả đẹp giả).
+Chia theo video hoặc địa điểm (FinlandProper là khung trích từ video: các khung liền nhau gần như giống hệt, chia ngẫu nhiên sẽ làm rò rỉ val vào train và cho kết quả đẹp giả). Công cụ: `tools/split_by_video.py` và `tools/check_leakage.py` (mục 15.6).
 
 ### 13.2. Hai cách đưa người nhỏ vào mô hình khi huấn luyện
 
@@ -800,14 +844,41 @@ yolo detect train model=yolo26s.pt data=data.yaml imgsz=1280 epochs=100 patience
 - Tăng cường dữ liệu nên thêm: xoay 90°/180° (nhìn từ trên xuống không có "chiều đứng"), lật dọc (`flipud=0.5`), thay đổi màu nhẹ (mặt nước đục, phản chiếu).
 - E3 dùng `model=yolo26s-p2.yaml` khởi tạo từ trọng số `yolo26s.pt` (ultralytics chuyển phần khớp).
 
-### 13.4. Kaggle
+### 13.4. Thang kích thước khi huấn luyện và augmentation `scale`
+
+**Vấn đề hay bị bỏ qua:** mô hình học tốt nhất ở những kích thước người nó đã thấy khi huấn luyện. Phân bố kích thước người **khi vào mô hình** lúc huấn luyện nên phủ phân bố lúc triển khai. Ý tưởng này là "scale match" trong bài TinyPerson (Yu và cộng sự, WACV 2020).
+
+Ultralytics biến đổi kích thước hai lần:
+1. `load_image`: đưa cạnh dài ảnh về `imgsz` (ảnh VisDrone 1360 px ở imgsz 1280 nhân 0,94).
+2. `RandomPerspective`: nhân hệ số ngẫu nhiên `s` trong `[1 − scale, 1 + scale]`; mặc định `scale = 0.5`, tức `s` từ 0,5 đến 1,5.
+
+Sau đó box có cạnh dưới 2 px bị **xoá nhãn** (`box_candidates`, `wh_thr = 2`) nhưng người vẫn còn trong ảnh, nên mô hình học rằng chỗ đó là nền. Đây là nhãn sai do augmentation sinh ra.
+
+Đo bằng `tools/label_size_stats.py` trên nhãn VisDrone val (thay cho train, cùng bộ dữ liệu; `runs/stats/visdrone_val_*/size_stats.csv`):
+
+| imgsz | Hệ số s | Mất nhãn (<2 px) | 2–4 px | 4–8 px | 8–16 px | 16–32 px | >32 px |
+|---|---|---|---|---|---|---|---|
+| 1280 | 0,5 | 3,2% | 23,7% | 44,4% | 25,0% | 3,5% | 0,2% |
+| 1280 | 1,0 | 0,1% | 3,1% | 23,7% | 44,4% | 25,0% | 3,7% |
+| 1280 | 1,5 | 0,0% | 0,2% | 7,1% | 39,9% | 37,6% | 15,1% |
+| 640 | 0,5 | **26,9%** | 44,4% | 25,0% | 3,5% | 0,2% | 0,0% |
+| 640 | 1,0 | 3,2% | 23,7% | 44,4% | 25,0% | 3,5% | 0,2% |
+
+Lúc triển khai (cắt ô ở độ phân giải gốc, video 4K, camera 82° chéo, `runs/gsd/m4t_diag82/gsd_table.csv`): người 42,2 px ở 30 m xuống 12,7 px ở 100 m; đầu người (thân đã ngập) 16,9 px xuống 5,1 px.
+
+Kết luận:
+- **E2 ở imgsz 1280 giữ `scale = 0.5`**: khoảng s từ 0,5 tới 1,5 phủ được từ đầu người 5 px tới người 42 px; mất nhãn chỉ đáng kể ở đầu dưới của khoảng s.
+- **Không huấn luyện ở imgsz 640 với `scale` mặc định**: tới 26,9% nhãn bị xoá ở s = 0,5. Nếu cần 640 (để batch lớn) thì dùng mảnh cắt (13.2), không thu cả ảnh.
+- `train.py` có `--scale` để giá trị này được ghi vào `run_config.json`; muốn thử giá trị khác thì tạo file cấu hình mới, không sửa E2_s0.
+
+### 13.5. Kaggle
 
 - GPU T4 16 GB; hạn mức theo tuần (khoảng 30 giờ, cần kiểm tra), mỗi phiên tối đa khoảng 12 giờ.
 - Lưu checkpoint vào `/kaggle/working` và dùng `resume=True` khi phiên bị ngắt.
 - Notebook chỉ clone kho mã ở một commit cố định, cài gói, gọi `training/train.py`. Mọi logic nằm trong mã có phiên bản.
 - Kết quả (trọng số, `results.csv`, `run_config.json`) lưu thành Kaggle Dataset có phiên bản, rồi tải về `runs/train/`.
 
-### 13.5. E6: recall theo số pixel trên người
+### 13.6. E6: recall theo số pixel trên người
 
 `tools/rescale_dataset.py`: thu nhỏ ảnh và nhãn theo các tỉ lệ 1, 1/1,5, 1/2,1, 1/3, 1/4 bằng `cv2.INTER_AREA` (nội suy theo diện tích, mô phỏng đúng việc cảm biến có ít điểm ảnh hơn, tránh răng cưa). Tuỳ chọn mô phỏng camera thật ở mỗi mức: làm mờ Gauss nhẹ, nén JPEG ở chất lượng tương đương video. Chạy cùng mô hình, vẽ recall theo kích thước người tính bằng pixel. Giới hạn: không tái tạo được nhiễu cảm biến và đặc tính ống kính.
 
@@ -868,7 +939,36 @@ Huấn luyện có ngẫu nhiên (khởi tạo, thứ tự dữ liệu, tăng c�
 
 ### 15.3. Khoảng tin cậy bootstrap
 
-Tập test lũ nhỏ (200–300 ảnh), nên một con số recall có độ bất định lớn. Bootstrap theo **ảnh**: lấy mẫu có hoàn lại 300 ảnh từ 300 ảnh, tính lại recall, lặp 1.000 lần, lấy phân vị 2,5% và 97,5% làm khoảng tin cậy 95%. Lấy mẫu theo ảnh chứ không theo box, vì các box trong cùng ảnh không độc lập (cùng điều kiện ánh sáng, độ cao). Để so sánh hai cấu hình, bootstrap **cặp**: dùng cùng mẫu ảnh cho cả hai rồi xem phân phối của hiệu số.
+Tập test lũ nhỏ (200–300 ảnh), nên một con số recall có độ bất định lớn. Bootstrap theo **ảnh**: lấy mẫu có hoàn lại 300 ảnh từ 300 ảnh, tính lại recall, lặp 1.000 lần, lấy phân vị 2,5% và 97,5% làm khoảng tin cậy 95%. Lấy mẫu theo ảnh chứ không theo box, vì các box trong cùng ảnh không độc lập (cùng điều kiện ánh sáng, độ cao). **[Đã có]** trong `eval/metrics.py` (`bootstrap_ci`), cột `_lo`, `_hi` của `eval_by_size.csv`.
+
+**So sánh hai cấu hình: bootstrap cặp.** **[Đã có]** `eval/metrics.py` (`paired_bootstrap`) và `eval/compare_runs.py`.
+
+Sai lầm hay gặp: thấy hai khoảng tin cậy riêng chồng nhau rồi kết luận "không khác nhau". Hai khoảng riêng mang cả độ bất định **chung** của tập ảnh: ảnh khó thì khó cho cả hai cấu hình, nên AP của hai cấu hình lên xuống cùng nhau giữa các mẫu bootstrap. Phần dao động chung này không liên quan tới câu hỏi "cấu hình nào tốt hơn".
+
+Bootstrap cặp loại phần chung đó:
+
+```
+lặp 1000 lần:
+    rút có hoàn lại n ảnh từ n ảnh        (cùng một bộ cho cả A và B)
+    hiệu = chỉ_số(B trên bộ đó) − chỉ_số(A trên bộ đó)
+khoảng tin cậy 95% của hiệu = phân vị 2,5% và 97,5% của 1000 hiệu
+p (hai phía) = 2 × tỉ lệ hiệu trái dấu với hiệu quan sát
+```
+
+Khoảng tin cậy của hiệu không chứa 0 thì chênh lệch có ý nghĩa ở mức 5%. Ví dụ thật trên VisDrone val (E4 SAHI và bộ cắt ô riêng): hai khoảng tin cậy AP50 riêng là 0,443–0,477 và 0,437–0,469, chồng nhau gần hết; nhưng khoảng tin cậy của hiệu là −0,011 đến −0,003, tức bộ cắt ô riêng kém hơn một chút và ổn định ([results/visdrone_tiled_vs_sahi.md](results/visdrone_tiled_vs_sahi.md)).
+
+Ba lưu ý:
+- "Có ý nghĩa thống kê" khác "đáng kể trong thực tế": hiệu 0,008 AP có ý nghĩa thống kê trên 548 ảnh nhưng có thể không đáng để đổi lấy tốc độ. Luận văn nên báo cả hiệu số lẫn khoảng tin cậy, không chỉ báo "có ý nghĩa".
+- So nhiều cặp cùng lúc (5 nhóm kích thước × 2 chỉ số × nhiều cấu hình) thì vài cặp sẽ "có ý nghĩa" do ngẫu nhiên. Kết luận chính nên dựa trên nhóm "tất cả" và nhóm người nhỏ đã định trước, không chọn sau khi thấy kết quả.
+- Bootstrap cặp xử lý độ bất định do **chọn ảnh**; độ bất định do **seed huấn luyện** (mục 15.2) là nguồn khác và phải báo riêng.
+
+**Ảnh không độc lập: cluster bootstrap.** **[Đã có]** tuỳ chọn `--cluster-pattern` của `eval_by_size.py` và `compare_runs.py`.
+
+Bootstrap theo ảnh giả định các ảnh độc lập. Nhưng VisDrone val có 548 ảnh mà chỉ từ **76 video** (`runs/leakage/visdrone_val`); ảnh cùng video cùng cảnh, cùng ánh sáng, cùng độ cao, nên lỗi của mô hình trên chúng đi cùng nhau. Coi 548 ảnh là 548 mẫu độc lập làm khoảng tin cậy **hẹp giả**. Cluster bootstrap rút có hoàn lại theo **video**: video được rút k lần thì mọi ảnh của nó vào mẫu k lần.
+
+Ví dụ thật, AP50 của E4 (SAHI) trên VisDrone val: theo ảnh 0,443–0,477 (rộng 0,034), theo video 0,428–0,489 (rộng 0,061), rộng gần gấp đôi (`runs/visdrone/E4/eval_iou0.5`, `runs/visdrone/eval_iou0.5_cluster`). Hiệu số trong bootstrap cặp thì gần như không đổi (−0,011 đến −0,003 theo video, `runs/visdrone/compare_E4_E4tiled_iou0.5_cluster`), vì phần tương quan theo video triệt tiêu khi lấy hiệu.
+
+Tập test lũ lấy tối đa 30 khung mỗi video (docs/LABELING.md), nên cùng vấn đề. **Mặc định hiện vẫn là theo ảnh** để các bảng cũ còn so sánh được; chuyển sang theo video cho tập test lũ là thay đổi quy ước đo, cần chốt trước khi chạy bảng chính.
 
 ### 15.4. Định nghĩa chỉ số RQ3
 
@@ -895,6 +995,20 @@ Nếu tự gán nhãn vài đoạn video lũ cho RQ3, gán ở 2 FPS và gán th
 
 ---
 
+### 15.6. Rò rỉ dữ liệu giữa các tập [Đã có]
+
+Rò rỉ là khi tập đánh giá chứa ảnh giống ảnh huấn luyện; kết quả đẹp giả mà không ai thấy. Ba dạng hay gặp trong đề tài này:
+
+| Dạng | Ví dụ | Cách chặn |
+|---|---|---|
+| Khung liền nhau bị chia vào hai tập | FinlandProper chia ngẫu nhiên theo khung | `tools/split_by_video.py`: gom ảnh theo mã video (regex trên tên file), gán **cả video** vào một tập; cùng seed thì cùng kết quả |
+| Cùng cảnh, khác tên | Một video lũ tải về hai lần từ hai nguồn, hoặc cắt lại | `tools/check_leakage.py`: so dHash mọi cặp ảnh đánh giá–huấn luyện |
+| Chọn tham số trên tập test | Chỉnh ngưỡng conf cho tới khi recall trên test đẹp | Quy trình: mọi lựa chọn làm trên val (15.1) |
+
+**dHash** (difference hash): thu ảnh xám về 9×8 điểm, so từng điểm với điểm bên phải, được 64 bit. Hai ảnh gần giống nhau (khác kích thước, nén, độ sáng) có hash khác nhau vài bit; hai cảnh khác nhau khác khoảng 32 bit. Ngưỡng mặc định 5 bit. dHash không bắt được ảnh bị cắt mạnh hay xoay; đủ cho trường hợp tải lại cùng một video.
+
+Chạy `check_leakage.py` với một tập (không có `--train`) thì tìm ảnh gần trùng **bên trong** tập đó: trên VisDrone val tìm được 4 cặp liên quan 7 ảnh (`runs/leakage/visdrone_val/near_duplicates.csv`), không đáng kể. Với tập test lũ, phải chạy trước khi khoá (cùng với `train` của mọi bộ đã dùng để huấn luyện), và lưu kết quả cạnh `MANIFEST.sha256`.
+
 ## 16. Tái lập và đóng gói
 
 ### 16.1. Quy ước
@@ -917,7 +1031,7 @@ GitHub Actions chạy `pytest` mỗi lần push.
 | Ảnh | Nội dung | Trạng thái |
 |---|---|---|
 | `docker/dev.Dockerfile` | Python 3.13 slim, torch CPU, `.[dev]` | Đã có |
-| `docker/ground.Dockerfile` | Python slim + `.[ground]`, không torch | Thiết kế |
+| `docker/ground.Dockerfile` | Python slim + `.[ground]`, không torch | Đã có (dịch vụ `ground` trong `compose.yaml`) |
 | `docker/edge.Dockerfile` | torch CPU + `.[edge]`, phát lại video | Thiết kế |
 | `docker/edge-jetson.Dockerfile` | Dựa trên ảnh Ultralytics cho JetPack | Thiết kế, cần thiết bị để thử |
 
