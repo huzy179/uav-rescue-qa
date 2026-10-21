@@ -17,9 +17,9 @@ from typing import IO, Any
 import cv2
 
 from edge.alerts import FakeTransport, HttpTransport, Outbox, Transport, crop_jpeg_base64, make_alert
-from edge.confirm import GeoConfirmer
-from edge.detector import Detector, ReplayDetector, YoloDetector
-from edge.georef import Camera, gps_to_pixel, locate
+from edge.confirm import Confirmer, GeoConfirmer, TrackConfirmer
+from edge.detector import ByteTracker, Detector, ReplayDetector, YoloDetector
+from edge.georef import Camera, frame_motion, gps_to_pixel, locate
 from edge.sampler import iter_timed_frames
 from edge.telemetry import SampledTelemetry, TelemetrySource
 from eval.draw import draw_boxes
@@ -58,7 +58,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--yaw-deg", type=float, default=0.0, help="Giả lập: hướng bay (0 = Bắc)")
     parser.add_argument("--fov-deg", type=float, default=82.0, help="Góc nhìn camera (độ)")
     parser.add_argument("--fov-type", choices=["horizontal", "diagonal"], default="diagonal", help="--fov-deg là góc ngang hay chéo")
-    parser.add_argument("--radius-m", type=float, default=3.0, help="Bán kính gom của confirm")
+    parser.add_argument("--confirm", choices=["geo", "bytetrack", "bytetrack_cmc"], default="geo", help="Chiến lược xác nhận (TECHNICAL mục 9)")
+    parser.add_argument("--radius-m", type=float, default=3.0, help="Bán kính gom của confirm geo")
     parser.add_argument("--n-confirm", type=int, default=3, help="Số lần thấy để xác nhận")
     parser.add_argument("--window-s", type=float, default=5.0, help="Cửa sổ đếm lần thấy (giây)")
     parser.add_argument("--expire-s", type=float, default=6.0, help="Xoá cụm không được thấy quá số giây này")
@@ -94,6 +95,14 @@ def annotate(
     return canvas
 
 
+def build_confirmer(args: argparse.Namespace, telemetry: TelemetrySource, cam: Camera) -> Confirmer:
+    """Chọn chiến lược xác nhận; bytetrack_cmc bù chuyển động camera bằng telemetry của hai khung liên tiếp."""
+    if args.confirm == "geo":
+        return GeoConfirmer(args.radius_m, args.n_confirm, args.window_s, args.expire_s)
+    motion = (lambda t0, t1: frame_motion(telemetry.at(t0), telemetry.at(t1), cam)) if args.confirm == "bytetrack_cmc" else None
+    return TrackConfirmer(ByteTracker(), args.n_confirm, args.window_s, args.expire_s, motion)
+
+
 def main() -> None:
     """Nối các khối và chạy hết nguồn."""
     args = parse_args()
@@ -111,7 +120,6 @@ def main() -> None:
         if args.replay
         else YoloDetector(args.model, args.mode, args.imgsz, args.tile, args.overlap, args.conf, args.max_det, args.device)
     )
-    confirmer = GeoConfirmer(args.radius_m, args.n_confirm, args.window_s, args.expire_s)
     transport: Transport = HttpTransport(args.ground_url) if args.ground_url else FakeTransport()
     if args.net_loss > 0 or args.net_outage:
         transport = NetemTransport(transport, args.net_loss, [tuple(o) for o in args.net_outage or []], args.seed)
@@ -126,6 +134,7 @@ def main() -> None:
         print("[cảnh báo] Telemetry giả lập: toạ độ GPS và vòng xác nhận trên video chỉ để minh hoạ, không phải vị trí thật.")
 
     cam: Camera | None = None
+    confirmer: Confirmer | None = None
     video: cv2.VideoWriter | None = None
     confirmed: list[Confirmation] = []
     n_frames, t = 0, 0.0
@@ -137,8 +146,9 @@ def main() -> None:
         (args.output / "timings.jsonl").open("w", encoding="utf-8") as time_log,
     ):
         for frame_id, t, frame in iter_timed_frames(args.source, args.fps, args.source_fps, args.max_frames):
-            if cam is None:
+            if cam is None or confirmer is None:
                 cam = Camera.from_fov(args.fov_deg, args.fov_type, frame.shape[1], frame.shape[0])
+                confirmer = build_confirmer(args, telemetry, cam)
             tel = telemetry.at(t)
             dets, timings = detector.detect(frame, frame_id, t)
             start = time.perf_counter()

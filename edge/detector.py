@@ -38,6 +38,84 @@ class ReplayDetector:
         return list(self._by_frame.get(frame_id, [])), {}
 
 
+class Tracker(Protocol):
+    def update(self, boxes: np.ndarray, confs: np.ndarray, warp: np.ndarray | None = None) -> list[tuple[int, int]]: ...
+
+
+class ByteTracker:
+    """Bọc BYTETracker của ultralytics làm thư viện độc lập, vì vòng model.track() không đi được với bộ cắt ô riêng.
+
+    Đặt ở đây để ultralytics chỉ được import trong detector.py (quyết định #8 của ROADMAP); confirm.py dùng qua
+    giao diện Tracker nên kiểm thử được bằng tracker giả. Tham số mặc định như bytetrack.yaml của ultralytics.
+    """
+
+    def __init__(
+        self,
+        track_high_thresh: float = 0.25,
+        track_low_thresh: float = 0.1,
+        new_track_thresh: float = 0.25,
+        track_buffer: int = 30,
+        match_thresh: float = 0.8,
+        fuse_score: bool = True,
+    ) -> None:
+        from types import SimpleNamespace
+
+        from ultralytics.trackers.byte_tracker import BYTETracker
+
+        self._tracker = BYTETracker(
+            SimpleNamespace(
+                track_high_thresh=track_high_thresh, track_low_thresh=track_low_thresh,
+                new_track_thresh=new_track_thresh, track_buffer=track_buffer,
+                match_thresh=match_thresh, fuse_score=fuse_score,
+            )
+        )
+
+    def update(self, boxes: np.ndarray, confs: np.ndarray, warp: np.ndarray | None = None) -> list[tuple[int, int]]:
+        """Cập nhật với phát hiện của một khung; trả về (chỉ số phát hiện, track_id) cho các track được ghép ở khung này.
+
+        warp (affine 2×3, khung trước → khung này) dời mọi track trước khi ghép: bù chuyển động camera.
+        """
+        if warp is not None:
+            _warp_tracks(self._tracker.tracked_stracks + self._tracker.lost_stracks, warp)
+        boxes = np.asarray(boxes, dtype=np.float32).reshape(-1, 4)
+        xywh = np.column_stack([(boxes[:, :2] + boxes[:, 2:]) / 2, boxes[:, 2:] - boxes[:, :2]])
+        self._tracker.update(_TrackInput(xywh, np.asarray(confs, dtype=np.float32), np.zeros(len(boxes), np.float32)))
+        # Lấy mọi track được thấy ở khung này, kể cả track mới chưa "kích hoạt": đầu ra mặc định của BYTETracker bỏ
+        # lần thấy đầu tiên, làm bytetrack cần N + 1 khung trong khi geo cần N. Lọc nhiễu để cho bước N lần thấy chung.
+        frame = self._tracker.frame_id
+        return [(int(t.idx), int(t.track_id)) for t in self._tracker.tracked_stracks if t.end_frame == frame]
+
+
+class _TrackInput:
+    """Đối tượng tối thiểu BYTETracker cần: xywh, conf, cls và lọc bằng mặt nạ boolean."""
+
+    def __init__(self, xywh: np.ndarray, conf: np.ndarray, cls: np.ndarray) -> None:
+        self.xywh, self.conf, self.cls = xywh, conf, cls
+
+    def __len__(self) -> int:
+        return len(self.conf)
+
+    def __getitem__(self, mask: np.ndarray) -> _TrackInput:
+        return _TrackInput(self.xywh[mask], self.conf[mask], self.cls[mask])
+
+
+def _warp_tracks(stracks: list[Any], warp: np.ndarray) -> None:
+    """Áp affine lên trạng thái Kalman dạng (x, y, a, h, vx, vy, va, vh): dời và xoay vị trí, xoay vận tốc.
+
+    Không dùng multi_gmc chung của ultralytics: nó xoay cả cặp (a, h), sai với trạng thái XYAH (tỉ lệ khung không
+    phải toạ độ). Co giãn do đổi độ cao giữa hai khung chỉ vài phần trăm nên bỏ qua với (a, h).
+    """
+    rotation, shift = warp[:, :2], warp[:, 2]
+    transform = np.eye(8)
+    transform[:2, :2] = rotation
+    transform[4:6, 4:6] = rotation
+    for track in stracks:
+        mean = transform @ track.mean
+        mean[:2] += shift
+        track.mean = mean
+        track.covariance = transform @ track.covariance @ transform.T
+
+
 def tile_origins(length: int, tile: int, overlap: float) -> list[int]:
     """Toạ độ bắt đầu các ô dọc một chiều; ô cuối kéo sát mép ảnh để không thừa ra ngoài."""
     if length <= tile:

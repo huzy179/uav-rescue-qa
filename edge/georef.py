@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+import numpy as np
+
 from shared.schema import Detection, Telemetry
 
 EARTH_RADIUS_M = 6_378_137.0
@@ -77,3 +79,17 @@ def locate(det: Detection, tel: Telemetry, cam: Camera) -> Detection:
     x1, _, x2, y2 = det.box_px
     lat, lon = pixel_to_gps((x1 + x2) / 2.0, y2, tel, cam)
     return det.model_copy(update={"lat": lat, "lon": lon})
+
+
+def frame_motion(tel_prev: Telemetry, tel_cur: Telemetry, cam: Camera) -> np.ndarray:
+    """Phép biến đổi affine 2×3 đưa pixel của khung trước về vị trí của cùng điểm mặt đất trong khung này.
+
+    Lấy 4 góc ảnh: pixel → GPS bằng telemetry khung trước, rồi GPS → pixel bằng telemetry khung này, và khớp affine
+    bình phương tối thiểu. Với camera nadir, phép này là dịch + xoay (đổi hướng) + co giãn (đổi độ cao), nên khớp đúng.
+    Dùng để bù chuyển động camera cho bytetrack_cmc (TECHNICAL mục 9.3).
+    """
+    corners = [(0.0, 0.0), (cam.width, 0.0), (0.0, cam.height), (cam.width, cam.height)]
+    src = np.array([[u, v, 1.0] for u, v in corners])
+    dst = np.array([gps_to_pixel(*pixel_to_gps(u, v, tel_prev, cam), tel_cur, cam) for u, v in corners])
+    affine, *_ = np.linalg.lstsq(src, dst, rcond=None)
+    return affine.T

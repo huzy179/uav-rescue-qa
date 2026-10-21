@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Callable, Protocol
 
+import numpy as np
+
+from edge.detector import Tracker
 from edge.georef import ground_distance_m
 from shared.schema import Confirmation, Detection
 
@@ -32,6 +35,33 @@ class _Cluster:
         self.weight = total
         self.last = det
         self.sightings.append((det.t, det.conf))
+
+
+def _newly_confirmed(clusters: list[_Cluster], t: float, n_confirm: int, window_s: float) -> list[Confirmation]:
+    """Cụm chưa cảnh báo mà có ≥ n_confirm lần thấy trong window_s giây gần nhất; đánh dấu đã cảnh báo.
+
+    Dùng chung cho mọi chiến lược, để chúng chỉ khác nhau ở cách ghép phát hiện vào cụm.
+    """
+    confirmed: list[Confirmation] = []
+    for cluster in clusters:
+        if cluster.alerted:
+            continue
+        recent = [conf for seen_t, conf in cluster.sightings if t - seen_t <= window_s]
+        if len(recent) >= n_confirm:
+            cluster.alerted = True
+            confirmed.append(
+                Confirmation(
+                    cluster_id=cluster.cluster_id,
+                    t=t,
+                    lat=cluster.lat,
+                    lon=cluster.lon,
+                    frames_seen=len(recent),
+                    confidence=sum(recent) / len(recent),
+                    frame_id=cluster.last.frame_id,
+                    box_px=cluster.last.box_px,
+                )
+            )
+    return confirmed
 
 
 class GeoConfirmer:
@@ -75,23 +105,43 @@ class GeoConfirmer:
                 self._clusters.append(cluster)
                 self._next_id += 1
 
-        confirmed: list[Confirmation] = []
-        for cluster in self._clusters:
-            if cluster.alerted:
+        return _newly_confirmed(self._clusters, t, self.n_confirm, self.window_s)
+
+
+class TrackConfirmer:
+    """Xác nhận theo track trên ảnh: chiến lược `bytetrack` (motion=None) và `bytetrack_cmc` (TECHNICAL mục 9.2, 9.3).
+
+    Tracker ghép phát hiện giữa hai khung bằng IoU của box trên ảnh. Ở 2 FPS, UAV bay 10 m/s làm mặt đất dịch
+    hàng trăm pixel giữa hai khung trong khi box người chỉ vài chục pixel, nên IoU bằng 0 và mỗi khung sinh track
+    mới: `bytetrack` gãy. `bytetrack_cmc` truyền motion(t_trước, t_này) trả về affine 2×3 (georef.frame_motion)
+    để dời các track về khung này trước khi ghép.
+    """
+
+    def __init__(
+        self,
+        tracker: Tracker,
+        n_confirm: int = 3,
+        window_s: float = 5.0,
+        expire_s: float = 6.0,
+        motion: Callable[[float, float], np.ndarray] | None = None,
+    ) -> None:
+        self.tracker, self.n_confirm, self.window_s, self.expire_s, self.motion = tracker, n_confirm, window_s, expire_s, motion
+        self._tracks: dict[int, _Cluster] = {}
+        self._prev_t: float | None = None
+
+    def update(self, dets: list[Detection], t: float) -> list[Confirmation]:
+        """Cập nhật với phát hiện của một khung; trả về các track vừa đủ điều kiện ở khung này."""
+        warp = self.motion(self._prev_t, t) if self.motion is not None and self._prev_t is not None else None
+        self._prev_t = t
+        boxes = np.array([d.box_px for d in dets], dtype=float).reshape(-1, 4)
+        confs = np.array([d.conf for d in dets], dtype=float)
+        for det_index, track_id in self.tracker.update(boxes, confs, warp):
+            det = dets[det_index]
+            if det.lat is None or det.lon is None:
                 continue
-            recent = [conf for seen_t, conf in cluster.sightings if t - seen_t <= self.window_s]
-            if len(recent) >= self.n_confirm:
-                cluster.alerted = True
-                confirmed.append(
-                    Confirmation(
-                        cluster_id=cluster.cluster_id,
-                        t=t,
-                        lat=cluster.lat,
-                        lon=cluster.lon,
-                        frames_seen=len(recent),
-                        confidence=sum(recent) / len(recent),
-                        frame_id=cluster.last.frame_id,
-                        box_px=cluster.last.box_px,
-                    )
-                )
-        return confirmed
+            cluster = self._tracks.get(track_id)
+            if cluster is None:
+                cluster = self._tracks[track_id] = _Cluster(track_id, det.lat, det.lon, 0.0, det)
+            cluster.add(det)
+        self._tracks = {k: c for k, c in self._tracks.items() if t - c.last.t <= self.expire_s}
+        return _newly_confirmed(list(self._tracks.values()), t, self.n_confirm, self.window_s)

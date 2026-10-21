@@ -271,4 +271,5 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 | 5 | Có video DJI kèm `.SRT` nào để thử `telemetry` với dữ liệu thật không? | Học viên | 23/10 |
 | 6 | Tài khoản Kaggle đã xác minh số điện thoại chưa? | Học viên | 17/10 |
 | 7 | Khoảng tin cậy trên tập test lũ lấy mẫu theo video (cluster bootstrap) thay vì theo ảnh? Theo ảnh làm khoảng tin cậy hẹp giả khi nhiều khung cùng video (TECHNICAL 15.3) | Học viên, hỏi thầy | Trước khi khoá tập test (4/11) |
-| 8 | `bytetrack`/`bytetrack_cmc`: cho `confirm.py` import tracker của ultralytics, hay đặt bộ bọc tracker trong `detector.py` để giữ quy tắc "ultralytics chỉ trong detector.py"? | Học viên | Trước RQ3 (14/11) |
+| 8 | ~~Đặt bộ bọc ByteTrack ở đâu~~ → đã chốt 21/10: bọc trong `detector.py` | Học viên | Xong |
+| 9 | RQ3: ByteTrack giữ ngưỡng tạo track 0,25 như bài gốc, hay hạ về bằng conf detector để cùng đầu vào với `geo`? (TECHNICAL 9.2) | Học viên | Trước RQ3 (14/11) |

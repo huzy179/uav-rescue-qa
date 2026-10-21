@@ -370,9 +370,9 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 |---|---|---|
 | `edge/sampler.py` | Đọc video/thư mục ảnh; `iter_timed_frames` lấy mẫu ở F FPS, `t` tính từ chỉ số khung | Đồng hồ mô phỏng (11.2) |
 | `edge/telemetry.py` | `SampledTelemetry` từ CSV hoặc `.SRT` DJI, nội suy theo `t`; `python -m edge.telemetry file.SRT` để kiểm tra file | Nội suy góc theo đường ngắn nhất (7.3) |
-| `edge/detector.py` | `YoloDetector` toàn ảnh hoặc cắt ô theo lô, gộp NMS theo IOS; `ReplayDetector` đọc lại `detections.jsonl`. Nơi duy nhất import ultralytics | Cắt ô (4.5) |
-| `edge/georef.py` | `pixel_to_gps`, `gps_to_pixel` (hàm ngược), `Camera.from_fov` | Chiếu nadir (8) |
-| `edge/confirm.py` | `GeoConfirmer`: gom phát hiện theo vị trí mặt đất qua nhiều khung | Xác nhận N khung (9.4) |
+| `edge/detector.py` | `YoloDetector` toàn ảnh hoặc cắt ô theo lô, gộp NMS theo IOS; `ReplayDetector` đọc lại `detections.jsonl`; `ByteTracker` bọc tracker của ultralytics. Nơi duy nhất import ultralytics | Cắt ô (4.5), ByteTrack (9.2) |
+| `edge/georef.py` | `pixel_to_gps`, `gps_to_pixel` (hàm ngược), `Camera.from_fov`, `frame_motion` (chuyển động mặt đất giữa hai khung) | Chiếu nadir (8), bù chuyển động (9.3) |
+| `edge/confirm.py` | `GeoConfirmer` (gom theo vị trí mặt đất), `TrackConfirmer` (theo track ByteTrack, có hoặc không bù chuyển động camera) | Xác nhận N khung (9) |
 | `edge/alerts.py` | `Outbox` SQLite, `HttpTransport`, `FakeTransport`, cắt ảnh JPEG | Outbox, gửi lại lùi theo hàm mũ (10) |
 | `edge/main.py` | Nối các khối, ghi log JSONL; không chứa logic | (7.5) |
 | `edge/device.py` | Chọn thiết bị: CUDA → MPS → CPU | |
@@ -530,7 +530,7 @@ Ba chế độ chạy thường dùng:
 |---|---|---|
 | Demo đủ hai phía | `--ground-url http://localhost:8000 --save-video` | Không có `--telemetry` thì video có dòng "TELEMETRY GIA LAP" |
 | Thử mạng chập chờn | `--net-loss 0.2 --net-outage 30 90 --seed 1` | `NetemTransport` bọc ngoài transport |
-| Quét tham số RQ3 không cần GPU | `--replay runs/.../detections.jsonl --n-confirm 5 --radius-m 2` | Phát hiện đọc lại từ lần chạy trước; georef, confirm, alerts chạy lại |
+| Quét tham số RQ3 không cần GPU | `--replay runs/.../detections.jsonl --confirm bytetrack_cmc --n-confirm 5` | Phát hiện đọc lại từ lần chạy trước; georef, confirm, alerts chạy lại |
 
 ## 8. Định vị (georef)
 
@@ -599,7 +599,7 @@ Một tinh tế: GPS thường lệch **chậm** (sai số tương quan theo th�
 
 ## 9. Xác nhận (confirm)
 
-**[Thiết kế]** Mục tiêu: chỉ cảnh báo khi một người được thấy ở ít nhất `N` khung, để lọc báo nhầm ngẫu nhiên (sóng nước, rác), và mỗi người chỉ sinh **một** cảnh báo.
+**[Đã có]** cả ba chiến lược trong `edge/confirm.py`, chọn bằng `--confirm geo|bytetrack|bytetrack_cmc`. Mục tiêu: chỉ cảnh báo khi một người được thấy ở ít nhất `N` khung, để lọc báo nhầm ngẫu nhiên (sóng nước, rác), và mỗi người chỉ sinh **một** cảnh báo.
 
 ### 9.1. Giao diện chung
 
@@ -610,19 +610,37 @@ class Confirmer(Protocol):
 
 `update` trả về những cụm **vừa đủ điều kiện** ở khung này (mỗi cụm chỉ trả về một lần).
 
+Để so sánh công bằng trong RQ3, ba chiến lược **chỉ khác nhau ở cách ghép** một phát hiện mới vào cụm/track nào. Phần còn lại dùng chung một hàm (`_newly_confirmed`): đếm số lần thấy trong cửa sổ `T_win`, đủ `N` thì xác nhận, toạ độ cảnh báo là trung bình có trọng số conf của các lần thấy.
+
+| Chiến lược | Ghép bằng | Lớp | Cần gì |
+|---|---|---|---|
+| `geo` | Khoảng cách mặt đất ≤ `r`, một-một | `GeoConfirmer` | lat/lon từ georef |
+| `bytetrack` | IoU của box trên ảnh, Kalman, hai vòng | `TrackConfirmer(ByteTracker())` | Chỉ box |
+| `bytetrack_cmc` | Như trên, sau khi dời track theo chuyển động camera | `TrackConfirmer(ByteTracker(), motion=…)` | Box + telemetry hai khung |
+
 ### 9.2. `bytetrack`: mốc so sánh
 
 ByteTrack: mỗi track có bộ lọc Kalman (vận tốc không đổi) dự đoán vị trí box ở khung sau; ghép box mới với dự đoán bằng IoU và thuật toán Hungary; hai vòng ghép (box điểm cao trước, box điểm thấp sau để cứu track bị che). Dùng `ultralytics.trackers.byte_tracker.BYTETracker` như thư viện độc lập.
 
+**Cài đặt** (`edge/detector.py`, lớp `ByteTracker`): bọc `BYTETracker` ở `detector.py` để ultralytics vẫn chỉ được import ở một file (quyết định #8); `confirm.py` dùng qua giao diện `Tracker` nên test được bằng tracker giả. Hai điểm đã chỉnh so với dùng thẳng:
+- Đầu ra mặc định của `BYTETracker` bỏ **lần thấy đầu tiên** của track mới (track chưa "kích hoạt" cho tới khi được ghép ở khung sau). Giữ nguyên thì `bytetrack` cần `N + 1` khung trong khi `geo` cần `N`, so sánh sai. Bộ bọc trả mọi track được thấy ở khung hiện tại.
+- Tham số giữ như `bytetrack.yaml` của ultralytics: chỉ phát hiện conf ≥ 0,25 mới **tạo** track; phát hiện 0,1–0,25 chỉ nối dài track có sẵn. `geo` thì nhận mọi phát hiện ≥ conf của detector (0,1). Đây là khác biệt do thiết kế của ByteTrack; khi chạy RQ3 cần quyết giữ nguyên (đúng bài báo gốc) hay hạ ngưỡng tạo track về bằng conf detector (cùng đầu vào với `geo`).
+
 Vì sao gãy ở đây: giữa hai khung, box dịch khoảng 254 px (mục 2.5) trong khi box chỉ 25 px, nên IoU giữa dự đoán và box mới bằng 0. Kalman không cứu được vì chuyển động do **camera** gây ra, không phải do người; ở khung đầu tiên của track, Kalman chưa biết vận tốc.
+
+**Đã kiểm chứng** bằng `tests/test_confirm.py::test_bytetrack_breaks_at_2fps_and_camera_motion_compensation_fixes_it` (ByteTrack thật, không cần mô hình): một người đứng yên, UAV bay 10 m/s ở 50 m, 2 FPS, camera 4K 74,3°, 6 khung. `bytetrack` không xác nhận được (mỗi khung một track mới); `bytetrack_cmc` và `geo` cùng xác nhận ở khung thứ 3. Đây là ví dụ dựng tay để minh hoạ cơ chế; số liệu RQ3 phải lấy từ chạy thật.
 
 ### 9.3. `bytetrack_cmc`: bù chuyển động camera
 
 Trước khi ghép, dời mọi track của khung trước theo chuyển động camera. Với camera nadir, chuyển động mặt đất trên ảnh giữa hai khung là phép tịnh tiến cộng xoay (do thay đổi hướng) cộng co giãn (do thay đổi độ cao). Hai cách tính:
-- **Từ telemetry (làm trước):** với mỗi box ở khung trước, `pixel → GPS` bằng telemetry khung trước, rồi `GPS → pixel` bằng telemetry khung này. Chính xác nếu telemetry chính xác; không tốn tính toán.
+- **Từ telemetry [Đã có]** (`georef.frame_motion`): lấy 4 góc ảnh, `pixel → GPS` bằng telemetry khung trước, rồi `GPS → pixel` bằng telemetry khung này, khớp một phép affine 2×3. Chính xác nếu telemetry chính xác; không tốn tính toán. Ví dụ: bay 5 m về phía đỉnh ảnh ở 50 m với tiêu cự 1920 px, mặt đất dịch xuống đúng 192 px (có test).
 - **Từ ảnh (nếu còn thời gian):** ước lượng phép biến đổi giữa hai khung bằng điểm đặc trưng (ORB + RANSAC) hoặc `cv2.findTransformECC`. Không cần telemetry, nhưng mặt nước ít đặc trưng và có phản chiếu nên dễ sai.
 
 Sau khi bù, box của cùng một người ở hai khung gần trùng nhau và ByteTrack hoạt động bình thường.
+
+Áp phép bù vào trạng thái Kalman: trạng thái của `BYTETracker` là `(x, y, a, h, vx, vy, va, vh)` với `a` là tỉ lệ khung. `multi_gmc` có sẵn trong ultralytics xoay cả cặp `(a, h)` như thể là toạ độ, sai với dạng trạng thái này (chính ultralytics ghi chú như vậy). `_warp_tracks` chỉ dời và xoay `(x, y)`, xoay `(vx, vy)`, để nguyên `(a, h)`. Co giãn do đổi độ cao giữa hai khung chỉ vài phần trăm nên bỏ qua với `h`.
+
+Giới hạn: bù bằng telemetry kế thừa mọi sai số của telemetry (mục 8.4). Lệch hướng 2° ở mép ảnh 4K làm điểm lệch khoảng 1920 × tan 2° ≈ 67 px, lớn hơn box người 25 px, nên `bytetrack_cmc` nhạy với sai số hướng hơn `geo` (bán kính gom tính bằng mét). RQ3 đo đúng điều này qua biến nhiễu telemetry.
 
 ### 9.4. `geo`: gom theo vị trí mặt đất [Đã có]
 

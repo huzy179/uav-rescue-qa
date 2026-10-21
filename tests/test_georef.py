@@ -2,6 +2,7 @@
 
 import math
 
+import numpy as np
 import pytest
 
 from edge.georef import Camera, ground_offset_m, gps_to_pixel, pixel_to_gps
@@ -43,3 +44,14 @@ def test_diagonal_fov_matches_gsd_calc() -> None:
     expected = math.degrees(2 * math.atan(math.tan(math.radians(41.0)) * 3840 / math.hypot(3840, 2160)))
     assert cam.hfov_deg == pytest.approx(expected)
     assert 73.0 < cam.hfov_deg < 75.0
+
+
+def test_frame_motion_identity_and_forward_flight() -> None:
+    """Cùng telemetry: affine đơn vị. Bay 5 m về phía đỉnh ảnh ở 50 m (f = 1920 px): mặt đất dịch xuống 192 px."""
+    from edge.georef import frame_motion
+    from sim.flight import StraightFlight
+
+    assert frame_motion(tel(30.0), tel(30.0), CAM) == pytest.approx(np.array([[1, 0, 0], [0, 1, 0.0]]), abs=1e-6)
+    flight = StraightFlight(21.0, 105.8, 50.0, 10.0, yaw_deg=0.0)
+    warp = frame_motion(flight.at(0.0), flight.at(0.5), CAM)
+    assert warp == pytest.approx(np.array([[1, 0, 0], [0, 1, 192.0]]), abs=1e-3)
