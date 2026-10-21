@@ -925,7 +925,7 @@ Kết luận:
 
 ## 14. Jetson và RQ2
 
-**[Thiết kế]** phần Jetson và TensorRT. **[Đã có]** đo từng chặng: `edge/main.py` ghi `timings.jsonl` (cắt ô, suy luận, gộp, georef, confirm, mỗi khung), `eval/timing_summary.py` tổng hợp trung bình, p50, p95 từng chặng và FPS đạt được theo p95, kèm máy chạy lấy từ `run_config.json` (cảnh báo khi là Mac).
+**Không có Jetson** (chốt 21/10): RQ2 đo trên Kaggle T4 theo mục 14.4; mục 14.1 (TensorRT) vẫn áp dụng, mục 14.2 (chế độ công suất, điện năng trên Jetson) chỉ còn là phần thảo luận. **[Thiết kế]** phần TensorRT. **[Đã có]** đo từng chặng: `edge/main.py` ghi `timings.jsonl` (cắt ô, suy luận, gộp, georef, confirm, mỗi khung), `eval/timing_summary.py` tổng hợp trung bình, p50, p95 từng chặng và FPS đạt được theo p95, kèm máy chạy lấy từ `run_config.json` (cảnh báo khi là Mac).
 
 ### 14.1. TensorRT
 

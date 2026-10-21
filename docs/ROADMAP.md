@@ -2,8 +2,10 @@
 
 Đề tài: Nghiên cứu phát hiện người kích thước nhỏ từ ảnh UAV trong vùng ngập lụt, hướng tới xử lý trên thiết bị biên.
 
-Mốc cố định: nộp đề cương **16/10** · khung code và chốt Jetson **30/10** · bắt đầu RQ2 **9/11** · bảo vệ **15/12/2026**.
-Ngân sách thời gian: khoảng 150 giờ, 10–20 giờ mỗi tuần (Phụ lục B của đề cương).
+Mốc cố định: nộp đề cương **16/10** · khung code **30/10** · khoá tập test lũ **4/11** · bắt đầu RQ2 **9/11** · bảo vệ **15/12/2026**.
+Ngân sách thời gian: khoảng 150 giờ (Phụ lục B của đề cương); từ 21/10 dành 15–20 giờ mỗi tuần.
+
+Kế hoạch điều chỉnh ngày 21/10/2026 (mục 1). Lịch gốc theo đề cương xem lịch sử git của file này.
 
 Tài liệu này chuyển đề cương thành việc cần làm theo tuần (mục 1), cách tổ chức và viết mã (mục 2–3), kế hoạch thí nghiệm (mục 4), những điểm kỹ thuật cần để ý (mục 5) và các quyết định còn treo (mục 6).
 
@@ -11,21 +13,64 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 
 ## 1. Lịch theo tuần
 
-Cột "Báo cáo" bám đúng mục 11 của đề cương. Cột "Gán nhãn" là số khung tập test lũ đã gán nhãn cộng dồn.
+### 1.1. Trạng thái ngày 21/10
 
-| Tuần | Code | Thí nghiệm | Gán nhãn | Viết | Báo cáo thứ Sáu |
-|---|---|---|---|---|---|
-| 10–16/10 | Tái cấu trúc kho (mục 2); `eval/` thêm `max_det`, vùng bỏ qua, khoảng tin cậy; script chuyển nhãn VisDrone | **E0, E1, E4 trên VisDrone val**; tải FinlandProper; dựng notebook Kaggle | Hướng dẫn gán nhãn; gom video; 50 | Nộp đề cương | 16/10: đề cương, bảng VisDrone E0/E1/E4, tiến độ gán nhãn |
-| 17–23/10 | `sampler`, `telemetry` (giả lập + SRT), `detector` (ảnh lớn, cắt ô theo lô), `georef`, `confirm` bản đầu | **E2** lượt 1 trên Kaggle (VisDrone + FinlandProper) | 100 | Chương 2 | 23/10: fine-tune đầu tiên; video chạy phát hiện + tracking |
-| 24–30/10 | `confirm` hoàn chỉnh, `alerts` (outbox SQLite), `ground/` | E2 lượt 2; ước lượng tốc độ để chốt Jetson | 200 | Chương 3 | 30/10: **khung code xong**, cảnh báo trên bản đồ; **chốt Jetson** |
-| 31/10–6/11 | `sim/netem`; đo thời gian từng chặng | **E3** (P2); E2 thêm seed; **khoá tập test lũ** (khoảng 4/11) | 250–300, khoá | Chương 4 | 6/11: RQ1 trên tập test lũ (E0–E3) |
-| 7–13/11 | Xuất TensorRT trên Kaggle T4 (và Jetson nếu có) | **E4, E5, E6**; phân tích theo loại nhiễu; **RQ2 bắt đầu 9/11** | | Chương 5 (RQ1) | 13/11: bảng RQ1 đầy đủ |
-| 14–20/11 | Giao diện trạm mặt đất | **RQ2**; **RQ3** | | | 20/11: kết quả RQ2, RQ3 |
-| 21–27/11 | Nhiều drone, xếp ưu tiên (chỉ khi RQ đã xong) | Hoàn tất RQ3; phân tích lỗi | | Chương 5 (RQ2, RQ3), chương 6 | 27/11: demo trạm mặt đất |
-| 28/11–4/12 | Đóng băng mã | | | Bản thảo đầy đủ | 4/12: bản thảo, phần mở rộng nếu kịp |
-| 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng | 11/12: bản hoàn chỉnh |
+| Mảng | So với lịch gốc | Chi tiết |
+|---|---|---|
+| Code | **Sớm 1–2 tuần** | Đủ pipeline UAV (3 chiến lược xác nhận, outbox), trạm mặt đất, giả lập mạng và chuyến bay, quét lưới RQ3, đánh giá thống kê (bootstrap cặp, theo video), công cụ chia tập và kiểm tra rò rỉ, chuyển nhãn CVAT, CI. Xem TECHNICAL mục 6.1 |
+| Thí nghiệm | Chậm khoảng 3 ngày | E0, E1, E4 trên VisDrone val xong; đối chiếu cắt ô riêng với SAHI xong; **E2 lượt 1 (VisDrone, 60 epoch) đang chạy trên Kaggle từ 21/10**, khoảng 8 giờ; RQ3 đã chạy thử bằng mô phỏng |
+| Dữ liệu | **Chậm 2 tuần, rủi ro lớn nhất** | Tập test lũ **chưa gán khung nào** (lịch gốc: 100 khung tới 23/10, khoá 4/11); FinlandProper chưa tải |
+| Thiết bị | Đã chốt | **Không có Jetson**: RQ2 đo trên Kaggle T4, báo thứ hạng tương đối (TECHNICAL mục 14.4) |
 
-Nếu trễ, cắt theo thứ tự của đề cương: phần mở rộng → độ đẹp trạm mặt đất → E3 → `sim/netem`. Không cắt tập test lũ và phần đánh giá.
+Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ liệu** và **thí nghiệm**; code chỉ làm khi một thí nghiệm cần.
+
+### 1.2. Phân bổ giờ mỗi tuần (15–20 giờ)
+
+| Tuần | Gán nhãn và dữ liệu | Thí nghiệm | Viết | Code |
+|---|---|---|---|---|
+| 21–30/10 | 8–10 giờ | 3–4 giờ | 2–3 giờ | ≤ 2 giờ |
+| 31/10–13/11 | 3–4 giờ (khoá, rà) | 8–10 giờ | 3–4 giờ | ≤ 2 giờ |
+| 14/11–4/12 | 0 | 5–7 giờ | 8–10 giờ | ≤ 2 giờ, đóng băng 28/11 |
+| 5–11/12 | 0 | 0 | 15–20 giờ | 0 |
+
+Số khung gán được mỗi giờ là **ước lượng** (khoảng 15–20 khung mỗi giờ, kể cả phóng to người nhỏ và rà lại); đo lại sau 50 khung đầu và chỉnh bảng dưới.
+
+### 1.3. Lịch theo tuần
+
+Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
+
+| Tuần | Dữ liệu | Thí nghiệm | Code (chỉ khi cần) | Viết | Gán nhãn | Báo cáo thứ Sáu |
+|---|---|---|---|---|---|---|
+| 21–23/10 | Gom video lũ, ghi `sources.csv`; dựng dự án CVAT theo LABELING.md; gán thử | E2 lượt 1 xong → `eval_by_size` trên VisDrone val, `compare_runs` với E1 | Push, xem CI chạy | Chương 2 | 30–50 | 23/10: bảng VisDrone (E0, E1, E4, cắt ô riêng); E2 nếu kịp; demo pipeline + trạm mặt đất (telemetry giả lập); RQ3 chạy thử; hỏi thầy quyết định #1, #7, #10 |
+| 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
+| 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | E3 (P2) trên Kaggle; E0–E2 trên tập test lũ | | Chương 4 | 200–250, **khoá 4/11** | 6/11: RQ1 trên tập test lũ (E0–E2) |
+| 7–13/11 | | E3, E4 (cắt ô) trên tập lũ và FinlandProper; E5 (YOLO11s); E6 nếu thầy duyệt; recall theo loại nhiễu; **RQ2 bắt đầu 9/11**: xuất TensorRT FP16/INT8 trên T4, đo từng chặng | Script recall theo thẻ nhiễu; notebook RQ2 trên Kaggle; `rescale_dataset.py` nếu E6 được duyệt | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
+| 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | Recall theo kích thước trong mô phỏng (lấy từ RQ1) | | | 20/11: kết quả RQ2, RQ3 |
+| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo trạm mặt đất |
+| 28/11–4/12 | | | **Đóng băng mã 28/11** | Bản thảo đầy đủ | | 4/12: bản thảo |
+| 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng | | 11/12: bản hoàn chỉnh |
+
+### 1.4. Ngân sách GPU Kaggle
+
+Mỗi lần huấn luyện ở 1280 khoảng 8–10 giờ T4 (E2 lượt 1, 60 epoch: khoảng 8 giờ). Hạn mức khoảng 30 giờ mỗi tuần (cần kiểm tra trên tài khoản).
+
+| Tuần | Lần chạy | Giờ GPU ước lượng |
+|---|---|---|
+| 21–23/10 | E2 lượt 1 | 8 |
+| 24–30/10 | E2 lượt 2 (thêm FinlandProper) | 10 |
+| 31/10–6/11 | E3 (P2) | 10 |
+| 7–13/11 | E5 (YOLO11s); xuất TensorRT, đo RQ2 | 9 + 2 |
+| 14–20/11 | 2 seed thêm cho cấu hình cuối | 20 |
+
+Không tuần nào vượt hạn mức nếu không chạy lại. Lần chạy hỏng thì đẩy seed sang Colab (như đề cương).
+
+### 1.5. Khi trễ
+
+Thứ tự cắt của đề cương giữ nguyên: phần mở rộng (nhiều drone, xếp ưu tiên) → độ đẹp trạm mặt đất → E3 → `sim/netem`. Đã cắt: mọi việc cần Jetson (`docker/edge-jetson.Dockerfile`, đo điện năng thật).
+
+Riêng tập test lũ, nếu tới 4/11 chưa đủ 200 khung đã rà: **giữ khoá với số khung đang có nếu từ 150 trở lên** (khoảng tin cậy rộng hơn, ghi vào giới hạn), hoặc lùi khoá tối đa tới 11/11. Lùi quá 11/11 thì RQ1 trên tập lũ không kịp báo cáo 13/11. Chọn cách nào là quyết định #10, hỏi thầy ngày 23/10.
+
+Không cắt tập test lũ và phần đánh giá.
 
 ---
 
@@ -69,7 +114,7 @@ Giữ Docker để đóng gói demo, tách theo vai trò:
 |---|---|---|
 | `docker/ground.Dockerfile` | Python slim + FastAPI, không có torch (nhẹ) | Demo trạm mặt đất |
 | `docker/edge.Dockerfile` | torch CPU + ultralytics + `edge/` | Giả lập UAV trên laptop |
-| `docker/edge-jetson.Dockerfile` | Dựa trên ảnh Ultralytics cho JetPack | Chạy trên Jetson (chỉ kiểm thử được khi có thiết bị) |
+| `docker/edge-jetson.Dockerfile` | Dựa trên ảnh Ultralytics cho JetPack | **Đã cắt** (21/10: không có Jetson) |
 | `compose.yaml` | `ground` + 2–3 dịch vụ `edge`, mỗi dịch vụ phát lại một video | Demo nhiều drone (mục 9 của đề cương) bằng một lệnh `docker compose up` |
 
 Ảnh `edge` và `ground` được viết khi hai gói đó có mã (tuần 24–30/10). Ảnh hiện tại (chạy các script đánh giá) giữ đến lúc đó.
@@ -196,7 +241,7 @@ Notebook chỉ làm ba việc: clone kho mã ở một commit cố định, cài
 
 ### RQ2
 
-Cấu hình tốt nhất của RQ1 × {FP16, INT8} × chế độ công suất. Đo theo từng chặng (cắt ô, suy luận, gộp, `georef`, `confirm`). Đầu ra là đường recall theo FPS, đánh dấu ngưỡng 2 FPS. Jetson nếu chốt mua trước 30/10, không thì Kaggle T4.
+Cấu hình tốt nhất của RQ1 × {FP16, INT8} × chế độ công suất. Đo theo từng chặng (cắt ô, suy luận, gộp, `georef`, `confirm`). Đầu ra là đường recall theo FPS, đánh dấu ngưỡng 2 FPS. **Đo trên Kaggle T4** (chốt 21/10: không có Jetson); bỏ trục chế độ công suất; báo thứ hạng tương đối giữa các cấu hình, không quy đổi ra FPS trên Jetson (TECHNICAL mục 14.4).
 
 ### RQ3
 
@@ -265,11 +310,12 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 | # | Câu hỏi | Ai quyết | Hạn |
 |---|---|---|---|
 | 1 | Đồng ý đặt lại E6 thành khảo sát recall theo số pixel trên người (mục 5.3)? | Thầy | 23/10 |
-| 2 | Lab có hỗ trợ mua Jetson không? | Thầy | 30/10 |
+| 2 | ~~Lab có hỗ trợ mua Jetson không?~~ → chốt 21/10: không có; RQ2 trên Kaggle T4 | Thầy | Xong |
 | 3 | Có bắt buộc bài báo trước khi bảo vệ không? | Thầy, khoa | 16/10 |
 | 4 | Hạn nộp quyển? | Khoa | 16/10 |
 | 5 | Có video DJI kèm `.SRT` nào để thử `telemetry` với dữ liệu thật không? | Học viên | 23/10 |
-| 6 | Tài khoản Kaggle đã xác minh số điện thoại chưa? | Học viên | 17/10 |
+| 6 | ~~Tài khoản Kaggle đã xác minh số điện thoại chưa?~~ → xong (E2 chạy được với Internet) | Học viên | Xong |
 | 7 | Khoảng tin cậy trên tập test lũ lấy mẫu theo video (cluster bootstrap) thay vì theo ảnh? Theo ảnh làm khoảng tin cậy hẹp giả khi nhiều khung cùng video (TECHNICAL 15.3) | Học viên, hỏi thầy | Trước khi khoá tập test (4/11) |
 | 8 | ~~Đặt bộ bọc ByteTrack ở đâu~~ → đã chốt 21/10: bọc trong `detector.py` | Học viên | Xong |
 | 9 | RQ3: ByteTrack giữ ngưỡng tạo track 0,25 như bài gốc, hay hạ về bằng conf detector để cùng đầu vào với `geo`? (TECHNICAL 9.2) | Học viên | Trước RQ3 (14/11) |
+| 10 | Tới 4/11 chưa đủ 200 khung đã rà: khoá với số đang có (tối thiểu 150) hay lùi khoá tới 11/11? (mục 1.5) | Thầy | 23/10 |
