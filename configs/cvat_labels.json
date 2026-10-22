@@ -1,0 +1,15 @@
+[
+  {
+    "name": "person",
+    "type": "rectangle",
+    "attributes": [
+      {"name": "partly_submerged", "mutable": false, "input_type": "checkbox", "default_value": "false", "values": ["false"]},
+      {"name": "occluded", "mutable": false, "input_type": "checkbox", "default_value": "false", "values": ["false"]}
+    ]
+  },
+  {"name": "ignore", "type": "rectangle", "attributes": []},
+  {"name": "glare", "type": "tag", "attributes": []},
+  {"name": "weather", "type": "tag", "attributes": []},
+  {"name": "blur", "type": "tag", "attributes": []},
+  {"name": "floating_debris", "type": "tag", "attributes": []}
+]

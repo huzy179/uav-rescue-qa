@@ -27,7 +27,7 @@ Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 c
 
 ## 2. Công cụ
 
-CVAT, một dự án, hai nhãn dạng hình chữ nhật:
+CVAT, một dự án, hai nhãn dạng hình chữ nhật (cấu hình sẵn: dán `configs/cvat_labels.json` vào tab **Raw** khi tạo dự án):
 
 | Nhãn | Dùng cho | Thuộc tính (checkbox) |
 |---|---|---|
