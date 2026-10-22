@@ -128,6 +128,8 @@ class TrackConfirmer:
         self.tracker, self.n_confirm, self.window_s, self.expire_s, self.motion = tracker, n_confirm, window_s, expire_s, motion
         self._tracks: dict[int, _Cluster] = {}
         self._prev_t: float | None = None
+        # (box, track_id) ghép được ở khung gần nhất; chỉ để vẽ video demo, không dùng để xác nhận.
+        self.last_assignments: list[tuple[tuple[float, float, float, float], int]] = []
 
     def update(self, dets: list[Detection], t: float) -> list[Confirmation]:
         """Cập nhật với phát hiện của một khung; trả về các track vừa đủ điều kiện ở khung này."""
@@ -135,7 +137,9 @@ class TrackConfirmer:
         self._prev_t = t
         boxes = np.array([d.box_px for d in dets], dtype=float).reshape(-1, 4)
         confs = np.array([d.conf for d in dets], dtype=float)
-        for det_index, track_id in self.tracker.update(boxes, confs, warp):
+        assignments = self.tracker.update(boxes, confs, warp)
+        self.last_assignments = [(dets[i].box_px, track_id) for i, track_id in assignments]
+        for det_index, track_id in assignments:
             det = dets[det_index]
             if det.lat is None or det.lon is None:
                 continue

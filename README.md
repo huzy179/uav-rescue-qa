@@ -25,7 +25,7 @@ data/, runs/        dữ liệu và kết quả chạy (không đưa lên git)
 Demo hai phía trên một máy, một lệnh (trạm mặt đất + pipeline, rồi giữ bản đồ mở tới khi Ctrl+C):
 
 ```bash
-scripts/demo.sh [video.mp4] [trọng số]    # mặc định data/raw/demo/afo_demo.mp4 và yolo26s.pt
+scripts/demo.sh [video.mp4] [trọng số] [geo|track]   # mặc định afo_demo.mp4, yolo26s.pt, geo; track: tracking có số ID
 ```
 
 Từng bước:

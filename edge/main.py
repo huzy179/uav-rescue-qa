@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import IO, Any
 
 import cv2
+import numpy as np
 
 from edge.alerts import FakeTransport, HttpTransport, Outbox, Transport, crop_jpeg_base64, make_alert
 from edge.confirm import Confirmer, GeoConfirmer, TrackConfirmer
@@ -84,10 +85,34 @@ def write_jsonl(f: IO[str], record: dict[str, Any]) -> None:
     f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
+def track_color(track_id: int) -> tuple[int, int, int]:
+    """Màu cố định cho mỗi track (BGR), để mắt theo được một người qua các khung."""
+    hue = (track_id * 47) % 180
+    return tuple(int(c) for c in cv2.cvtColor(np.uint8([[[hue, 220, 255]]]), cv2.COLOR_HSV2BGR)[0, 0])
+
+
 def annotate(
-    frame: Any, boxes: list[Any], confs: list[float], confirmed: list[Confirmation], tel: Any, cam: Camera, synthetic: bool
+    frame: Any, boxes: list[Any], confs: list[float], confirmed: list[Confirmation], tel: Any, cam: Camera, synthetic: bool,
+    tracks: list[tuple[Any, int]] | None = None,
 ) -> Any:
-    """Vẽ phát hiện của khung và vị trí các người đã xác nhận chiếu lại vào khung hiện tại."""
+    """Vẽ phát hiện của khung và vị trí các người đã xác nhận chiếu lại vào khung hiện tại.
+
+    Với chiến lược bytetrack, `tracks` là (box, track_id) của khung: vẽ khung màu theo track kèm số ID thay cho khung đỏ.
+    """
+    if tracks is not None:
+        # Track đã xác nhận (cluster_id của TrackConfirmer là track_id): khung đậm, nhãn "#id". Không vẽ vòng chiếu từ GPS:
+        # với telemetry giả lập, vòng đó không trùng người và che mất khung.
+        confirmed_ids = {c.cluster_id for c in confirmed}
+        canvas = frame.copy()
+        for box, track_id in tracks:
+            x1, y1, x2, y2 = (int(round(v)) for v in box)
+            color, done = track_color(track_id), track_id in confirmed_ids
+            cv2.rectangle(canvas, (x1, y1), (x2, y2), color, 3 if done else 1)
+            label = f"#{track_id}" if done else str(track_id)
+            cv2.putText(canvas, label, (x1, max(12, y1 - 3)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1, cv2.LINE_AA)
+        if synthetic:
+            cv2.putText(canvas, SYNTHETIC_NOTE, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
+        return canvas
     canvas = draw_boxes(frame, boxes, confs)
     if synthetic:
         # Ghi thẳng lên video để không ai lấy nhầm video demo làm bằng chứng định vị.
@@ -180,7 +205,8 @@ def main() -> None:
                 if video is None:
                     path = str(args.output / "annotated.mp4")
                     video = cv2.VideoWriter(path, cv2.VideoWriter.fourcc(*"mp4v"), args.fps, (cam.width, cam.height))
-                video.write(annotate(frame, [d.box_px for d in dets], [d.conf for d in dets], confirmed, tel, cam, synthetic))
+                tracks = getattr(confirmer, "last_assignments", None)
+                video.write(annotate(frame, [d.box_px for d in dets], [d.conf for d in dets], confirmed, tel, cam, synthetic, tracks))
         # Hết video: tiếp tục gửi bù mỗi giây, như UAV vẫn bay tiếp và giữ kết nối.
         for k in range(1, int(args.drain_s) + 1):
             if outbox.pending() == 0:

@@ -110,3 +110,18 @@ def test_bytetrack_breaks_at_2fps_and_camera_motion_compensation_fixes_it() -> N
 
     geo = GeoConfirmer(radius_m=3.0, n_confirm=3)
     assert sum(len(geo.update(d, t)) for d, t in zip(frames, times)) == 1
+
+
+def test_track_confirmer_giu_id_cua_khung_gan_nhat() -> None:
+    """TrackConfirmer ghi lại (box, track_id) của khung vừa cập nhật để vẽ video demo."""
+    from edge.confirm import TrackConfirmer
+
+    class FakeTracker:
+        def update(self, boxes, confs, warp=None):  # type: ignore[no-untyped-def]
+            return [(i, 100 + i) for i in range(len(boxes))]
+
+    confirmer = TrackConfirmer(FakeTracker(), n_confirm=3)
+    confirmer.update([det(0, 0.0), det(0, 5.0)], 0.0)
+    assert [tid for _, tid in confirmer.last_assignments] == [100, 101]
+    confirmer.update([], 0.5)
+    assert confirmer.last_assignments == []
