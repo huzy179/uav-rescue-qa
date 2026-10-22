@@ -1007,6 +1007,8 @@ Notebook `notebooks/kaggle_train.ipynb` là lớp vỏ mỏng: mọi logic nằm
 | `ray … get_trial_id … UserWarning` | Thư viện `ray` cài sẵn trên Kaggle, không liên quan |
 | `New https://pypi.org/project/ultralytics/… available` | Phiên bản được ghim có chủ đích |
 
+Kết quả E2 lượt 1 ở `docs/results/visdrone_E2.md` (val và test-dev, so cặp với E1).
+
 **Hai điểm phải nhớ khi viết kết quả E2:**
 - **mAP in trong log lần chạy thử không phải kết quả.** Nó chỉ sau một phần epoch, và do ultralytics tính. Số của E2 tính bằng `eval_by_size.py` sau khi tải trọng số về.
 - **`best.pt` được chọn theo mAP trên VisDrone val**, nên VisDrone val không còn là tập kiểm tra độc lập cho E2. So E2 với E0/E1 trên chính tập này sẽ hơi thiên vị E2. Cách khắc phục: chạy cả ba mô hình trên VisDrone test-dev (có nhãn công khai; chỉ cần dự đoán). Quyết định #11 ở ROADMAP.

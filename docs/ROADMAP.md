@@ -18,7 +18,7 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 | Mảng | So với lịch gốc | Chi tiết |
 |---|---|---|
 | Code | **Sớm 1–2 tuần** | Đủ pipeline UAV (3 chiến lược xác nhận, outbox), trạm mặt đất, giả lập mạng và chuyến bay, quét lưới RQ3, đánh giá thống kê (bootstrap cặp, theo video), công cụ chia tập và kiểm tra rò rỉ, chuyển nhãn CVAT, CI. Xem TECHNICAL mục 6.1 |
-| Thí nghiệm | Chậm khoảng 3 ngày | E0, E1, E4 trên VisDrone val xong; đối chiếu cắt ô riêng với SAHI xong; **E2 lượt 1 (VisDrone, 60 epoch) đang chạy trên Kaggle từ 21/10**, khoảng 8 giờ; RQ3 đã chạy thử bằng mô phỏng |
+| Thí nghiệm | Chậm khoảng 3 ngày | E0, E1, E4 trên VisDrone val xong; đối chiếu cắt ô riêng với SAHI xong; **E2 lượt 1 (VisDrone, 60 epoch) xong 22/10** (7,4 giờ T4): AP50 trên VisDrone val 0,497 → 0,758, nhóm dưới 8 px 0,167 → 0,554; giữ nguyên xu hướng trên test-dev (`docs/results/visdrone_E2.md`); RQ3 đã chạy thử bằng mô phỏng |
 | Dữ liệu | **Chậm 2 tuần, rủi ro lớn nhất** | Tập test lũ **chưa gán khung nào** (lịch gốc: 100 khung tới 23/10, khoá 4/11); FinlandProper chưa tải |
 | Thiết bị | Đã chốt | **Không có Jetson**: RQ2 đo trên Kaggle T4, báo thứ hạng tương đối (TECHNICAL mục 14.4) |
 
@@ -319,5 +319,5 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 | 8 | ~~Đặt bộ bọc ByteTrack ở đâu~~ → đã chốt 21/10: bọc trong `detector.py` | Học viên | Xong |
 | 9 | RQ3: ByteTrack giữ ngưỡng tạo track 0,25 như bài gốc, hay hạ về bằng conf detector để cùng đầu vào với `geo`? (TECHNICAL 9.2) | Học viên | Trước RQ3 (14/11) |
 | 10 | Tới 4/11 chưa đủ 200 khung đã rà: khoá với số đang có (tối thiểu 150) hay lùi khoá tới 11/11? (mục 1.5) | Thầy | 23/10 |
-| 11 | So E2 với E0/E1 trên VisDrone test-dev thay vì val? E2 chọn `best.pt` theo val nên val thiên vị E2 (TECHNICAL 13.5) | Học viên, hỏi thầy | Trước khi viết bảng E2 |
+| 11 | So E2 với E0/E1 trên VisDrone test-dev thay vì val? E2 chọn `best.pt` theo val nên val thiên vị E2 (TECHNICAL 13.5). Đã chạy cả hai tập cho E1, E2: mức tăng giữ nguyên trên test-dev (`docs/results/visdrone_E2.md`); cần thầy chọn tập nào là bảng chính | Học viên, hỏi thầy | 23/10 |
 | 12 | Dùng video lũ có bản quyền (YouTube, báo chí) cho tập test, chỉ công bố nhãn và nguồn, không phát hành lại ảnh: có được chấp nhận? C2A không ghi giấy phép trên GitHub: dùng để huấn luyện có ổn? | Thầy | 23/10 |
