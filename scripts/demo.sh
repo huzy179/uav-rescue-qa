@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 
 VIDEO="${1:-data/raw/demo/afo_demo.mp4}"
 MODEL="${2:-yolo26s.pt}"
-OUT="runs/edge/demo_$(basename "${MODEL%.*}")"
+OUT="runs/edge/demo_$(basename "${VIDEO%.*}")_$(basename "${MODEL%.*}")"   # tên video + tên trọng số: các lần demo không ghi đè nhau
 PORT=8000
 
 [ -f "$VIDEO" ] || { echo "Không thấy video: $VIDEO"; exit 1; }
