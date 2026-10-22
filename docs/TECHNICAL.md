@@ -881,7 +881,7 @@ Hai drone có thể cảnh báo cùng một người. Khi một cảnh báo mớ
 
 ### 12.5. Bản đồ
 
-Leaflet hiển thị incident theo màu ưu tiên, bấm để xem ảnh cắt và lịch sử; bảng bên cạnh hiện FPS, băng thông, số cảnh báo đang chờ của mỗi drone. Ô bản đồ lấy từ OpenStreetMap cần internet; trong ngữ cảnh lũ mất mạng thì cần ô bản đồ ngoại tuyến (tải trước cho khu vực, phục vụ từ chính trạm). Đây là giới hạn cần ghi nếu không làm.
+Leaflet hiển thị incident theo màu ưu tiên, bấm để xem ảnh cắt và lịch sử; bảng bên cạnh hiện FPS, băng thông, số cảnh báo đang chờ của mỗi drone. Ô bản đồ (ảnh vệ tinh và bản đồ đường của Esri; máy chủ ô của OpenStreetMap không trả lời từ mạng của dự án, CARTO đòi khoá API) cần internet; trong ngữ cảnh lũ mất mạng thì cần ô bản đồ ngoại tuyến (tải trước cho khu vực, phục vụ từ chính trạm). Đây là giới hạn cần ghi nếu không làm.
 
 ---
 

@@ -23,9 +23,16 @@
   <div id="side"><h1>Cảnh báo (<span id="count">0</span>)</h1><div id="list"></div></div>
 </div>
 <script>
-  // Ô bản đồ OpenStreetMap cần internet; khi mất mạng thật cần ô bản đồ ngoại tuyến (TECHNICAL mục 12.5).
-  const map = L.map("map").setView([21.0285, 105.8542], 15);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, attribution: "© OpenStreetMap" }).addTo(map);
+  // Ô bản đồ cần internet; khi mất mạng thật cần ô bản đồ ngoại tuyến (TECHNICAL mục 12.5).
+  // Không dùng tile.openstreetmap.org (từ mạng của dự án không trả lời, 22/10/2026: bản đồ chỉ còn nền trắng)
+  // và CARTO (đòi khoá API). Esri hai lớp đều tải được không cần khoá.
+  // maxNativeZoom: phóng quá mức ảnh có thật thì phóng to ô cuối cùng thay vì hiện ô trắng.
+  const map = L.map("map", { maxZoom: 20 }).setView([21.0285, 105.8542], 15);
+  const satellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom: 20, maxNativeZoom: 19, attribution: "Ảnh vệ tinh © Esri, Maxar, Earthstar Geographics" }).addTo(map);
+  const streets = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom: 20, maxNativeZoom: 19, attribution: "Bản đồ © Esri" });
+  L.control.layers({ "Ảnh vệ tinh": satellite, "Bản đồ đường": streets }).addTo(map);
   const markers = {};
   let fitted = false;
 
