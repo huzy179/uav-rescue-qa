@@ -11,7 +11,8 @@ import yaml
 def parse_args_with_config(parser: argparse.ArgumentParser) -> argparse.Namespace:
     """Thêm --config; giá trị trong file YAML thay cho mặc định, tham số gõ trên dòng lệnh vẫn được ưu tiên."""
     parser.add_argument("--config", type=Path, default=None, help="File YAML chứa tham số (khoá trùng tên tham số)")
-    pre_parser = argparse.ArgumentParser(add_help=False)
+    # Tắt viết tắt: nếu không, `--conf 0.1` của script bị lượt này hiểu nhầm là `--config 0.1`.
+    pre_parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     pre_parser.add_argument("--config", type=Path, default=None)
     config_path = pre_parser.parse_known_args()[0].config
     if config_path is not None:
