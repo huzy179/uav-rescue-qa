@@ -143,6 +143,17 @@ Chung: conf 0,001, `max_det` 1000; AP nội suy 101 điểm; recall và precisio
 4. **Kết quả không phải do chọn mô hình trên val.** Mức tăng giữ nguyên trên test-dev (tập không dùng khi chọn), và `best.pt` gần như bằng epoch cuối.
 5. **Test-dev thấp hơn val ở cả hai mô hình** vì có nhiều người dưới 8 px hơn hẳn; cùng một nhóm kích thước thì hai tập cho số gần nhau hơn (ví dụ nhóm 16–32 px của E2: 0,859 trên val, 0,830 trên test-dev).
 
+## Kiểm tra nhanh ngoài VisDrone: người dưới nước (AFO, 21 ảnh)
+
+Để chuẩn bị demo, cả hai mô hình được chạy trên 21 ảnh drone chụp người bơi lấy từ bộ AFO (bản trên Hugging Face, giấy phép CC BY-NC-SA 3.0), 7 video, 553 người có nhãn tay; cùng quy ước đo, IoU 0,5, không bootstrap (`runs/afo_demo/eval_E1`, `runs/afo_demo/eval_E2`).
+
+| Cấu hình | AP50 | Recall @0,25 | Precision @0,25 | Recall tối đa |
+|---|---|---|---|---|
+| E1 | 0,288 | 0,192 | 0,558 | 0,674 |
+| E2 | 0,158 | 0,045 | 0,625 | 0,499 |
+
+**E2 kém hơn E1 với người dưới nước.** 519/553 người ở đây lớn hơn 32 px, nên đây không phải chuyện kích thước mà là hình dạng: VisDrone chỉ có người đi bộ trên phố, nhìn xiên; fine-tune làm mô hình chuyên vào kiểu đó và mất khả năng nhận người nằm ngang trên mặt nước mà mô hình COCO gốc vẫn có. Đây là **dấu hiệu, chưa phải kết quả**: 21 ảnh chọn để làm demo, không phải tập đánh giá. Hệ quả cho kế hoạch: E2 lượt 2 phải có dữ liệu người dưới nước (AFO, FinlandProper, C2A), và mọi mô hình fine-tune phải được đo trên dữ liệu có nước trước khi dùng cho cảnh lũ.
+
 ## Thời gian (RTX 5060 trên WSL2; chỉ để so sánh tương đối, không phải số cho Jetson)
 
 | Cấu hình | ms/ảnh (trung vị), val |
