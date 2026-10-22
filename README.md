@@ -28,6 +28,13 @@ Demo hai phía trên một máy, một lệnh (trạm mặt đất + pipeline, r
 scripts/demo.sh [video.mp4] [trọng số] [geo|track]   # mặc định afo_demo.mp4, yolo26s.pt, geo; track: tracking có số ID
 ```
 
+Demo trực tiếp để trình bày: video phát trong cửa sổ, người được tô màu kèm số ID và vệt đường đi, bảng đếm người ở góc
+(Space tạm dừng, Q thoát; trên WSL cửa sổ mở qua WSLg):
+
+```bash
+.venv/bin/python scripts/live_demo.py --source video.mp4 --model runs/train/E2_s0/weights/best.pt
+```
+
 Từng bước:
 
 ```bash
