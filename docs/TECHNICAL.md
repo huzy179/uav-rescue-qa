@@ -400,7 +400,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 
 **Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
 
-**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
+**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
@@ -900,7 +900,7 @@ val:   [visdrone/images/val, finland/images/val]
 names: {0: person}
 ```
 
-**C2A** (tải 21/10 từ Google Drive của tác giả, `data/raw/c2a/`; trên Kaggle gắn dataset `c2a-dataset`): 10.215 ảnh (train 6.129, val 2.043, test 2.043), bốn loại cảnh (lũ, cháy, nhà sập, tai nạn giao thông, mỗi loại khoảng một phần tư), một lớp người, khoảng 34 người mỗi ảnh. Người là hình ghép lên ảnh thảm hoạ thật, nên chỉ dùng để **huấn luyện**, không dùng để kết luận về cảnh lũ. Chuyển bằng `tools/convert_yolo_subset.py --class-names human --keep human` (`data/processed/c2a/stats.json`). Ảnh nhỏ (cạnh dài trung vị khoảng 430 px), xem mục 13.4 về hệ quả. GitHub của C2A không ghi giấy phép (quyết định #11 của ROADMAP). Nền ảnh lấy từ bộ AIDER (ảnh thảm hoạ trên Internet): khi có tập test lũ phải chạy `tools/check_leakage.py` giữa tập test và C2A train.
+**C2A** (tải 21/10 từ Google Drive của tác giả, `data/raw/c2a/`; trên Kaggle gắn dataset `c2a-dataset`): 10.215 ảnh (train 6.129, val 2.043, test 2.043), bốn loại cảnh (lũ, cháy, nhà sập, tai nạn giao thông, mỗi loại khoảng một phần tư), một lớp người, khoảng 34 người mỗi ảnh. Người là hình ghép lên ảnh thảm hoạ thật, nên chỉ dùng để **huấn luyện**, không dùng để kết luận về cảnh lũ. Chuyển bằng `tools/convert_yolo_subset.py --class-names human --keep human` (`data/processed/c2a/stats.json`). Ảnh nhỏ (cạnh dài trung vị khoảng 430 px), xem mục 13.4 về hệ quả. GitHub của C2A không ghi giấy phép (quyết định #12 của ROADMAP). Nền ảnh lấy từ bộ AIDER (ảnh thảm hoạ trên Internet): khi có tập test lũ phải chạy `tools/check_leakage.py` giữa tập test và C2A train.
 
 Chia theo video hoặc địa điểm (FinlandProper là khung trích từ video: các khung liền nhau gần như giống hệt, chia ngẫu nhiên sẽ làm rò rỉ val vào train và cho kết quả đẹp giả). Công cụ: `tools/split_by_video.py` và `tools/check_leakage.py` (mục 15.6).
 
