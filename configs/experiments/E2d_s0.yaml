@@ -1,0 +1,13 @@
+# E2 lượt 3, seed 0: như E2c (VisDrone + AFO) thêm HydroVigilance (người bơi nhô đầu trên sông nước đục, 4 lớp gộp về person).
+# HydroVigilance chia train/val ngẫu nhiên theo khung liền nhau (176/179 ảnh val cách ảnh train ≤ 2 khung), nên cả hai
+# phần chỉ dùng để huấn luyện; best.pt vẫn chọn theo val của VisDrone và AFO. Chạy sau khi có kết quả E2c.
+train: [data/processed/visdrone/images/train, data/processed/afo/images/train, data/processed/hydrovigilance/images/train, data/processed/hydrovigilance/images/val]
+val: [data/processed/visdrone/images/val, data/processed/afo/images/val]
+model: yolo26s.pt
+imgsz: 1280
+epochs: 100
+patience: 20
+batch: 8
+seed: 0
+scale: 0.5
+output: runs/train/E2d_s0
