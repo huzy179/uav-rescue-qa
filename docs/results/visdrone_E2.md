@@ -152,7 +152,7 @@ Chung: conf 0,001, `max_det` 1000; AP nội suy 101 điểm; recall và precisio
 | E1 | 0,288 | 0,192 | 0,558 | 0,674 |
 | E2 | 0,158 | 0,045 | 0,625 | 0,499 |
 
-**E2 kém hơn E1 với người dưới nước.** 519/553 người ở đây lớn hơn 32 px, nên đây không phải chuyện kích thước mà là hình dạng: VisDrone chỉ có người đi bộ trên phố, nhìn xiên; fine-tune làm mô hình chuyên vào kiểu đó và mất khả năng nhận người nằm ngang trên mặt nước mà mô hình COCO gốc vẫn có. Đây là **dấu hiệu, chưa phải kết quả**: 21 ảnh chọn để làm demo, không phải tập đánh giá. Hệ quả cho kế hoạch: E2 lượt 2 phải có dữ liệu người dưới nước (AFO, FinlandProper, C2A), và mọi mô hình fine-tune phải được đo trên dữ liệu có nước trước khi dùng cho cảnh lũ.
+**E2 kém hơn E1 với người dưới nước.** Đã xác nhận trên toàn bộ tập test của AFO (514 ảnh, có ý nghĩa thống kê): `docs/results/afo_E1_E2.md`. 519/553 người ở đây lớn hơn 32 px, nên đây không phải chuyện kích thước mà là hình dạng: VisDrone chỉ có người đi bộ trên phố, nhìn xiên; fine-tune làm mô hình chuyên vào kiểu đó và mất khả năng nhận người nằm ngang trên mặt nước mà mô hình COCO gốc vẫn có. Đây là **dấu hiệu, chưa phải kết quả**: 21 ảnh chọn để làm demo, không phải tập đánh giá. Hệ quả cho kế hoạch: E2 lượt 2 phải có dữ liệu người dưới nước (AFO, FinlandProper, C2A), và mọi mô hình fine-tune phải được đo trên dữ liệu có nước trước khi dùng cho cảnh lũ.
 
 ## Thời gian (RTX 5060 trên WSL2; chỉ để so sánh tương đối, không phải số cho Jetson)
 

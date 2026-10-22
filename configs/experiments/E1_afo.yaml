@@ -1,0 +1,8 @@
+# E1 trên AFO test (người dưới nước, 9 video không có trong train của AFO): như E1_visdrone.yaml, khác tập ảnh.
+source: data/processed/afo/images/test
+model: yolo26s.pt
+imgsz: [1280]
+conf: 0.001
+max_det: 1000
+no_images: true
+output: runs/afo/E1

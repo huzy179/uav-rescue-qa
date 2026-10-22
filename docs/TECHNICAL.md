@@ -400,7 +400,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 
 **Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
 
-**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
+**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `prepare_afo.py` (dựng lại bố cục AFO từ bản Kaggle cho `convert_yolo_subset.py`), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
@@ -1170,6 +1170,8 @@ Rò rỉ là khi tập đánh giá chứa ảnh giống ảnh huấn luyện; k�
 | Chọn tham số trên tập test | Chỉnh ngưỡng conf cho tới khi recall trên test đẹp | Quy trình: mọi lựa chọn làm trên val (15.1) |
 
 **dHash** (difference hash): thu ảnh xám về 9×8 điểm, so từng điểm với điểm bên phải, được 64 bit. Hai ảnh gần giống nhau (khác kích thước, nén, độ sáng) có hash khác nhau vài bit; hai cảnh khác nhau khác khoảng 32 bit. Ngưỡng mặc định 5 bit. dHash không bắt được ảnh bị cắt mạnh hay xoay; đủ cho trường hợp tải lại cùng một video.
+
+**dHash báo nhầm với ảnh mặt nước.** Nước ít chi tiết, nên hai cảnh khác hẳn nhau vẫn có thể lệch dưới 5 bit: trên AFO, cặp gần trùng đầu tiên giữa test và train là hai cảnh khác nhau (`docs/results/afo_E1_E2.md`). Với ảnh mặt nước, mọi cặp dHash phải được xem lại bằng mắt trước khi kết luận rò rỉ; điều này áp dụng cho tập test lũ.
 
 Chạy `check_leakage.py` với một tập (không có `--train`) thì tìm ảnh gần trùng **bên trong** tập đó: trên VisDrone val tìm được 4 cặp liên quan 7 ảnh (`runs/leakage/visdrone_val/near_duplicates.csv`), không đáng kể. Với tập test lũ, phải chạy trước khi khoá (cùng với `train` của mọi bộ đã dùng để huấn luyện), và lưu kết quả cạnh `MANIFEST.sha256`.
 

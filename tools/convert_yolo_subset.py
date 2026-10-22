@@ -119,7 +119,7 @@ def main() -> None:
             target = out["images"] / image.name
             if not target.exists():
                 try:
-                    os.link(image, target)
+                    os.link(image, target, follow_symlinks=False)  # ảnh là liên kết mềm (Kaggle) thì liên kết chính nó, không chép
                 except OSError:
                     shutil.copy2(image, target)
             (out["labels"] / f"{image.stem}.txt").write_text("".join(persons), encoding="utf-8")
