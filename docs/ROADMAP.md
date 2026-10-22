@@ -19,7 +19,7 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 |---|---|---|
 | Code | **Sớm 1–2 tuần** | Đủ pipeline UAV (3 chiến lược xác nhận, outbox), trạm mặt đất, giả lập mạng và chuyến bay, quét lưới RQ3, đánh giá thống kê (bootstrap cặp, theo video), công cụ chia tập và kiểm tra rò rỉ, chuyển nhãn CVAT, CI. Xem TECHNICAL mục 6.1 |
 | Thí nghiệm | Chậm khoảng 3 ngày | E0, E1, E4 trên VisDrone val xong; đối chiếu cắt ô riêng với SAHI xong; **E2 lượt 1 (VisDrone, 60 epoch) xong 22/10** (7,4 giờ T4): AP50 trên VisDrone val 0,497 → 0,758, nhóm dưới 8 px 0,167 → 0,554; giữ nguyên xu hướng trên test-dev; **nhưng kém mô hình gốc với người dưới nước** (AFO test: AP50 0,147 → 0,103, có ý nghĩa thống kê; `docs/results/afo_E1_E2.md`), nên E2 lượt 2 thêm AFO (`E2c_s0.yaml`) (`docs/results/visdrone_E2.md`); RQ3 đã chạy thử bằng mô phỏng |
-| Dữ liệu | **Chậm 2 tuần, rủi ro lớn nhất** | Tập test lũ **chưa gán khung nào** (lịch gốc: 100 khung tới 23/10, khoá 4/11); FinlandProper chưa tải |
+| Dữ liệu | **Chậm 2 tuần, rủi ro lớn nhất** | Tập test lũ **chưa gán khung nào**; 22/10 đã trích **227 khung** từ 10 video (YouTube, NIDARX CC0) vào `data/raw/flood/frames`, đã loại tay khung không phải góc UAV (`frames_loai/ly_do.csv`); 2 video còn 480p. Đã rà Kaggle, Hugging Face, Zenodo, Roboflow: không có bộ công khai nào gồm ảnh UAV lũ thật có khung người. Thêm dữ liệu huấn luyện: AFO (đang dùng trong E2c), HydroVigilance (`E2d_s0.yaml`) (lịch gốc: 100 khung tới 23/10, khoá 4/11); FinlandProper chưa tải |
 | Thiết bị | Đã chốt | **Không có Jetson**: RQ2 đo trên Kaggle T4, báo thứ hạng tương đối (TECHNICAL mục 14.4) |
 
 Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ liệu** và **thí nghiệm**; code chỉ làm khi một thí nghiệm cần.
