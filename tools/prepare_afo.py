@@ -5,6 +5,10 @@ nằm ở PART_1/6categories và chia tập bằng ba file danh sách train.txt,
 <out>/images/<tập> (liên kết cứng, không tốn dung lượng) và <out>/labels/<tập>, kèm file tên lớp <out>/classes.txt.
 Tập test của AFO lấy từ 9 video không có trong train và validation.
 
+`--max-side 1920` thu ảnh lớn hơn về cạnh dài 1920 px (ghi JPEG mới thay cho liên kết). Ảnh 4K của AFO đọc chậm gấp
+khoảng 3 lần ảnh 1920 px và làm Kaggle (4 CPU) nghẽn ở khâu đọc dữ liệu; huấn luyện ở imgsz 1280 nên 1920 px vẫn đủ
+cho phóng to ngẫu nhiên tới 1,5 lần. Nhãn YOLO là toạ độ chuẩn hoá nên không đổi.
+
 Ví dụ:
     .venv/bin/python tools/prepare_afo.py --src data/raw/afo --out data/raw/afo_yolo
     .venv/bin/python tools/convert_yolo_subset.py --src data/raw/afo_yolo --dst data/processed/afo \\
@@ -18,6 +22,8 @@ import os
 import shutil
 from pathlib import Path
 
+import cv2
+
 from shared.config import parse_args_with_config
 
 SPLIT_FILES = {"train": "train.txt", "val": "validation.txt", "test": "test.txt"}
@@ -29,6 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--src", type=Path, required=True, help="Thư mục chứa PART_1, PART_2, PART_3 (giải nén từ Kaggle)")
     parser.add_argument("--out", type=Path, required=True, help="Thư mục đích theo bố cục images/<tập>, labels/<tập>")
     parser.add_argument("--labels", default="6categories", help="Bộ nhãn trong PART_1: 6categories (có lớp human), 2categories, 1category")
+    parser.add_argument("--max-side", type=int, default=None, help="Thu ảnh có cạnh dài hơn về cạnh dài này (px); mặc định giữ nguyên")
     return parse_args_with_config(parser)
 
 
@@ -60,6 +67,24 @@ def link(src: Path, dst: Path) -> None:
         dst.symlink_to(src.resolve())
 
 
+def place_image(src: Path, dst: Path, max_side: int | None) -> bool:
+    """Đặt ảnh vào bố cục mới: liên kết nếu không cần thu nhỏ, ngược lại ghi bản thu nhỏ. Trả về True nếu đã thu nhỏ."""
+    if dst.exists() or dst.is_symlink():
+        return False
+    if max_side is not None:
+        image = cv2.imread(str(src))
+        if image is None:
+            raise SystemExit(f"Không đọc được ảnh: {src}")
+        scale = max_side / max(image.shape[:2])
+        if scale < 1:
+            small = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+            if not cv2.imwrite(str(dst), small, [cv2.IMWRITE_JPEG_QUALITY, 95]):
+                raise SystemExit(f"Không ghi được {dst}")
+            return True
+    link(src, dst)
+    return False
+
+
 def main() -> None:
     """Đọc danh sách từng tập, liên kết ảnh và nhãn sang bố cục chuẩn, báo ảnh thiếu hoặc không thuộc tập nào."""
     args = parse_args()
@@ -83,16 +108,16 @@ def main() -> None:
         out_images, out_labels = args.out / "images" / split, args.out / "labels" / split
         out_images.mkdir(parents=True, exist_ok=True)
         out_labels.mkdir(parents=True, exist_ok=True)
-        n_no_label = 0
+        n_no_label = n_resized = 0
         for name in names:
-            link(images[name], out_images / name)
+            n_resized += place_image(images[name], out_images / name, args.max_side)
             label = labels_dir / f"{Path(name).stem}.txt"
             if label.is_file():
                 link(label, out_labels / label.name)
             else:
                 n_no_label += 1
                 (out_labels / f"{Path(name).stem}.txt").write_text("", encoding="utf-8")
-        print(f"{split}: {len(names)} ảnh, {n_no_label} ảnh không có file nhãn (coi là không có vật thể)")
+        print(f"{split}: {len(names)} ảnh ({n_resized} ảnh thu về cạnh dài {args.max_side} px), {n_no_label} ảnh không có file nhãn (coi là không có vật thể)")
 
     if names_file.is_file():
         shutil.copyfile(names_file, args.out / "classes.txt")

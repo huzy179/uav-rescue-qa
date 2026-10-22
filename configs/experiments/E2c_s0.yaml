@@ -1,5 +1,6 @@
 # E2 lượt 2, seed 0: fine-tune YOLO26s ở imgsz 1280 trên VisDrone + AFO (người dưới nước, tools/prepare_afo.py).
 # Thêm AFO vì E2 lượt 1 (chỉ VisDrone) kém mô hình gốc với người dưới nước (docs/results/afo_E1_E2.md).
+# Ảnh AFO thu về cạnh dài 1920 px khi chuẩn bị (prepare_afo.py --max-side 1920): ảnh 4K đọc chậm gấp 3 lần, nghẽn CPU Kaggle.
 # best.pt chọn theo val gộp VisDrone + AFO. Số epoch thật đặt từ notebook sau lần chạy thử (giới hạn 12 giờ).
 train: [data/processed/visdrone/images/train, data/processed/afo/images/train]
 val: [data/processed/visdrone/images/val, data/processed/afo/images/val]

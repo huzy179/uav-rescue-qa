@@ -51,3 +51,21 @@ def test_anh_trong_danh_sach_nhung_thieu_file(tmp_path: Path) -> None:
     result = run("tools/prepare_afo.py", "--src", str(src), "--out", str(tmp_path / "out"))
     assert result.returncode != 0
     assert "khong_co.jpg" in result.stderr
+
+
+def test_thu_nho_anh_lon(tmp_path: Path) -> None:
+    import cv2
+    import numpy as np
+
+    src, out = tmp_path / "afo", tmp_path / "afo_yolo"
+    make_afo(src)
+    big = src / "PART_1" / "PART_1" / "images" / "a_1.jpg"
+    cv2.imwrite(str(big), np.full((300, 400, 3), 128, dtype=np.uint8))
+    small_src = src / "PART_1" / "PART_1" / "images" / "a_2.jpg"
+    cv2.imwrite(str(small_src), np.full((50, 80, 3), 128, dtype=np.uint8))
+    for other in (src / "PART_2" / "PART_2" / "images" / "k_1.jpg", src / "PART_1" / "PART_1" / "images" / "x_9.jpg"):
+        cv2.imwrite(str(other), np.full((40, 40, 3), 128, dtype=np.uint8))
+    result = run("tools/prepare_afo.py", "--src", str(src), "--out", str(out), "--max-side", "100")
+    assert result.returncode == 0, result.stderr
+    assert cv2.imread(str(out / "images" / "train" / "a_1.jpg")).shape[:2] == (75, 100)  # cạnh dài 400 → 100
+    assert cv2.imread(str(out / "images" / "train" / "a_2.jpg")).shape[:2] == (50, 80)  # đã nhỏ hơn: giữ nguyên
