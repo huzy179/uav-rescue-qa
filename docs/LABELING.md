@@ -10,6 +10,7 @@ Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 c
 - **Giữ cả khung không có người** (nước, rác trôi, mái nhà): khoảng 10–20% tập, để đo báo động giả.
 - **Tên file:** `<video_id>_<số khung 6 chữ số>.jpg`. Lưu khung ở chất lượng gốc, không thu nhỏ.
 - Video dùng cho tập test không được dùng để huấn luyện hay chọn tham số.
+- Gợi ý nguồn video: YouTube (tìm "flycam lũ lụt", "flycam lũ Yagi 2024", "flycam cứu hộ lũ"; bộ lọc Creative Commons nếu cần giấy phép rõ), video của cơ quan phòng chống thiên tai (xin phép), các trang video miễn phí (Mixkit, Videvo, Wikimedia Commons; thường không có người, dùng cho khung không có người). Video có bản quyền: chỉ công bố nhãn và nguồn, không phát hành lại ảnh (hỏi thầy, quyết định #12 của ROADMAP).
 
 **Trích khung bằng `tools/extract_frames.py`** (làm đúng các quy tắc trên):
 
