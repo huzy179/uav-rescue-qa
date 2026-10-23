@@ -1,0 +1,8 @@
+# E2c (VisDrone + AFO, 55 epoch) trên afo: như E2_afo.yaml, trọng số E2c_s0.
+source: data/processed/afo/images/test
+model: runs/train/E2c_s0/weights/best.pt
+imgsz: [1280]
+conf: 0.001
+max_det: 1000
+no_images: true
+output: runs/afo/E2c
