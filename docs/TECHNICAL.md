@@ -940,7 +940,7 @@ Những việc script làm thêm so với gọi `yolo train` trực tiếp:
 - **Chặn `--resume` sai.** Checkpoint của lần chạy đã xong không còn trạng thái optimizer; khi đó ultralytics không báo lỗi mà lặng lẽ huấn luyện bộ mẫu `coco8`. Script kiểm tra trước và dừng kèm thông báo.
 - **Ghi `run_config.json`** cạnh trọng số, có commit git và máy chạy (`shared/provenance.py`).
 
-Chưa làm: xoay 90°/180° (ultralytics không có sẵn phép xoay góc vuông; `degrees` là xoay ngẫu nhiên liên tục, làm box phình ra). E3 dùng `model=yolo26s-p2.yaml` khởi tạo từ `yolo26s.pt` (ultralytics chuyển phần khớp).
+Chưa làm: xoay 90°/180° (ultralytics không có sẵn phép xoay góc vuông; `degrees` là xoay ngẫu nhiên liên tục, làm box phình ra). E3 dùng `model=yolo26s-p2.yaml` với `--transfer-from yolo26s.pt` (`configs/experiments/E3_s0.yaml`). Nạp mặc định của ultralytics (`YOLO(yaml).load(pt)`) ghép theo tên lớp kèm số thứ tự; P2 chèn 6 lớp vào head nên nhánh xuống P3→P4→P5 và Detect lệch số, chỉ nạp được 62% số tham số. `train.py` ánh xạ lại (`remap_to_p2`: lớp 17–22 → 23–28, Detect 23 → 29 với đầu thứ j thành j+1) và chỉ nhận tham số cùng hình dạng: nạp 92,5% số tham số; phần còn lại là nhánh và đầu P2 mới cùng các lớp đầu Detect đổi độ rộng. YOLO26s-P2: 26,6 GFLOPs ở 640 (bản thường 22,7).
 
 ### 13.4. Thang kích thước khi huấn luyện và augmentation `scale`
 

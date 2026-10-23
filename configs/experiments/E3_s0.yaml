@@ -1,0 +1,13 @@
+# E3, seed 0: như E2c (VisDrone + AFO) nhưng mô hình YOLO26s-P2 (thêm tầng phát hiện bước 4 cho người dưới 8 px).
+# Khởi tạo từ yolo26s.pt theo ánh xạ lớp của P2 (train.py --transfer-from); so với E2c để tách tác dụng của P2.
+train: [data/processed/visdrone/images/train, data/processed/afo/images/train]
+val: [data/processed/visdrone/images/val, data/processed/afo/images/val]
+model: yolo26s-p2.yaml
+transfer_from: yolo26s.pt
+imgsz: 1280
+epochs: 100
+patience: 20
+batch: 8
+seed: 0
+scale: 0.5
+output: runs/train/E3_s0

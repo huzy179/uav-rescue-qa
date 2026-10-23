@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 import yaml
@@ -18,6 +19,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train", type=Path, nargs="+", required=True, help="Các thư mục ảnh huấn luyện (.../images/train) hoặc file .txt danh sách ảnh (tools/split_by_video.py)")
     parser.add_argument("--val", type=Path, nargs="+", required=True, help="Các thư mục ảnh kiểm định (.../images/val) hoặc file .txt danh sách ảnh")
     parser.add_argument("--model", default="yolo26s.pt", help="Trọng số khởi đầu, hoặc yaml mô hình (E3)")
+    parser.add_argument(
+        "--transfer-from", default=None,
+        help="Với --model yolo26?-p2.yaml: nạp trọng số của bản 3 đầu (ví dụ yolo26s.pt) theo ánh xạ lớp của P2, thay vì học từ đầu",
+    )
     parser.add_argument("--imgsz", type=int, default=1280, help="Kích thước ảnh huấn luyện")
     parser.add_argument("--epochs", type=int, default=100, help="Số epoch tối đa")
     parser.add_argument("--patience", type=int, default=20, help="Dừng sớm sau N epoch không cải thiện")
@@ -55,6 +60,51 @@ def write_data_yaml(train: list[Path], val: list[Path], out_dir: Path) -> Path:
     return path
 
 
+# yolo26-p2.yaml chèn 6 lớp (nhánh lên P2 và xuống lại P3) vào head: lớp 0–16 giữ chỗ, nhánh xuống P3→P4→P5
+# (17–22 của bản 3 đầu) dời thành 23–28, Detect 23 thành 29 với một đầu P2 thêm ở vị trí 0.
+P2_SHIFT_FROM, P2_SHIFT, BASE_DETECT, P2_DETECT = 17, 6, 23, 29
+DETECT_BRANCH = re.compile(r"^(cv2|cv3|one2one_cv2|one2one_cv3)\.(\d+)\.")
+
+
+def remap_to_p2(key: str) -> str | None:
+    """Tên tham số của YOLO26 3 đầu → tên tương ứng trong YOLO26-P2; None nếu không có chỗ tương ứng."""
+    match = re.match(r"model\.(\d+)\.(.+)", key)
+    if not match:
+        return None
+    index, rest = int(match.group(1)), match.group(2)
+    if index < P2_SHIFT_FROM:
+        return key
+    if index < BASE_DETECT:
+        return f"model.{index + P2_SHIFT}.{rest}"
+    if index == BASE_DETECT:
+        rest = DETECT_BRANCH.sub(lambda m: f"{m.group(1)}.{int(m.group(2)) + 1}.", rest)
+        return f"model.{P2_DETECT}.{rest}"
+    return None
+
+
+def build_p2_init(p2_yaml: str, source: str, out_path: Path) -> tuple[int, int]:
+    """Dựng checkpoint P2 mang trọng số của bản 3 đầu (theo remap_to_p2, chỉ nhận tham số cùng hình dạng).
+
+    Gọi YOLO(p2_yaml).load(source) chỉ ghép theo tên nên mất cả neck và head (360/902 tham số với bản s).
+    Giữ tên lớp của nguồn để ultralytics còn nhận ra lớp person khi thu đầu phân loại về một lớp.
+    """
+    from ultralytics import YOLO
+
+    src = YOLO(source).model
+    target = YOLO(p2_yaml)
+    target_sd = target.model.state_dict()
+    moved = {}
+    for key, value in src.state_dict().items():
+        new_key = remap_to_p2(key)
+        if new_key in target_sd and target_sd[new_key].shape == value.shape:
+            moved[new_key] = value
+    target.model.load_state_dict(moved, strict=False)
+    target.model.names = dict(src.names)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    target.save(str(out_path))
+    return len(moved), len(target_sd)
+
+
 def main() -> None:
     """Huấn luyện rồi ghi run_config.json cạnh trọng số."""
     args = parse_args()
@@ -76,7 +126,12 @@ def main() -> None:
         # Ultralytics đọc lại toàn bộ tham số từ checkpoint, nên các tham số khác trên dòng lệnh bị bỏ qua.
         YOLO(str(last)).train(resume=True)
     else:
-        YOLO(args.model).train(
+        model_path = args.model
+        if args.transfer_from:
+            model_path = str(output / "p2_init.pt")
+            n, total = build_p2_init(args.model, args.transfer_from, Path(model_path))
+            print(f"Khởi tạo P2 từ {args.transfer_from}: {n}/{total} tham số, lưu {model_path}")
+        YOLO(model_path).train(
             data=str(write_data_yaml([Path(p) for p in args.train], [Path(p) for p in args.val], output)),
             imgsz=args.imgsz,
             epochs=args.epochs,
