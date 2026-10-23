@@ -1,7 +1,7 @@
 # FloodEye (flood-tiny-person)
 
 Phát hiện người kích thước nhỏ từ ảnh UAV trong vùng ngập lụt, hướng tới xử lý trên thiết bị biên.
-Mô hình nền: YOLO26 (`ultralytics`). Tổng quan dự án, các bước và lý do: [docs/TONG_QUAN.md](docs/TONG_QUAN.md). Kế hoạch và tiến độ: [docs/ROADMAP.md](docs/ROADMAP.md). Giải thích kỹ thuật: [docs/TECHNICAL.md](docs/TECHNICAL.md). Kết quả đã có: [docs/results/](docs/results/).
+Mô hình nền: YOLO26 (`ultralytics`). Tổng quan dự án, các bước và lý do: [docs/TONG_QUAN.md](docs/TONG_QUAN.md). Thuật toán chi tiết, có ví dụ tính tay và nguồn tham khảo: [docs/THUAT_TOAN.md](docs/THUAT_TOAN.md). Kế hoạch và tiến độ: [docs/ROADMAP.md](docs/ROADMAP.md). Giải thích kỹ thuật: [docs/TECHNICAL.md](docs/TECHNICAL.md). Kết quả đã có: [docs/results/](docs/results/).
 
 ## Cấu trúc
 

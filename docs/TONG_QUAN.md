@@ -8,6 +8,7 @@ Tài liệu không thay cho ba tài liệu kia:
 |---|---|
 | **TONG_QUAN.md** (tài liệu này) | Cần hiểu dự án tổng thể, lập luận cho từng lựa chọn, chuẩn bị trả lời câu hỏi |
 | [TECHNICAL.md](TECHNICAL.md) | Cần công thức, thuật toán, chi tiết cài đặt. Các chỗ "(T 9.3)" bên dưới là mục 9.3 của TECHNICAL |
+| [THUAT_TOAN.md](THUAT_TOAN.md) | Cần hiểu kỹ thuật toán trên UAV: từng bước, ví dụ tính tay, nguồn tham khảo |
 | [ROADMAP.md](ROADMAP.md) | Cần lịch theo tuần, các quyết định còn treo |
 | [README.md](../README.md) | Cần lệnh cài đặt và chạy |
 
