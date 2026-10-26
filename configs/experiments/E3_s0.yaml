@@ -7,7 +7,7 @@ transfer_from: yolo26s.pt
 imgsz: 1280
 epochs: 100
 patience: 20
-batch: 8
+batch: 4   # P2 ở 1280 tràn bộ nhớ T4 với batch 8 (lần chạy thử 24/10); ultralytics vẫn cộng dồn gradient tới batch danh nghĩa 64
 seed: 0
 scale: 0.5
 output: runs/train/E3_s0

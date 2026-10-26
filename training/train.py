@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
 from pathlib import Path
+from typing import Any, Callable
 
 import yaml
 
@@ -38,6 +40,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workers", type=int, default=8, help="Số tiến trình đọc dữ liệu")
     parser.add_argument("--device", default=None, help="Ví dụ: 0, mps, cpu (mặc định: tự chọn)")
     parser.add_argument("--output", type=Path, default=Path("runs/train/E2_s0"), help="Thư mục kết quả")
+    parser.add_argument(
+        "--stop-after-epochs", type=int, default=None,
+        help="Dừng gọn sau N epoch nhưng giữ lịch tốc độ học của --epochs; weights/last_resume.pt giữ trạng thái optimizer "
+             "để chạy tiếp bằng --resume ở phiên sau (một phiên Kaggle tối đa 12 giờ)",
+    )
     parser.add_argument("--resume", action="store_true", help="Chạy tiếp từ <output>/weights/last.pt khi phiên bị ngắt")
     return parse_args_with_config(parser)
 
@@ -105,6 +112,25 @@ def build_p2_init(p2_yaml: str, source: str, out_path: Path) -> tuple[int, int]:
     return len(moved), len(target_sd)
 
 
+def split_run_callbacks(stop_after: int | None) -> dict[str, Callable[[Any], None]]:
+    """Callback cho ultralytics để chia một lần huấn luyện dài thành nhiều phiên.
+
+    on_model_save: chép weights/last.pt thành last_resume.pt ngay sau mỗi lần lưu, khi nó còn trạng thái optimizer
+    (ultralytics xoá trạng thái này khỏi last.pt ở bước đánh giá cuối, nên last.pt không chạy tiếp được nữa).
+    on_fit_epoch_end: đặt trainer.stop sau stop_after epoch (đếm cả epoch đã chạy ở phiên trước).
+    """
+    def keep_resumable(trainer: Any) -> None:
+        last = Path(trainer.last)
+        if last.is_file():
+            shutil.copy2(last, last.with_name("last_resume.pt"))
+
+    def stop_when_due(trainer: Any) -> None:
+        if stop_after is not None and trainer.epoch + 1 >= stop_after:
+            trainer.stop = True
+
+    return {"on_model_save": keep_resumable, "on_fit_epoch_end": stop_when_due}
+
+
 def main() -> None:
     """Huấn luyện rồi ghi run_config.json cạnh trọng số."""
     args = parse_args()
@@ -123,15 +149,23 @@ def main() -> None:
         # lặng lẽ huấn luyện bộ mặc định coco8 vào thư mục runs chung.
         if torch_load(last, map_location="cpu").get("optimizer") is None:
             raise RuntimeError(f"{last} là checkpoint của lần chạy đã xong, không còn gì để chạy tiếp")
+        # Phiên mới (Kaggle) chưa có data.yaml mà checkpoint trỏ tới: dựng lại cùng đường dẫn trước khi chạy tiếp.
+        write_data_yaml([Path(p) for p in args.train], [Path(p) for p in args.val], output)
         # Ultralytics đọc lại toàn bộ tham số từ checkpoint, nên các tham số khác trên dòng lệnh bị bỏ qua.
-        YOLO(str(last)).train(resume=True)
+        model = YOLO(str(last))
+        for event, callback in split_run_callbacks(args.stop_after_epochs).items():
+            model.add_callback(event, callback)
+        model.train(resume=True)
     else:
         model_path = args.model
         if args.transfer_from:
             model_path = str(output / "p2_init.pt")
             n, total = build_p2_init(args.model, args.transfer_from, Path(model_path))
             print(f"Khởi tạo P2 từ {args.transfer_from}: {n}/{total} tham số, lưu {model_path}")
-        YOLO(model_path).train(
+        model = YOLO(model_path)
+        for event, callback in split_run_callbacks(args.stop_after_epochs).items():
+            model.add_callback(event, callback)
+        model.train(
             data=str(write_data_yaml([Path(p) for p in args.train], [Path(p) for p in args.val], output)),
             imgsz=args.imgsz,
             epochs=args.epochs,

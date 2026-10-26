@@ -28,3 +28,23 @@ def test_remap_to_p2(key: str, expected: str) -> None:
 def test_remap_bo_qua_ten_la() -> None:
     assert train.remap_to_p2("names") is None
     assert train.remap_to_p2("model.24.conv.weight") is None
+
+
+def test_split_run_callbacks(tmp_path: Path) -> None:
+    """Chép last.pt thành last_resume.pt sau mỗi lần lưu; dừng sau đủ số epoch."""
+    from types import SimpleNamespace
+
+    last = tmp_path / "last.pt"
+    last.write_bytes(b"ckpt")
+    callbacks = train.split_run_callbacks(stop_after=3)
+    trainer = SimpleNamespace(last=last, epoch=1, stop=False)
+    callbacks["on_model_save"](trainer)
+    assert (tmp_path / "last_resume.pt").read_bytes() == b"ckpt"
+    callbacks["on_fit_epoch_end"](trainer)
+    assert trainer.stop is False  # mới xong 2 epoch
+    trainer.epoch = 2
+    callbacks["on_fit_epoch_end"](trainer)
+    assert trainer.stop is True
+    untouched = SimpleNamespace(last=last, epoch=99, stop=False)
+    train.split_run_callbacks(stop_after=None)["on_fit_epoch_end"](untouched)
+    assert untouched.stop is False
