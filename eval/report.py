@@ -58,7 +58,8 @@ def write_csvs(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Ghi boxes.csv (mỗi dòng một box) và per_image.csv (mỗi dòng một ảnh)."""
     boxes = pd.DataFrame(box_records, columns=BOX_COLUMNS)
-    images = pd.DataFrame(image_records, columns=IMAGE_COLUMNS)
+    extra = [c for c in dict.fromkeys(k for r in image_records for k in r) if c not in IMAGE_COLUMNS]  # ví dụ scale của run_tiled.py
+    images = pd.DataFrame(image_records, columns=IMAGE_COLUMNS + extra)
     boxes.to_csv(out_dir / "boxes.csv", index=False)
     images.to_csv(out_dir / "per_image.csv", index=False)
     return boxes, images

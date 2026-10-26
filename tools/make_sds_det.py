@@ -2,6 +2,7 @@
 
 Khung liền nhau trong video gần như giống hệt, nên chỉ lấy thưa; tên ảnh v<video>_<khung>.jpg để bootstrap theo video
 (eval_by_size.py --cluster-pattern '^(v\\d+)_'). Lớp swimmer và swimmer with life jacket thành person; thuyền bỏ.
+Ghi thêm meta_<split>.csv (độ cao, góc gimbal từng ảnh) cho run_tiled.py --altitude-csv.
 
 Ví dụ:
     .venv/bin/python tools/make_sds_det.py --src data/raw/seadronessee_mot --dst data/processed/sds_det --split val --every 15
@@ -10,6 +11,7 @@ Ví dụ:
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import shutil
@@ -45,6 +47,7 @@ def main() -> None:
     images_dir.mkdir(parents=True, exist_ok=True)
     labels_dir.mkdir(parents=True, exist_ok=True)
     sizes, n_images, videos = [], 0, set()
+    meta_rows = []
     for image in data["images"]:
         if image["frame_index"] % args.every:
             continue
@@ -61,7 +64,13 @@ def main() -> None:
         (labels_dir / f"{name}.txt").write_text("".join(lines), encoding="utf-8")
         sizes += [min(w, h) for _, _, w, h in boxes[image["id"]]]
         n_images += 1
+        meta_rows.append({"image": f"{name}.jpg", "alt_agl_m": image["meta"]["altitude"],
+                          "gimbal_pitch_deg": image["meta"].get("gimbal_pitch"), "drone": image.get("source", {}).get("drone")})
         videos.add(image["video_id"])
+    with (args.dst / f"meta_{args.split}.csv").open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["image", "alt_agl_m", "gimbal_pitch_deg", "drone"])
+        writer.writeheader()
+        writer.writerows(meta_rows)
     print(f"{n_images} ảnh, {len(sizes)} người, {len(videos)} video; cạnh ngắn người trung vị "
           f"{statistics.median(sizes) if sizes else 0:.0f} px")
 

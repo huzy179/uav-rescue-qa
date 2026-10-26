@@ -49,6 +49,7 @@ Số đọc từ `runs/e6_sds/eval/recall_by_factor.csv`.
 
 1. **E2c giỏi người nhỏ, đúng mục tiêu fine-tune:** ở 6–23 px recall 0,494–0,624, so với 0,047–0,210 của E1.
 2. **Nhưng E2c tụt mạnh với người to:** từ 45 px trở lên kém E1, ở ≥ 91 px còn 0,133 so với 0,637. Hai đường cắt nhau ở khoảng 32–64 px. Cách giải thích hợp lý nhất (chưa kiểm chứng riêng): dữ liệu huấn luyện của E2c là VisDrone và AFO đã thu về imgsz 1280, nên người khi vào mạng hầu hết nhỏ; mô hình quên dạng người to. Hệ quả: **không nên đưa người to vào E2c ở độ phân giải gốc**; với E2c, ảnh 4K nên thu về để người còn khoảng 10–30 px.
+   Số liệu ủng hộ cách giải thích này (`tools/label_size_stats.py`, imgsz 1280, `runs/stats/{visdrone,afo}_train_1280/size_stats.csv`): khi không co giãn (s = 1), người trên 32 px chỉ chiếm 0,0477 số người trong VisDrone train và 0,1833 trong AFO train; ở s = 0,5 (cận dưới của `scale: 0.5`) còn 0,0027 và 0,0005.
 3. Hệ quả cho cắt ô (E4): cắt ô ở độ phân giải gốc chỉ có lợi khi người ở độ phân giải gốc còn nhỏ (bay cao). Với người đã đủ to, cắt ô làm người "to lên" so với lúc huấn luyện và E2c kém đi. Kích thước ô và mức thu nhỏ nên chọn theo GSD để người rơi vào khoảng 10–30 px.
 4. Với E6 nguyên bản: dưới khoảng 6 px cả hai mô hình gần như không thấy người; muốn E2c còn recall khoảng 0,5 thì người cần ít nhất khoảng 6–8 px.
 5. Khuyến nghị "thêm dữ liệu người to khi fine-tune" (hoặc augmentation `scale` rộng hơn) là việc nên thử nếu tập lũ có nhiều người to; tập lũ sẽ trả lời.

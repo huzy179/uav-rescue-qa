@@ -53,6 +53,11 @@ def ground_distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> flo
     return math.hypot(*ground_offset_m(lat1, lon1, lat2, lon2))
 
 
+def expected_person_px(tel: Telemetry, cam: Camera, person_m: float = 0.5) -> float:
+    """Kích thước dự kiến (px) của vật cỡ person_m mét trên ảnh gốc, camera nhìn thẳng xuống."""
+    return person_m * cam.f_px / tel.alt_agl_m
+
+
 def pixel_to_gps(u: float, v: float, tel: Telemetry, cam: Camera) -> tuple[float, float]:
     """Pixel (u sang phải, v xuống dưới) → (lat, lon) của điểm trên mặt đất."""
     scale = tel.alt_agl_m / cam.f_px

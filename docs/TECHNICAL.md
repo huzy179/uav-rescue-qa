@@ -271,6 +271,8 @@ SAHI gọi mô hình từng ô một và gắn với cách nạp mô hình của
 
 YOLO26 không cần NMS **trong** từng ô, nhưng vẫn cần gộp **giữa** các ô vì cùng một người xuất hiện ở vùng chồng của hai ô.
 
+**Thu nhỏ theo độ cao [Đã có, sơ bộ]:** `--target-person-px` thu nhỏ khung trước khi cắt ô để người dự kiến (0,5 m × f_px / độ cao, mục 2.3) còn khoảng số px này; không phóng to. Lý do: mô hình fine-tune (E2c) mạnh ở người 10–30 px, yếu với người to vì dữ liệu huấn luyện hầu như không có (`results/e6_sds_pilot.md`). Trên SDS 4K, cắt ô ở độ phân giải gốc cho AP50 0,235; thu nhỏ theo độ cao cho 0,531, ngang mô hình gốc trên nước (`results/scale_by_altitude.md`). Cũng giảm số ô phải chạy.
+
 Tối ưu tiềm năng (nếu RQ2 cần): chỉ chạy ô có nước hoặc có khả năng có người (lọc bằng mô hình phân vùng nước rẻ, hoặc bằng lượt toàn ảnh độ phân giải thấp với ngưỡng rất thấp), ô không thay đổi so với khung trước thì bỏ qua.
 
 ---

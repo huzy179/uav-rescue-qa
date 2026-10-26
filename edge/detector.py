@@ -11,6 +11,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
+import cv2
 import numpy as np
 
 from edge.device import pick_device
@@ -20,7 +21,20 @@ PERSON_CLASS_ID = 0  # COCO và mô hình fine-tune một lớp đều để ng�
 
 
 class Detector(Protocol):
-    def detect(self, frame: np.ndarray, frame_id: int, t: float) -> tuple[list[Detection], dict[str, float]]: ...
+    def detect(
+        self, frame: np.ndarray, frame_id: int, t: float, scale: float = 1.0
+    ) -> tuple[list[Detection], dict[str, float]]: ...
+
+
+def person_scale(expected_px: float, target_px: float | None) -> float:
+    """Hệ số thu nhỏ khung để người dự kiến còn khoảng target_px; không phóng to (phóng to không thêm thông tin).
+
+    Lý do (docs/results/e6_sds_pilot.md): E2c bắt tốt nhất người khoảng 10–30 px và tụt mạnh với người trên 45 px,
+    vì dữ liệu huấn luyện hầu như không có người to. target_px=None thì giữ nguyên khung.
+    """
+    if target_px is None or expected_px <= target_px:
+        return 1.0
+    return expected_px / target_px
 
 
 class ReplayDetector:
@@ -34,7 +48,9 @@ class ReplayDetector:
                 # Bỏ toạ độ cũ: georef tính lại theo telemetry của lần chạy này.
                 self._by_frame[det.frame_id].append(det.model_copy(update={"lat": None, "lon": None}))
 
-    def detect(self, frame: np.ndarray, frame_id: int, t: float) -> tuple[list[Detection], dict[str, float]]:
+    def detect(
+        self, frame: np.ndarray, frame_id: int, t: float, scale: float = 1.0
+    ) -> tuple[list[Detection], dict[str, float]]:
         return list(self._by_frame.get(frame_id, [])), {}
 
 
@@ -180,9 +196,17 @@ class YoloDetector:
         results: Any = self.model.predict(images, imgsz=imgsz, **self._kwargs)
         return [(r.boxes.xyxy.cpu().numpy(), r.boxes.conf.cpu().numpy()) for r in results]
 
-    def detect(self, frame: np.ndarray, frame_id: int, t: float) -> tuple[list[Detection], dict[str, float]]:
-        """Trả về phát hiện trên toạ độ ảnh gốc và thời gian từng phần (ms): cắt ô, suy luận, gộp."""
+    def detect(
+        self, frame: np.ndarray, frame_id: int, t: float, scale: float = 1.0
+    ) -> tuple[list[Detection], dict[str, float]]:
+        """Trả về phát hiện trên toạ độ ảnh gốc và thời gian từng phần (ms): cắt ô, suy luận, gộp.
+
+        scale > 1: thu nhỏ khung theo hệ số này trước khi cắt ô hay suy luận (xem person_scale), box quy về ảnh gốc.
+        """
         start = time.perf_counter()
+        if scale > 1.0:
+            size = (max(1, round(frame.shape[1] / scale)), max(1, round(frame.shape[0] / scale)))
+            frame = cv2.resize(frame, size, interpolation=cv2.INTER_AREA)
         if self.mode == "full":
             images, offsets, imgsz = [frame], [(0, 0)], self.imgsz
         else:
@@ -215,6 +239,8 @@ class YoloDetector:
         if len(offsets) > 1:
             keep = merge_boxes(boxes, confs)
             boxes, confs = boxes[keep], confs[keep]
+        if scale > 1.0:
+            boxes = boxes * scale
         detections = [
             Detection(frame_id=frame_id, t=t, box_px=(x1, y1, x2, y2), conf=conf)
             for (x1, y1, x2, y2), conf in zip(boxes.tolist(), confs.tolist())
@@ -225,5 +251,6 @@ class YoloDetector:
             "infer_ms": (t_infer - t_tile) * 1000.0,
             "merge_ms": (t_merge - t_infer) * 1000.0,
             "n_tiles": float(len(offsets)),
+            "scale": scale,
         }
         return detections, timings

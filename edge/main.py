@@ -19,8 +19,8 @@ import numpy as np
 
 from edge.alerts import FakeTransport, HttpTransport, Outbox, Transport, crop_jpeg_base64, make_alert
 from edge.confirm import Confirmer, GeoConfirmer, TrackConfirmer
-from edge.detector import ByteTracker, Detector, ReplayDetector, YoloDetector
-from edge.georef import Camera, frame_motion, gps_to_pixel, locate
+from edge.detector import ByteTracker, Detector, ReplayDetector, YoloDetector, person_scale
+from edge.georef import Camera, expected_person_px, frame_motion, gps_to_pixel, locate
 from edge.sampler import iter_timed_frames
 from edge.telemetry import SampledTelemetry, TelemetrySource
 from eval.draw import draw_boxes
@@ -49,6 +49,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--overlap", type=float, default=0.2, help="Độ chồng giữa các ô")
     parser.add_argument("--conf", type=float, default=0.1, help="Ngưỡng conf của detector (thấp vì có xác nhận nhiều khung)")
     parser.add_argument("--max-det", type=int, default=1000, help="Số box tối đa mỗi lần suy luận")
+    parser.add_argument("--target-person-px", type=float, default=None,
+                        help="Thu nhỏ khung theo độ cao để người dự kiến còn khoảng số px này (docs/results/e6_sds_pilot.md); không đặt thì giữ nguyên")
+    parser.add_argument("--person-m", type=float, default=0.5, help="Cỡ người nhìn từ trên xuống (m), để tính số px dự kiến")
     parser.add_argument("--device", default=None, help="cuda:0, mps, cpu (mặc định: tự chọn)")
     parser.add_argument("--telemetry", type=Path, default=None, help="File .csv hoặc .srt (DJI); không có thì dùng chuyến bay thẳng giả lập")
     parser.add_argument("--alt-offset-m", type=float, default=0.0, help="SRT: cộng vào độ cao tương đối để ra độ cao so với mặt nước")
@@ -185,7 +188,8 @@ def main() -> None:
                 cam = Camera.from_fov(args.fov_deg, args.fov_type, frame.shape[1], frame.shape[0])
                 confirmer = build_confirmer(args, telemetry, cam)
             tel = telemetry.at(t)
-            dets, timings = detector.detect(frame, frame_id, t)
+            scale = person_scale(expected_person_px(tel, cam, args.person_m), args.target_person_px)
+            dets, timings = detector.detect(frame, frame_id, t, scale)
             start = time.perf_counter()
             dets = [locate(d, tel, cam) for d in dets]
             timings["georef_ms"] = (time.perf_counter() - start) * 1000.0

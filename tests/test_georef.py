@@ -55,3 +55,15 @@ def test_frame_motion_identity_and_forward_flight() -> None:
     flight = StraightFlight(21.0, 105.8, 50.0, 10.0, yaw_deg=0.0)
     warp = frame_motion(flight.at(0.0), flight.at(0.5), CAM)
     assert warp == pytest.approx(np.array([[1, 0, 0], [0, 1, 192.0]]), abs=1e-3)
+
+
+def test_co_nguoi_du_kien_va_he_so_thu_nho() -> None:
+    from edge.detector import person_scale
+    from edge.georef import expected_person_px
+
+    cam = Camera(4000, 3000, 90.0)  # f = 2000 px
+    tel = Telemetry(t=0.0, lat=21.0, lon=105.8, alt_agl_m=50.0, yaw_deg=0.0, pitch_deg=-90.0)
+    assert expected_person_px(tel, cam, 0.5) == pytest.approx(20.0)
+    assert person_scale(40.0, 20.0) == 2.0
+    assert person_scale(10.0, 20.0) == 1.0  # không phóng to
+    assert person_scale(40.0, None) == 1.0
