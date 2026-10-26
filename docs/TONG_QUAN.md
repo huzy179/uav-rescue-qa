@@ -421,17 +421,17 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 1. Hình học camera | Xong |
 | 2. Mô hình nền | Xong |
 | 3. Dữ liệu công khai | VisDrone, AFO, C2A, HydroVigilance, SeaDronesSee-MOT đã tải và chuyển; FinlandProper tạm bỏ (162 GB, máy chủ không cho tải từng phần) |
-| 4. Tập test lũ | **Chưa gán**; 212 khung từ 10 video đã trích, lọc tay, đóng gói zip cho CVAT (`Downloads/floodeye_cvat`) |
+| 4. Tập test lũ | **Chưa gán**; 212 khung từ 10 video đã trích, lọc tay, đóng gói zip cho CVAT (`Downloads/floodeye_cvat`). Gán xong thì `scripts/eval_flood.sh <thư mục file xuất>` chạy trọn: chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu (`eval/recall_by_tag.py`) |
 | 5. Cách đo | Xong; thêm chấm khối xác nhận theo track trên video thật (`eval/track_confirm_eval.py`) |
 | 6. E0, E1, E4 | Xong |
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |
-| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; E3 (P2) đang chạy, chia hai phiên Kaggle; E2d (+ HydroVigilance) có cấu hình |
+| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; E3 (P2) đang chạy, chia hai phiên Kaggle; E2d (+ HydroVigilance) có cấu hình; **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
 | 9. Pipeline UAV | Xong; demo trực tiếp `scripts/live_demo.py` |
-| 10. Trạm mặt đất | Xong bản tối giản; bản đồ Esri (ô OpenStreetMap không tải được) |
+| 10. Trạm mặt đất | Xong bản tối giản; bản đồ Esri (ô OpenStreetMap không tải được); gộp cảnh báo thành sự cố, bán kính 5 m (`alert_memory.md`) |
 | 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`) |
 | 12. RQ2 | Công cụ đo xong; chưa xuất TensorRT |
 | 13. Luận văn | Đã báo cáo ý tưởng thuật toán với cô 23/10 (slide 22 trang) |
 
-Kết quả chính tới nay: fine-tune tăng mạnh người nhỏ trên VisDrone (`visdrone_E2.md`); thêm AFO giữ được người dưới nước (`E2c.md`), nhưng trên tập nước độc lập SeaDronesSee chưa hơn mô hình gốc (`sds_det.md`).
+Kết quả chính tới nay: fine-tune tăng mạnh người nhỏ trên VisDrone (`visdrone_E2.md`); thêm AFO giữ được người dưới nước (`E2c.md`), nhưng trên tập nước độc lập SeaDronesSee chưa hơn mô hình gốc (`sds_det.md`). Lý do một phần là cỡ người: E2c yếu với người to; **thu nhỏ khung theo độ cao bay** (`--target-person-px`) đưa E2c cắt ô trên SDS 4K từ AP50 0,235 lên 0,531, ngang mô hình gốc (`scale_by_altitude.md`). Cảnh báo lặp của geo: chặn ở biên (`--suppress-s`) làm mất người ở cảnh đông nên tắt; gộp thành sự cố ở trạm mặt đất thay thế (`alert_memory.md`).
 
 Lịch chi tiết: [ROADMAP.md](ROADMAP.md) mục 1. Khi một bước đổi trạng thái, cập nhật bảng này cùng lúc với ROADMAP.
