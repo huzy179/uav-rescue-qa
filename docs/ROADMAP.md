@@ -320,5 +320,5 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 | 9 | RQ3: ByteTrack giữ ngưỡng tạo track 0,25 như bài gốc, hay hạ về bằng conf detector để cùng đầu vào với `geo`? (TECHNICAL 9.2) | Học viên | Trước RQ3 (14/11) |
 | 10 | Tới 4/11 chưa đủ 200 khung đã rà: khoá với số đang có (tối thiểu 150) hay lùi khoá tới 11/11? (mục 1.5) | Thầy | 23/10 |
 | 11 | So E2 với E0/E1 trên VisDrone test-dev thay vì val? E2 chọn `best.pt` theo val nên val thiên vị E2 (TECHNICAL 13.5). Đã chạy cả hai tập cho E1, E2: mức tăng giữ nguyên trên test-dev (`docs/results/visdrone_E2.md`); cần thầy chọn tập nào là bảng chính | Học viên, hỏi thầy | 23/10 |
-| 13 | Đưa "thu nhỏ khung theo độ cao" (`scale_by_altitude.md`) thành một đóng góp của khối phát hiện, đánh giá trên tập lũ cạnh E4 (cắt ô cố định)? Chọn mục tiêu px trên dữ liệu ngoài tập test lũ | Học viên, hỏi thầy | Trước khi chạy RQ1 trên tập lũ |
 | 12 | Dùng video lũ có bản quyền (YouTube, báo chí) cho tập test, chỉ công bố nhãn và nguồn, không phát hành lại ảnh: có được chấp nhận? C2A không ghi giấy phép trên GitHub: dùng để huấn luyện có ổn? | Thầy | 23/10 |
+| 13 | Đưa "thu nhỏ khung theo độ cao" (`scale_by_altitude.md`) thành một đóng góp của khối phát hiện, đánh giá trên tập lũ cạnh E4 (cắt ô cố định)? Chọn mục tiêu px trên dữ liệu ngoài tập test lũ | Học viên, hỏi thầy | Trước khi chạy RQ1 trên tập lũ |
