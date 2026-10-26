@@ -342,9 +342,9 @@ Nếu không làm vậy, một dự đoán đúng cho người 40 px sẽ bị t
 
 VisDrone đánh dấu một số vùng là "ignored" (đám đông quá dày, vùng mờ không gán nhãn được). Dự đoán rơi vào đó có thể là người thật nhưng không có nhãn. Nếu tính là FP, precision bị đánh giá thấp oan. `match_image` nhận thêm `ignore_regions`: dự đoán không khớp nhãn nào mà có ít nhất 50% diện tích nằm trong một vùng bỏ qua (IoA, Intersection over Area của dự đoán) thì không tính. Ultralytics bỏ hẳn các vùng này khi chuyển nhãn, nên AP của nó thấp hơn một chút (0,490 so với 0,497).
 
-### 5.7. Recall theo loại nhiễu [Thiết kế]
+### 5.7. Recall theo loại nhiễu [Đã có, chờ tập lũ có nhãn]
 
-**[Đã có]** phần dữ liệu: `tools/convert_cvat.py` ghi `boxes_<split>.csv` (thuộc tính từng người) và `tags_<split>.csv` (thẻ từng ảnh). **[Thiết kế]** phần tính recall theo tập con.
+`tools/convert_cvat.py` ghi `boxes_<split>.csv` (thuộc tính từng người) và `tags_<split>.csv` (thẻ từng ảnh); `eval/recall_by_tag.py` tính recall ở conf 0,25 trên từng tập con (mỗi thẻ ảnh, mỗi thuộc tính người, cùng tập con "không thẻ" và "không thuộc tính" để so) và báo nhầm mỗi ảnh trên từng tập con ảnh, kèm khoảng tin cậy bootstrap theo ảnh hoặc theo video.
 
 Tập test lũ được gắn thẻ nhiễu (lóa nước, rác trôi, ngập một phần, che khuất, thời tiết, nhòe). Hai mức gắn thẻ:
 - **Theo ảnh** (lóa, thời tiết, nhòe): tính recall trên tập con các ảnh có thẻ.
