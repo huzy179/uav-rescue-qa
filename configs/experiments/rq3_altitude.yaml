@@ -1,0 +1,18 @@
+# RQ3: bay cao bao nhiêu thì còn đủ người được cảnh báo, với recall theo cỡ người đo ở E6 thử (SDS, e6_sds_pilot.md)
+# thay cho recall cố định. Người cách đường bay tối đa 15 m để luôn lọt khung từ 30 m trở lên; GPS σ 0,5 m, τ 30 s.
+output: runs/rq3/altitude
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  lateral_m: 15
+  gps_sigma_m: 0.5
+  fp_per_frame: 0.5
+  recall_curve: runs/e6_sds/eval/recall_by_pixels.csv
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+grid:
+  scenario.alt_m: [30, 50, 80, 120, 160, 200]
+  scenario.recall_model: [E1, E2c]
+  pipeline.confirm: [geo]
