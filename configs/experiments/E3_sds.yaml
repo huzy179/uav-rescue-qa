@@ -1,0 +1,8 @@
+# E3 (YOLO26s-P2, dữ liệu như E2c: VisDrone + AFO, 55 epoch) trên sds: như E2c_sds.yaml, trọng số E3_s0.
+source: data/processed/sds_det/images/val
+model: runs/train/E3_s0/weights/best.pt
+imgsz: [1280]
+conf: 0.001
+max_det: 1000
+no_images: true
+output: runs/sds_det/E3
