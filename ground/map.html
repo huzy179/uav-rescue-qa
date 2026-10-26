@@ -20,7 +20,7 @@
 <body>
 <div id="wrap">
   <div id="map"></div>
-  <div id="side"><h1>Cảnh báo (<span id="count">0</span>)</h1><div id="list"></div></div>
+  <div id="side"><h1>Sự cố (<span id="count">0</span>) · cảnh báo (<span id="nalerts">0</span>)</h1><div id="list"></div></div>
 </div>
 <script>
   // Ô bản đồ cần internet; khi mất mạng thật cần ô bản đồ ngoại tuyến (TECHNICAL mục 12.5).
@@ -36,31 +36,38 @@
   const markers = {};
   let fitted = false;
 
-  function popup(a) {
-    const crop = a.has_crop ? `<br><img src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" width="200">` : "<br><i>Chưa có ảnh cắt</i>";
-    return `<b>${a.alert_id}</b><br>Độ tin cậy ${a.confidence.toFixed(2)} · ${a.frames_confirmed} khung<br>`
-      + `Sai số ±${a.position_error_m.toFixed(1)} m · độ cao ${a.altitude_m.toFixed(0)} m${crop}`;
+  // Mỗi sự cố (ground/incidents.py) là một điểm; mở ra thấy ảnh cắt mới nhất và mọi cảnh báo đã gộp vào.
+  function popup(inc) {
+    const a = inc.alerts[0];
+    const crop = a && a.has_crop ? `<br><img src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" width="200">` : "<br><i>Chưa có ảnh cắt</i>";
+    const ids = inc.alerts.map(x => x.alert_id).join(", ");
+    return `<b>Sự cố #${inc.incident_id}</b><br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.join(", ")}<br>`
+      + `Sai số ±${inc.position_error_m.toFixed(1)} m · độ tin cậy cao nhất ${Math.max(...inc.alerts.map(x => x.confidence)).toFixed(2)}`
+      + `${crop}<br><small>${ids}</small>`;
   }
 
   async function refresh() {
     try {
-      const alerts = await (await fetch("/api/alerts")).json();
-      document.getElementById("count").textContent = alerts.length;
+      const incidents = await (await fetch("/api/incidents")).json();
+      document.getElementById("count").textContent = incidents.length;
+      document.getElementById("nalerts").textContent = incidents.reduce((n, i) => n + i.n_alerts, 0);
       const list = document.getElementById("list");
       list.replaceChildren();
-      for (const a of alerts) {
-        if (!markers[a.alert_id]) {
-          markers[a.alert_id] = L.circleMarker([a.lat, a.lon], { radius: 8, color: "#d62728", weight: 2 }).addTo(map);
+      for (const inc of incidents) {
+        const key = inc.incident_id;
+        if (!markers[key]) {
+          markers[key] = L.circleMarker([inc.lat, inc.lon], { color: "#d62728", weight: 2 }).addTo(map);
         }
-        markers[a.alert_id].bindPopup(popup(a));
+        markers[key].setLatLng([inc.lat, inc.lon]).setRadius(Math.min(8 + 2 * (inc.n_alerts - 1), 16));
+        markers[key].bindPopup(popup(inc));
         const item = document.createElement("div");
         item.className = "item";
-        item.textContent = `${a.alert_id} · ${a.lat.toFixed(6)}, ${a.lon.toFixed(6)} · ${a.confidence.toFixed(2)}`;
-        item.onclick = () => { map.setView([a.lat, a.lon], 19); markers[a.alert_id].openPopup(); };
+        item.textContent = `#${key} · ${inc.n_alerts} cảnh báo · ${inc.uav_ids.length} UAV · ${inc.lat.toFixed(6)}, ${inc.lon.toFixed(6)}`;
+        item.onclick = () => { map.setView([inc.lat, inc.lon], 19); markers[key].openPopup(); };
         list.appendChild(item);
       }
-      if (!fitted && alerts.length) {
-        map.fitBounds(alerts.map(a => [a.lat, a.lon]), { maxZoom: 19, padding: [40, 40] });
+      if (!fitted && incidents.length) {
+        map.fitBounds(incidents.map(i => [i.lat, i.lon]), { maxZoom: 19, padding: [40, 40] });
         fitted = true;
       }
     } catch (e) { console.error(e); }

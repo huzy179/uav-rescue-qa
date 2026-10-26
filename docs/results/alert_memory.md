@@ -51,7 +51,30 @@ Báo giả mỗi phút bằng 0 ở mọi ô, cả hai mức.
 1. **Bộ nhớ làm đúng việc của nó:** cảnh báo lặp giảm ở mọi nơi có lặp (SDS v5 bytetrack 5 → 0; v21 geo 12 → 7; mô phỏng tách nhầm về 0 trừ geo 30 người σ 3 m).
 2. **Cái giá thấy rõ ở cảnh đông người.** v21 (19 người bơi gần nhau) geo mất 2 người được báo (12 → 10). Mô phỏng: geo bỏ sót tăng 0,000 → 0,033 ở σ 0,5 m; bytetrack_cmc 30 người 0,244 → 0,256.
 3. Cảnh báo nhầm cũng giảm nhẹ trên v21 (13 → 10), có lẽ vì báo nhầm lặp lại quanh cùng một vật (sóng, phao) bị chặn; chưa kiểm tra từng cảnh báo.
-4. Với cứu hộ, bỏ sót một người đắt hơn nhiều so với một cảnh báo thừa. Vì vậy **mặc định giữ `suppress_s = 0`**; bộ nhớ chỉ nên bật khi người vận hành bị quá tải cảnh báo, hoặc thay bằng cách gộp cảnh báo ở trạm mặt đất (giữ cả hai, hiển thị là một nhóm) thay vì bỏ hẳn ở biên.
+4. Với cứu hộ, bỏ sót một người đắt hơn nhiều so với một cảnh báo thừa. Vì vậy **mặc định giữ `suppress_s = 0`** và gộp ở trạm mặt đất (mục dưới).
+
+## Thay thế: gộp thành sự cố ở trạm mặt đất
+
+Thay vì bỏ cảnh báo ở biên, trạm mặt đất gắn mỗi cảnh báo vào sự cố gần nhất còn mở (`ground/incidents.py`, TECHNICAL mục 12.3): không cảnh báo nào bị bỏ, người vận hành mở sự cố vẫn thấy từng cảnh báo và ảnh cắt. Phát lại cảnh báo geo của ba video SDS qua đúng hàm gộp (`eval/incident_merge_eval.py`, số đọc từ `runs/sds/incident_merge.csv`):
+
+| Video | Luật gộp | Cảnh báo | Sự cố | Sự cố lẫn > 1 người | Người bị tách | Người bị gộp chung |
+|---|---|---|---|---|---|---|
+| v21 (12 người được báo) | cố định 3 m | 37 | 27 | 6 | 6 | 8 |
+| | cố định 5 m | 37 | 19 | 5 | 6 | 9 |
+| | cố định 10 m | 37 | 10 | 3 | 3 | 12 |
+| | tổng sai số (10 m) | 37 | 10 | 3 | 3 | 12 |
+| v5 (6 người) | cố định 3 m | 9 | 9 | 0 | 0 | 0 |
+| | cố định 5 m | 9 | 8 | 0 | 0 | 0 |
+| | cố định 10 m | 9 | 4 | 2 | 0 | 6 |
+| v13 (2 người) | cố định 3 m | 4 | 3 | 0 | 1 | 0 |
+| | cố định 5 m | 4 | 2 | 0 | 0 | 0 |
+| | cố định 10 m | 4 | 1 | 1 | 0 | 2 |
+
+Luật "tổng sai số" dùng `position_error_m` gửi kèm cảnh báo; `edge/main.py` hiện gửi hằng số 5 m chưa hiệu chỉnh, nên luật này trùng với bán kính cố định 10 m (v5, v13 cũng trùng). Nhận xét:
+
+1. Bán kính 10 m gộp nhầm mọi người ở v21 và v5. **Mặc định chọn 5 m cố định**: hai video thưa người gộp đúng hoàn toàn (v13 hết lặp, v5 không lẫn người), v21 giảm 37 cảnh báo xuống 19 sự cố.
+2. v21 thì không bán kính nào vừa hết tách vừa hết lẫn: người bơi sát nhau hơn độ trôi vị trí geo. Đó là giới hạn của định vị, không chữa được bằng luật gộp; vì gộp ở trạm không bỏ cảnh báo, cái giá là hiển thị gộp nhóm, không phải mất người.
+3. Khi `position_error_m` được ước lượng thật (TECHNICAL mục 8.4) thì đáng thử lại luật theo sai số (`error_weight`).
 
 ## Giới hạn
 
@@ -67,6 +90,9 @@ V=val-m100-DJI_0001-v21
     --replay runs/sds/$V/geo/detections.jsonl --telemetry data/processed/sds_mot/$V/telemetry.csv \
     --confirm geo --suppress-s 60 --output runs/sds/$V/geo_sup60 --drain-s 0
 .venv/bin/python eval/track_confirm_eval.py --run runs/sds/$V/geo_sup60 --truth data/processed/sds_mot/$V/truth.json
+# Trạm mặt đất: gộp sự cố
+.venv/bin/python eval/incident_merge_eval.py --videos val-m100-DJI_0001-v21 val-mavic-DJI_0065-v5 train-mavic-DJI_0064-v13 \
+    --mot data/processed/sds_mot --runs runs/sds --confirm geo --output runs/sds/incident_merge.csv
 # Mô phỏng
 .venv/bin/python -m sim.sweep_rq3 --config configs/experiments/rq3_suppress.yaml --jobs 8
 ```

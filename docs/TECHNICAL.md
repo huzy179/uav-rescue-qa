@@ -858,7 +858,7 @@ Hai cách dùng:
 
 ## 12. Trạm mặt đất
 
-**[Đã có]** `ground/app.py` và `ground/map.html`: API mục 12.1 trừ `/api/stream` (trang bản đồ hỏi lại mỗi 2 giây), bảng `alerts` và `crops`. **[Thiết kế]** bảng `incidents`, gộp nhiều drone (12.3), xếp ưu tiên (12.4). Tối giản: FastAPI + SQLite + một trang Leaflet.
+**[Đã có]** `ground/app.py` và `ground/map.html`: API mục 12.1 trừ `/api/stream` (trang bản đồ hỏi lại mỗi 2 giây), bảng `alerts`, `crops`, `incidents` và `GET /api/incidents`; bản đồ hiện sự cố thay cho từng cảnh báo. **[Thiết kế]** xếp ưu tiên (12.4). Tối giản: FastAPI + SQLite + một trang Leaflet.
 
 ### 12.1. API
 
@@ -883,6 +883,8 @@ incidents(incident_id PK, lat, lon, first_seen, last_seen, n_alerts, n_uavs, pri
 ### 12.3. Gộp nhiều drone
 
 Hai drone có thể cảnh báo cùng một người. Khi một cảnh báo mới tới: tìm `incident` có khoảng cách ≤ `r_merge` (gắn với tổng `position_error_m` của hai cảnh báo) và thời gian gần; có thì gắn vào, không thì tạo mới. Bản đồ hiển thị incident, không hiển thị từng cảnh báo.
+
+**[Đã có]** `ground/incidents.py`: cảnh báo mới gắn vào sự cố còn mở gần nhất trong bán kính `radius_m` (mặc định 5 m) và cửa sổ `window_s` (300 s theo đồng hồ chuyến bay); vị trí sự cố là trung bình các cảnh báo. Gộp trong cùng giao dịch SQLite (`BEGIN IMMEDIATE`). Bán kính theo tổng `position_error_m` có sẵn (`error_weight`) nhưng tắt, vì sai số gửi từ biên còn là hằng số 5 m: bán kính 10 m gộp nhầm cả nhóm người bơi trên SDS. Số đo: `docs/results/alert_memory.md`. Cũng chữa cảnh báo lặp của geo khi GPS trôi (mục 9.6) mà không bỏ cảnh báo nào, khác `--suppress-s` (mục 9.7).
 
 ### 12.4. Xếp ưu tiên (luật đơn giản, giải thích được)
 
