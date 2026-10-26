@@ -1,0 +1,8 @@
+# E3 trên tập test lũ tự gán nhãn (khoá 4/11/2026): như E3_afo.yaml, khác tập ảnh.
+source: data/processed/flood/images/test
+model: runs/train/E3_s0/weights/best.pt
+imgsz: [1280]
+conf: 0.001
+max_det: 1000
+no_images: true
+output: runs/flood/E3

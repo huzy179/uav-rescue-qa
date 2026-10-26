@@ -1,0 +1,11 @@
+# E4 trên tập test lũ: bộ cắt ô riêng, ô 640, chồng 0,2, thêm lượt toàn ảnh ở 1280 (imgsz lúc fine-tune), trọng số E2c.
+source: data/processed/flood/images/test
+model: runs/train/E2c_s0/weights/best.pt
+tile: 640
+overlap: 0.2
+full_pass: true
+imgsz: 1280
+conf: 0.001
+max_det: 1000
+no_images: true
+output: runs/flood/E4tiled

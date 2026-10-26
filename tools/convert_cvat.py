@@ -25,6 +25,7 @@ import json
 import os
 import shutil
 import xml.etree.ElementTree as ET
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -48,7 +49,8 @@ class ImageLabels:
 def parse_args() -> argparse.Namespace:
     """Đọc tham số dòng lệnh (có thể lấy mặc định từ --config)."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--xml", type=Path, required=True, help="File annotations.xml xuất từ CVAT (CVAT for images 1.1)")
+    parser.add_argument("--xml", type=Path, nargs="+", required=True,
+                        help="Các file annotations.xml xuất từ CVAT (CVAT for images 1.1), hoặc file .zip xuất ra chứa nó; mỗi task một file")
     parser.add_argument("--images", type=Path, required=True, help="Thư mục chứa các khung đã gán nhãn")
     parser.add_argument("--dst", type=Path, default=Path("data/processed/flood"), help="Thư mục đích")
     parser.add_argument("--split", default="test", help="Tên tập (thư mục con)")
@@ -94,6 +96,31 @@ def parse_cvat(xml_text: str) -> list[ImageLabels]:
     return images
 
 
+def read_xml(path: Path) -> str:
+    """Nội dung annotations.xml, đọc thẳng hoặc từ file .zip CVAT xuất ra."""
+    if path.suffix.lower() == ".zip":
+        with zipfile.ZipFile(path) as archive:
+            names = [n for n in archive.namelist() if n.endswith("annotations.xml")]
+            if len(names) != 1:
+                raise ValueError(f"{path}: cần đúng một annotations.xml trong file zip, thấy {names}")
+            return archive.read(names[0]).decode("utf-8")
+    return path.read_text(encoding="utf-8")
+
+
+def parse_many(paths: list[Path]) -> list[ImageLabels]:
+    """Gộp nhãn của nhiều task; một ảnh có mặt ở hai task thì báo lỗi (không biết lấy nhãn nào)."""
+    images: list[ImageLabels] = []
+    seen: dict[str, Path] = {}
+    for path in paths:
+        for item in parse_cvat(read_xml(path)):
+            name = Path(item.name).name
+            if name in seen:
+                raise ValueError(f"Ảnh {name} có ở cả {seen[name]} và {path}")
+            seen[name] = path
+            images.append(item)
+    return images
+
+
 def yolo_line(x1: float, y1: float, x2: float, y2: float, width: int, height: int) -> str:
     return f"0 {(x1 + x2) / 2 / width:.6f} {(y1 + y2) / 2 / height:.6f} {(x2 - x1) / width:.6f} {(y2 - y1) / height:.6f}\n"
 
@@ -101,7 +128,7 @@ def yolo_line(x1: float, y1: float, x2: float, y2: float, width: int, height: in
 def main() -> None:
     """Đọc XML, kiểm tra khớp với thư mục ảnh, ghi nhãn YOLO, vùng bỏ qua và CSV thuộc tính."""
     args = parse_args()
-    images = parse_cvat(args.xml.read_text(encoding="utf-8"))
+    images = parse_many(args.xml)
     on_disk = {p.name for p in args.images.iterdir() if p.is_file()}
     missing = [item.name for item in images if Path(item.name).name not in on_disk]
     if missing:

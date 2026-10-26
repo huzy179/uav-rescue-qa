@@ -208,7 +208,7 @@ Quét cả lưới tham số × seed từ một file YAML, chạy tiếp đượ
 
 Thời gian từng chặng (RQ2): `python eval/timing_summary.py --runs runs/edge/demo --output runs/edge/timing.csv`.
 
-Nhãn tập lũ từ CVAT: `python tools/convert_cvat.py --xml annotations.xml --images data/raw/flood/frames --dst data/processed/flood --split test`.
+Nhãn tập lũ từ CVAT: `python tools/convert_cvat.py --xml task1.zip task2.zip … --images data/raw/flood/frames --dst data/processed/flood --split test` (nhận nhiều file xuất "CVAT for images 1.1", .zip hoặc .xml). Cả bước chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu: `scripts/eval_flood.sh <thư mục chứa các file xuất>`.
 
 Dữ liệu: chia theo video, kiểm tra rò rỉ, xem kích thước người khi huấn luyện (TECHNICAL mục 13.4, 15.6):
 

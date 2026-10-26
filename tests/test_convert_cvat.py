@@ -88,3 +88,15 @@ def test_end_to_end_writes_yolo_compatible_with_eval(tmp_path: Path) -> None:
     stats = json.loads((dst / "stats_test.json").read_text())
     assert stats["n_persons"] == 2 and stats["n_images_without_person"] == 1
     assert stats["persons_by_attribute"] == {"partly_submerged": 1, "occluded": 1}
+
+
+def test_gop_nhieu_task_va_doc_zip(tmp_path: Path) -> None:
+    import zipfile
+
+    with zipfile.ZipFile(tmp_path / "task1.zip", "w") as archive:
+        archive.writestr("annotations.xml", XML)
+    images = convert_cvat.parse_many([tmp_path / "task1.zip"])
+    assert len(images) == len(convert_cvat.parse_cvat(XML))
+    (tmp_path / "task2.xml").write_text(XML, encoding="utf-8")
+    with pytest.raises(ValueError, match="có ở cả"):
+        convert_cvat.parse_many([tmp_path / "task1.zip", tmp_path / "task2.xml"])
