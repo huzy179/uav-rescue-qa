@@ -37,10 +37,35 @@ class _Cluster:
         self.sightings.append((det.t, det.conf))
 
 
-def _newly_confirmed(clusters: list[_Cluster], t: float, n_confirm: int, window_s: float) -> list[Confirmation]:
+@dataclass
+class AlertMemory:
+    """Nhớ vị trí đã cảnh báo trong suppress_s giây để không cảnh báo lại trong bán kính radius_m quanh đó.
+
+    Chữa cảnh báo lặp khi một người bị detector bỏ sót lâu hơn thời gian xoá cụm rồi được thấy lại thành cụm mới
+    (SeaDronesSee, docs/results/sds_mot_confirm.md). Cái giá: người thật đứng trong bán kính đó của người đã cảnh báo
+    cũng không được cảnh báo riêng. suppress_s = 0 là tắt.
+    """
+
+    suppress_s: float = 0.0
+    radius_m: float = 3.0
+    alerts: list[tuple[float, float, float]] = field(default_factory=list)  # (t, lat, lon)
+
+    def blocks(self, t: float, lat: float, lon: float) -> bool:
+        self.alerts = [a for a in self.alerts if t - a[0] <= self.suppress_s]
+        return any(ground_distance_m(a_lat, a_lon, lat, lon) <= self.radius_m for _, a_lat, a_lon in self.alerts)
+
+    def remember(self, t: float, lat: float, lon: float) -> None:
+        if self.suppress_s > 0:
+            self.alerts.append((t, lat, lon))
+
+
+def _newly_confirmed(
+    clusters: list[_Cluster], t: float, n_confirm: int, window_s: float, memory: AlertMemory | None = None
+) -> list[Confirmation]:
     """Cụm chưa cảnh báo mà có ≥ n_confirm lần thấy trong window_s giây gần nhất; đánh dấu đã cảnh báo.
 
-    Dùng chung cho mọi chiến lược, để chúng chỉ khác nhau ở cách ghép phát hiện vào cụm.
+    Dùng chung cho mọi chiến lược, để chúng chỉ khác nhau ở cách ghép phát hiện vào cụm. Cụm đủ điều kiện nhưng nằm
+    gần một cảnh báo còn trong bộ nhớ thì được đánh dấu đã cảnh báo mà không sinh cảnh báo mới.
     """
     confirmed: list[Confirmation] = []
     for cluster in clusters:
@@ -49,6 +74,10 @@ def _newly_confirmed(clusters: list[_Cluster], t: float, n_confirm: int, window_
         recent = [conf for seen_t, conf in cluster.sightings if t - seen_t <= window_s]
         if len(recent) >= n_confirm:
             cluster.alerted = True
+            if memory is not None and memory.blocks(t, cluster.lat, cluster.lon):
+                continue
+            if memory is not None:
+                memory.remember(t, cluster.lat, cluster.lon)
             confirmed.append(
                 Confirmation(
                     cluster_id=cluster.cluster_id,
@@ -72,8 +101,11 @@ class GeoConfirmer:
     chỉ khác Hungary khi nhiều người cách nhau dưới r, đổi nếu RQ3 thấy gộp/tách nhầm đáng kể.
     """
 
-    def __init__(self, radius_m: float = 3.0, n_confirm: int = 3, window_s: float = 5.0, expire_s: float = 6.0) -> None:
+    def __init__(
+        self, radius_m: float = 3.0, n_confirm: int = 3, window_s: float = 5.0, expire_s: float = 6.0, suppress_s: float = 0.0
+    ) -> None:
         self.radius_m, self.n_confirm, self.window_s, self.expire_s = radius_m, n_confirm, window_s, expire_s
+        self.memory = AlertMemory(suppress_s, radius_m)
         self._clusters: list[_Cluster] = []
         self._next_id = 0
 
@@ -105,7 +137,7 @@ class GeoConfirmer:
                 self._clusters.append(cluster)
                 self._next_id += 1
 
-        return _newly_confirmed(self._clusters, t, self.n_confirm, self.window_s)
+        return _newly_confirmed(self._clusters, t, self.n_confirm, self.window_s, self.memory)
 
 
 class TrackConfirmer:
@@ -124,8 +156,11 @@ class TrackConfirmer:
         window_s: float = 5.0,
         expire_s: float = 6.0,
         motion: Callable[[float, float], np.ndarray] | None = None,
+        suppress_s: float = 0.0,
+        suppress_radius_m: float = 3.0,
     ) -> None:
         self.tracker, self.n_confirm, self.window_s, self.expire_s, self.motion = tracker, n_confirm, window_s, expire_s, motion
+        self.memory = AlertMemory(suppress_s, suppress_radius_m)
         self._tracks: dict[int, _Cluster] = {}
         self._prev_t: float | None = None
         # (box, track_id) ghép được ở khung gần nhất; chỉ để vẽ video demo, không dùng để xác nhận.
@@ -148,4 +183,4 @@ class TrackConfirmer:
                 cluster = self._tracks[track_id] = _Cluster(track_id, det.lat, det.lon, 0.0, det)
             cluster.add(det)
         self._tracks = {k: c for k, c in self._tracks.items() if t - c.last.t <= self.expire_s}
-        return _newly_confirmed(list(self._tracks.values()), t, self.n_confirm, self.window_s)
+        return _newly_confirmed(list(self._tracks.values()), t, self.n_confirm, self.window_s, self.memory)

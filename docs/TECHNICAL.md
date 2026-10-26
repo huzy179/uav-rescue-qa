@@ -726,6 +726,10 @@ Vì xác nhận nhiều khung lọc được báo nhầm ngẫu nhiên, `detecto
 
 SeaDronesSee-MOT có video drone 4K với người bơi gán `track_id` qua các khung và metadata GPS, độ cao, góc gimbal, hướng từng khung, nên chạy được cả ba chiến lược trên dữ liệu thật (`tools/convert_seadronessee_mot.py`, chấm bằng `eval/track_confirm_eval.py`). Trên ba đoạn camera gần nhìn thẳng xuống, ở 2 khung/giây: geo xác nhận 12/19 người ở đoạn lớn nhất, ByteTrack 2/19. IoU giữa box nhãn thật của cùng người ở hai khung xử lý liên tiếp chỉ có trung vị 0,05–0,53 dù drone gần đứng yên (0,84–0,94 ở 30 khung/giây); ở 10 khung/giây ByteTrack hoạt động lại. Cái giá của geo trên dữ liệu thật: cảnh báo lặp khi GPS trôi và cảnh báo nhầm do vật cố định, tăng mạnh ở FPS cao, nên N và cửa sổ phải chọn theo FPS. Chi tiết: `docs/results/sds_mot_confirm.md`.
 
+### 9.7. Bộ nhớ vị trí đã cảnh báo (`--suppress-s`) [Đã có, mặc định tắt]
+
+`AlertMemory` trong `edge/confirm.py` nhớ vị trí GPS các cảnh báo đã gửi trong `suppress_s` giây; cụm hoặc track mới đủ N lần thấy mà nằm trong `radius_m` quanh một cảnh báo cũ thì không gửi nữa. Dùng chung cho cả ba chiến lược. Nó chữa cảnh báo lặp (mục 9.6) nhưng chặn luôn người thật thứ hai đứng trong bán kính đó; trên đoạn SDS đông người nhất geo giảm từ 12 xuống 10 người được báo. Vì bỏ sót đắt hơn cảnh báo thừa, mặc định `suppress_s = 0`. Chi tiết: `docs/results/alert_memory.md`.
+
 ## 10. Cảnh báo (alerts)
 
 **[Đã có]** trong `edge/alerts.py` (`Outbox`, `FakeTransport`, `HttpTransport`), kiểm thử trong `tests/test_alerts.py`. Cơ chế "lưu và gửi bù, toạ độ trước, ảnh sau" của đề cương. Ảnh cắt chỉ được gửi sau khi gói toạ độ cùng `alert_id` đã được ack; lượt gửi dừng ở lần thất bại đầu tiên. Chưa có giới hạn băng thông.

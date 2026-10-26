@@ -125,3 +125,24 @@ def test_track_confirmer_giu_id_cua_khung_gan_nhat() -> None:
     assert [tid for _, tid in confirmer.last_assignments] == [100, 101]
     confirmer.update([], 0.5)
     assert confirmer.last_assignments == []
+
+
+def test_bo_nho_canh_bao_chan_canh_bao_lap() -> None:
+    """Người được cảnh báo, mất dấu quá expire_s rồi thấy lại: không bộ nhớ thì cảnh báo lần 2, có bộ nhớ thì không."""
+    def run(suppress_s: float) -> int:
+        confirmer = GeoConfirmer(radius_m=3.0, n_confirm=3, window_s=5.0, expire_s=6.0, suppress_s=suppress_s)
+        alerts = 0
+        for i in range(3):  # thấy 3 khung liên tiếp → cảnh báo
+            alerts += len(confirmer.update([det(i, 0.5 * i)], i * 0.5))
+        for i in range(30, 33):  # thấy lại sau 15 s, cùng chỗ (lệch 1 m)
+            alerts += len(confirmer.update([det(i, 1.0)], i * 0.5))
+        return alerts
+
+    assert run(suppress_s=0.0) == 2
+    assert run(suppress_s=60.0) == 1
+
+
+def test_bo_nho_khong_chan_nguoi_o_xa() -> None:
+    confirmer = GeoConfirmer(radius_m=3.0, n_confirm=2, suppress_s=60.0)
+    confirmer.update([det(0, 0.0), det(0, 20.0)], 0.0)
+    assert len(confirmer.update([det(1, 0.0), det(1, 20.0)], 0.5)) == 2

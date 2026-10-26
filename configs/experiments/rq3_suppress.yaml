@@ -1,0 +1,16 @@
+# RQ3: bộ nhớ vị trí đã cảnh báo (--suppress-s) chữa cảnh báo lặp, đổi lại có thể bỏ sót người đứng gần người đã
+# cảnh báo; đo theo mật độ người và nhiễu GPS. Kịch bản như rq3_gps.yaml, GPS trôi chậm hơn thực tế (τ 30 s).
+output: runs/rq3/suppress
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  recall: 0.7
+  fp_per_frame: 0.5
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+grid:
+  scenario.n_people: [10, 30]
+  scenario.gps_sigma_m: [0.5, 3]
+  pipeline.suppress_s: [0, 60]
+  pipeline.confirm: [geo, bytetrack_cmc]
