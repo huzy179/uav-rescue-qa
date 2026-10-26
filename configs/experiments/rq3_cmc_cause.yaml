@@ -1,0 +1,18 @@
+# RQ3, điều tra vì sao bytetrack_cmc bỏ sót khi GPS nhiễu (TONG_QUAN mục 3.11): đổi độ cao và thời gian tương quan
+# của nhiễu GPS. Nếu nguyên nhân là độ lệch GPS giữa hai khung liên tiếp thì GPS trôi càng chậm (tau lớn) càng ít hỏng;
+# nếu do số pixel tuyệt đối thì độ cao đổi kết quả. geo làm mốc. Kịch bản như rq3_gps.yaml.
+output: runs/rq3/cmc_cause
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  recall: 0.7
+  fp_per_frame: 0.5
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+grid:
+  scenario.gps_sigma_m: [0, 0.5, 1]
+  scenario.gps_tau_s: [5, 30, 300]
+  scenario.alt_m: [50, 100]
+  pipeline.confirm: [geo, bytetrack_cmc]

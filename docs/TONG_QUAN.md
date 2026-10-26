@@ -308,7 +308,7 @@ Giới hạn phải nói rõ: đây là mô phỏng, không phải bay thật.
 | 1 m | 0,000 | 1,000 | 0,767 |
 | 3 m | 0,033 | 1,000 | 1,000 |
 
-Đọc bảng: tracking thông dụng gãy hoàn toàn ở 2 FPS; bù chuyển động camera cứu được nhưng chỉ khi GPS rất ổn định; gom theo mặt đất gần như không bị ảnh hưởng. **Cơ chế khiến `bytetrack_cmc` bỏ sót ở σ = 0,5 m chưa được xác nhận** (T 15.4); cần điều tra trước khi viết chương RQ3.
+Đọc bảng: tracking thông dụng gãy hoàn toàn ở 2 FPS; bù chuyển động camera cứu được nhưng chỉ khi GPS rất ổn định; gom theo mặt đất gần như không bị ảnh hưởng. **Cơ chế khiến `bytetrack_cmc` bỏ sót đã xác định (26/10, mô phỏng):** độ chênh nhiễu GPS giữa hai khung liên tiếp, không phải sai số tuyệt đối; cùng σ = 0,5 m, GPS nhảy nhanh (τ = 5 s) bỏ sót 0,900, trôi chậm (τ = 300 s) 0,033; geo không bị ảnh hưởng (`docs/results/rq3_cmc_cause.md`).
 
 **Trạng thái.** Công cụ xong; còn chạy đủ lưới tham số (độ cao, vận tốc, FPS, N, nhiễu hướng, nghiêng camera, mạng), dự kiến 14–20/11. **Ở đâu:** `sim/`, `eval/rq3_metrics.py`, cấu hình `configs/experiments/rq3_*.yaml`.
 
