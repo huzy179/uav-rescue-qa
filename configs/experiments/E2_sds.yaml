@@ -1,0 +1,8 @@
+# E2 trên SeaDronesSee (người bơi trên biển, 317 ảnh từ 11 video, 1 khung mỗi 0,5 s): như E2_visdrone.yaml, khác tập ảnh.
+source: data/processed/sds_det/images/val
+model: runs/train/E2_s0/weights/best.pt
+imgsz: [1280]
+conf: 0.001
+max_det: 1000
+no_images: true
+output: runs/sds_det/E2

@@ -414,22 +414,24 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 
 ---
 
-## 8. Trạng thái tổng hợp (22/10/2026)
+## 8. Trạng thái tổng hợp (26/10/2026)
 
 | Bước | Trạng thái |
 |---|---|
 | 1. Hình học camera | Xong |
 | 2. Mô hình nền | Xong |
-| 3. Dữ liệu công khai | VisDrone, C2A xong; AFO, FinlandProper chưa tải |
-| 4. Tập test lũ | **Chưa gán**; công cụ sẵn sàng |
-| 5. Cách đo | Xong |
+| 3. Dữ liệu công khai | VisDrone, AFO, C2A, HydroVigilance, SeaDronesSee-MOT đã tải và chuyển; FinlandProper tạm bỏ (162 GB, máy chủ không cho tải từng phần) |
+| 4. Tập test lũ | **Chưa gán**; 212 khung từ 10 video đã trích, lọc tay, đóng gói zip cho CVAT (`Downloads/floodeye_cvat`) |
+| 5. Cách đo | Xong; thêm chấm khối xác nhận theo track trên video thật (`eval/track_confirm_eval.py`) |
 | 6. E0, E1, E4 | Xong |
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |
-| 8. E2–E6 | E2 lượt 1 đang chạy; còn lại chưa |
-| 9. Pipeline UAV | Xong |
-| 10. Trạm mặt đất | Xong bản tối giản |
-| 11. RQ3 | Công cụ xong, đã chạy thử; còn lưới đầy đủ |
+| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; E3 (P2) đang chạy, chia hai phiên Kaggle; E2d (+ HydroVigilance) có cấu hình |
+| 9. Pipeline UAV | Xong; demo trực tiếp `scripts/live_demo.py` |
+| 10. Trạm mặt đất | Xong bản tối giản; bản đồ Esri (ô OpenStreetMap không tải được) |
+| 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`) |
 | 12. RQ2 | Công cụ đo xong; chưa xuất TensorRT |
-| 13. Luận văn | Theo lịch: chương 2 tuần 21–23/10 |
+| 13. Luận văn | Đã báo cáo ý tưởng thuật toán với cô 23/10 (slide 22 trang) |
+
+Kết quả chính tới nay: fine-tune tăng mạnh người nhỏ trên VisDrone (`visdrone_E2.md`); thêm AFO giữ được người dưới nước (`E2c.md`), nhưng trên tập nước độc lập SeaDronesSee chưa hơn mô hình gốc (`sds_det.md`).
 
 Lịch chi tiết: [ROADMAP.md](ROADMAP.md) mục 1. Khi một bước đổi trạng thái, cập nhật bảng này cùng lúc với ROADMAP.

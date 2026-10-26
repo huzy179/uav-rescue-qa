@@ -37,7 +37,8 @@ Ngày 23/10/2026, WSL2, RTX 5060; cùng quy ước như `visdrone_E2.md` (conf 0
 
 1. **Thêm AFO lấy lại người dưới nước**: AFO test tăng từ 0,103 (E2) lên 0,568, vượt cả mô hình gốc (0,147); bỏ nhóm ảnh chung địa điểm với train thì 0,734. Hiệu số có ý nghĩa thống kê.
 2. **Cái giá trên ảnh phố rất nhỏ**: VisDrone val giảm 0,011, test-dev giảm 0,006 so với E2, có ý nghĩa thống kê nhưng nhỏ hơn nhiều so với mức tăng trên AFO. E2c thay E2 làm mô hình chính.
-3. AFO test vẫn có phần chung địa điểm với AFO train (nhóm `a`); bản bỏ nhóm chung cho số cao hơn, nên không phải do rò rỉ mà có lẽ do các nhóm còn lại dễ hơn. Kết luận về cảnh lũ vẫn phải chờ tập test lũ.
+3. **Lưu ý từ một tập người dưới nước độc lập (SeaDronesSee, `sds_det.md`):** E2c 0,468 so với mô hình gốc 0,535 (hiệu không có ý nghĩa), tức mức tăng trên AFO một phần do test và train cùng nguồn. Thêm AFO giúp không đánh mất người dưới nước; chưa chứng minh hơn mô hình gốc ở người dưới nước nói chung.
+4. AFO test vẫn có phần chung địa điểm với AFO train (nhóm `a`); bản bỏ nhóm chung cho số cao hơn, nên không phải do rò rỉ mà có lẽ do các nhóm còn lại dễ hơn. Kết luận về cảnh lũ vẫn phải chờ tập test lũ.
 
 ## Giới hạn
 

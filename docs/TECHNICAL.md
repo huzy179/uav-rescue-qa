@@ -393,6 +393,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `eval/compare_runs.py` | So sánh hai lần chạy bằng bootstrap cặp (15.3) |
 | `eval/metrics.py` | IoU, IoA, ghép, AP, điểm vận hành, `bootstrap_ci`, `paired_bootstrap` (5, 15.3) |
 | `eval/splits.py` | Nhóm theo video, chia tập, dHash tìm ảnh gần trùng (15.6) |
+| `eval/track_confirm_eval.py` | Chấm khối xác nhận trên video thật có nhãn theo track: người được cảnh báo, cảnh báo nhầm, lặp, thời gian (9.6) |
 | `eval/frames.py` | Chọn khung từ video để gán nhãn: lấy mẫu theo thời gian, bỏ khung gần trùng bằng dHash, rải đều |
 | `eval/rq3_metrics.py` | Chỉ số RQ3 từ log pipeline và nhãn theo thời gian (15.4) |
 | `eval/timing_summary.py` | Thời gian từng chặng, p50/p95, FPS đạt được (14) |
@@ -400,7 +401,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 
 **Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
 
-**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `prepare_afo.py` (dựng lại bố cục AFO từ bản Kaggle cho `convert_yolo_subset.py`), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
+**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `prepare_afo.py` (dựng lại bố cục AFO từ bản Kaggle cho `convert_yolo_subset.py`), `convert_seadronessee_mot.py` (SeaDronesSee-MOT thành chuỗi khung, telemetry từ metadata drone, nhãn theo track), `make_sds_det.py` (tập phát hiện người dưới nước từ SeaDronesSee, 1 khung mỗi 15), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
@@ -721,6 +722,10 @@ Vì xác nhận nhiều khung lọc được báo nhầm ngẫu nhiên, `detecto
 
 ---
 
+### 9.6. Kiểm chứng trên video thật (sơ bộ)
+
+SeaDronesSee-MOT có video drone 4K với người bơi gán `track_id` qua các khung và metadata GPS, độ cao, góc gimbal, hướng từng khung, nên chạy được cả ba chiến lược trên dữ liệu thật (`tools/convert_seadronessee_mot.py`, chấm bằng `eval/track_confirm_eval.py`). Trên ba đoạn camera gần nhìn thẳng xuống, ở 2 khung/giây: geo xác nhận 12/19 người ở đoạn lớn nhất, ByteTrack 2/19. IoU giữa box nhãn thật của cùng người ở hai khung xử lý liên tiếp chỉ có trung vị 0,05–0,53 dù drone gần đứng yên (0,84–0,94 ở 30 khung/giây); ở 10 khung/giây ByteTrack hoạt động lại. Cái giá của geo trên dữ liệu thật: cảnh báo lặp khi GPS trôi và cảnh báo nhầm do vật cố định, tăng mạnh ở FPS cao, nên N và cửa sổ phải chọn theo FPS. Chi tiết: `docs/results/sds_mot_confirm.md`.
+
 ## 10. Cảnh báo (alerts)
 
 **[Đã có]** trong `edge/alerts.py` (`Outbox`, `FakeTransport`, `HttpTransport`), kiểm thử trong `tests/test_alerts.py`. Cơ chế "lưu và gửi bù, toạ độ trước, ảnh sau" của đề cương. Ảnh cắt chỉ được gửi sau khi gói toạ độ cùng `alert_id` đã được ack; lượt gửi dừng ở lần thất bại đầu tiên. Chưa có giới hạn băng thông.
@@ -1008,6 +1013,8 @@ Notebook `notebooks/kaggle_train.ipynb` là lớp vỏ mỏng: mọi logic nằm
 | `New https://pypi.org/project/ultralytics/… available` | Phiên bản được ghim có chủ đích |
 
 Kết quả E2 lượt 1 ở `docs/results/visdrone_E2.md` (val và test-dev, so cặp với E1).
+
+**Chia một lần huấn luyện thành nhiều phiên** (E3: khoảng 17 phút/epoch, 55 epoch vượt 12 giờ). `train.py --stop-after-epochs K` dừng gọn sau K epoch nhưng giữ lịch tốc độ học của `--epochs`; sau mỗi lần lưu, `weights/last_resume.pt` được chép từ `last.pt` khi nó còn trạng thái optimizer (ultralytics xoá trạng thái này ở bước đánh giá cuối). Phiên sau: tải `last_resume.pt` thành một Kaggle Dataset, Add Input, `MODE = "resume"`: notebook chép nó thành `weights/last.pt` (kèm `results.csv`) và gọi `train.py --resume`, `train.py` dựng lại `data.yaml` trước khi chạy tiếp. Đã chạy thử trên máy: dừng sau 1/3 epoch rồi chạy tiếp epoch 2–3, `results.csv` liền mạch.
 
 **Hai điểm phải nhớ khi viết kết quả E2:**
 - **mAP in trong log lần chạy thử không phải kết quả.** Nó chỉ sau một phần epoch, và do ultralytics tính. Số của E2 tính bằng `eval_by_size.py` sau khi tải trọng số về.
