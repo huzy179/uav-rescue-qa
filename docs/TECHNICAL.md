@@ -212,6 +212,8 @@ Thu ảnh lớn hơn (1920, 3840) giữ được người nhưng chi phí tăng 
 
 E3 đo xem mức tăng recall có đáng với chi phí đó không, và RQ2 đo chi phí đó trên thiết bị biên.
 
+**[Đã có] Kết quả E3** (`results/E3.md`): AP50 nhóm dưới 8 px chỉ tăng +0,012 (VisDrone val) và +0,013 (test-dev), mất ở IoU 0,3, nên P2 làm box nhỏ khít hơn chứ không tìm thêm người; người trên 32 px giảm, recall ở conf 0,25 giảm. Không đáng chi phí; mô hình chính giữ E2c.
+
 ### 3.5. Ngưỡng tin cậy
 
 Mỗi box có điểm `conf` từ 0 đến 1. Kết quả VisDrone cho thấy một điều quan trọng: ở conf 0,25, mô hình COCO chỉ bắt 30% người 8–16 px, nhưng nếu giữ mọi box thì bắt được tới 75%. Mô hình **có thấy** người nhỏ, nhưng không tự tin. Hai hệ quả:

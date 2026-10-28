@@ -425,7 +425,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 5. Cách đo | Xong; thêm chấm khối xác nhận theo track trên video thật (`eval/track_confirm_eval.py`) |
 | 6. E0, E1, E4 | Xong |
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |
-| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; E3 (P2) đang chạy, chia hai phiên Kaggle; E2d (+ HydroVigilance) có cấu hình; **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
+| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; **E3 (P2) xong 27/10**: người dưới 8 px chỉ +0,012–0,013 AP50, kém hơn ở người to, không đáng chi phí; giữ E2c (`E3.md`); E2d (+ HydroVigilance) có cấu hình; **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
 | 9. Pipeline UAV | Xong; demo trực tiếp `scripts/live_demo.py` |
 | 10. Trạm mặt đất | Xong bản tối giản; bản đồ Esri (ô OpenStreetMap không tải được); gộp cảnh báo thành sự cố, bán kính 5 m (`alert_memory.md`) |
 | 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`) |
