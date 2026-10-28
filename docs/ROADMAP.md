@@ -24,6 +24,13 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 
 Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ liệu** và **thí nghiệm**; code chỉ làm khi một thí nghiệm cần.
 
+**Cập nhật 28/10:**
+- **E3 (P2) xong sớm một tuần**, kết quả âm: người dưới 8 px chỉ +0,012 (val) và +0,013 (test-dev) AP50, kém hơn ở người to; giữ E2c làm mô hình chính (`docs/results/E3.md`). Tuần 31/10–6/11 dư khoảng 10 giờ GPU (quyết định #14).
+- **E6 chạy thử trên SeaDronesSee** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt với người trên 45 px. Từ đó có **thu nhỏ khung theo độ cao** (`scale_by_altitude.md`): E2c cắt ô trên SDS 4K từ AP50 0,235 lên 0,531 (quyết định #13).
+- RQ3: mô phỏng dùng recall theo cỡ người từ E6 thử, quét độ cao (`rq3_altitude.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`).
+- Trạm mặt đất gộp cảnh báo thành sự cố (`alert_memory.md`).
+- Mã cho tập lũ đã sẵn (`scripts/eval_flood.sh`: chuyển nhãn CVAT, chạy mọi `*_flood.yaml`, chấm theo kích thước và theo thẻ nhiễu). **Tập test lũ vẫn chưa gán khung nào**: đây vẫn là rủi ro lớn nhất, hạn khoá 4/11.
+
 ### 1.2. Phân bổ giờ mỗi tuần (15–20 giờ)
 
 | Tuần | Gán nhãn và dữ liệu | Thí nghiệm | Viết | Code |
@@ -43,9 +50,9 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 |---|---|---|---|---|---|---|
 | 21–23/10 | Gom video lũ, ghi `sources.csv`; dựng dự án CVAT theo LABELING.md; gán thử | E2 lượt 1 xong → `eval_by_size` trên VisDrone val, `compare_runs` với E1 | Push, xem CI chạy | Chương 2 | 30–50 | 23/10: bảng VisDrone (E0, E1, E4, cắt ô riêng); E2 nếu kịp; demo pipeline + trạm mặt đất (telemetry giả lập); RQ3 chạy thử; hỏi thầy quyết định #1, #7, #10 |
 | 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
-| 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | E3 (P2) trên Kaggle; E0–E2 trên tập test lũ | | Chương 4 | 200–250, **khoá 4/11** | 6/11: RQ1 trên tập test lũ (E0–E2) |
-| 7–13/11 | | E3, E4 (cắt ô) trên tập lũ và FinlandProper; E5 (YOLO11s); E6 nếu thầy duyệt; recall theo loại nhiễu; **RQ2 bắt đầu 9/11**: xuất TensorRT FP16/INT8 trên T4, đo từng chặng | Script recall theo thẻ nhiễu; notebook RQ2 trên Kaggle; `rescale_dataset.py` nếu E6 được duyệt | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
-| 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | Recall theo kích thước trong mô phỏng (lấy từ RQ1) | | | 20/11: kết quả RQ2, RQ3 |
+| 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E0–E2 trên tập test lũ | | Chương 4 | 200–250, **khoá 4/11** | 6/11: RQ1 trên tập test lũ (E0–E2) |
+| 7–13/11 | | E3, E4 (cắt ô, có và không thu nhỏ theo độ cao) trên tập lũ; E5 (YOLO11s); E6 nếu thầy duyệt; recall theo loại nhiễu; **RQ2 bắt đầu 9/11**: xuất TensorRT FP16/INT8 trên T4, đo từng chặng | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~ (đã có); notebook RQ2 trên Kaggle | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
+| 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
 | 21–27/11 | | Phân tích lỗi; demo trên video lũ thật | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo trạm mặt đất |
 | 28/11–4/12 | | | **Đóng băng mã 28/11** | Bản thảo đầy đủ | | 4/12: bản thảo |
 | 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng | | 11/12: bản hoàn chỉnh |
@@ -58,7 +65,7 @@ Mỗi lần huấn luyện ở 1280 khoảng 8–10 giờ T4 (E2 lượt 1, 60 e
 |---|---|---|
 | 21–23/10 | E2 lượt 1 | 8 |
 | 24–30/10 | E2 lượt 2 (thêm FinlandProper) | 10 |
-| 31/10–6/11 | E3 (P2) | 10 |
+| 31/10–6/11 | ~~E3 (P2)~~ đã chạy trước (hai phiên); giờ trống dùng theo quyết định #14 | 10 |
 | 7–13/11 | E5 (YOLO11s); xuất TensorRT, đo RQ2 | 9 + 2 |
 | 14–20/11 | 2 seed thêm cho cấu hình cuối | 20 |
 
@@ -227,11 +234,11 @@ Notebook chỉ làm ba việc: clone kho mã ở một commit cố định, cài
 |---|---|---|
 | E0 | YOLO26s COCO, 640 | Đã có |
 | E1 | 1280 | Đã có |
-| E2 | Fine-tune (VisDrone + FinlandProper, thêm C2A nếu kịp) | `training/train.py`, notebook |
-| E3 | E2 + đầu P2 | yaml mô hình |
-| E4 | E2/E3 + cắt ô | `detector.py` (đối chiếu với SAHI) |
-| E5 | E2 với YOLO11s | Không |
-| E6 | Recall theo số pixel trên người (thu nhỏ nhiều mức); 48 MP và 4K là hai điểm trên đường cong | `tools/rescale_dataset.py`, xem mục 5.3 |
+| E2 | Fine-tune (VisDrone; FinlandProper tạm bỏ) | Xong: E2 (VisDrone), **E2c (+ AFO), mô hình chính**; E2d (+ HydroVigilance) có cấu hình |
+| E3 | E2c + đầu P2 | Xong 28/10, không đáng chi phí (`docs/results/E3.md`) |
+| E4 | E2c + cắt ô | Xong trên VisDrone và SDS; thêm biến thể thu nhỏ theo độ cao (`--target-person-px`); trên tập lũ chờ nhãn |
+| E5 | E2 với YOLO11s | Chưa |
+| E6 | Recall theo số pixel trên người (thu nhỏ nhiều mức); 48 MP và 4K là hai điểm trên đường cong | Đã có `tools/rescale_dataset.py`, `eval/recall_by_pixels.py`; chạy thử trên SDS (`e6_sds_pilot.md`); xem mục 5.3 |
 
 Đánh giá trên ba tập: VisDrone val, test của FinlandProper, tập test lũ. Theo mục 8.5 của đề cương:
 - AP ở conf 0,001, recall vận hành ở conf 0,25;
@@ -292,6 +299,8 @@ Chưa thấy bộ dữ liệu công khai nào có ảnh 48 MP từ UAV kèm nhã
 
 Giới hạn phải ghi rõ: thu nhỏ ảnh không tái tạo được nhiễu cảm biến, độ nhòe và mức nén của camera thật. Có thể thêm làm mờ và nén JPEG ở mỗi mức để gần thực tế hơn, nhưng vẫn gọi là mô phỏng. Hỏi thầy hôm thứ Sáu.
 
+Đã chạy thử 26/10 trên SeaDronesSee 4K (thu nhỏ 1, 2, 3, 4, 6 lần; `docs/results/e6_sds_pilot.md`). Phát hiện phụ quan trọng hơn dự kiến: mô hình fine-tune yếu với người **to**, dẫn tới thu nhỏ khung theo độ cao (quyết định #13).
+
 ### 5.4. Vùng bỏ qua của VisDrone
 
 Đề cương ghi "phát hiện trong vùng ignored bị tính là báo nhầm". Có thể làm tốt hơn với ít công: giữ các vùng đó thành một file riêng khi chuyển nhãn, và để `eval/` bỏ qua phát hiện rơi vào vùng đó. Mã so khớp hiện tại đã có khái niệm nhãn bị bỏ qua, chỉ cần mở rộng thêm.
@@ -322,3 +331,4 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 | 11 | So E2 với E0/E1 trên VisDrone test-dev thay vì val? E2 chọn `best.pt` theo val nên val thiên vị E2 (TECHNICAL 13.5). Đã chạy cả hai tập cho E1, E2: mức tăng giữ nguyên trên test-dev (`docs/results/visdrone_E2.md`); cần thầy chọn tập nào là bảng chính | Học viên, hỏi thầy | 23/10 |
 | 12 | Dùng video lũ có bản quyền (YouTube, báo chí) cho tập test, chỉ công bố nhãn và nguồn, không phát hành lại ảnh: có được chấp nhận? C2A không ghi giấy phép trên GitHub: dùng để huấn luyện có ổn? | Thầy | 23/10 |
 | 13 | Đưa "thu nhỏ khung theo độ cao" (`scale_by_altitude.md`) thành một đóng góp của khối phát hiện, đánh giá trên tập lũ cạnh E4 (cắt ô cố định)? Chọn mục tiêu px trên dữ liệu ngoài tập test lũ | Học viên, hỏi thầy | Trước khi chạy RQ1 trên tập lũ |
+| 14 | Tuần 31/10–6/11 dư khoảng 10 giờ GPU vì E3 xong sớm: dùng cho E2d (+ HydroVigilance) hay seed thứ hai của E2c? | Học viên | 31/10 |

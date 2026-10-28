@@ -9,7 +9,7 @@ Mô hình nền: YOLO26 (`ultralytics`). Tổng quan dự án, các bước và 
 configs/            cấu hình; configs/experiments/ là một file cho mỗi thí nghiệm
 shared/             dùng chung giữa edge và ground: đọc cấu hình, schema gói cảnh báo
 edge/               chạy trên UAV: lấy mẫu khung hình, phát hiện, định vị, xác nhận, gửi cảnh báo
-ground/             trạm mặt đất: FastAPI + SQLite + Leaflet
+ground/             trạm mặt đất: FastAPI + SQLite + Leaflet, gộp cảnh báo thành sự cố
 sim/                giả lập chuyến bay và đường truyền mạng
 eval/               đánh giá AP/recall theo nhóm kích thước, báo cáo, biểu đồ
 tools/              chuyển nhãn bộ dữ liệu, thống kê
@@ -45,6 +45,7 @@ FLOODEYE_GROUND_DB=runs/ground/ground.sqlite .venv/bin/python -m uvicorn --facto
 .venv/bin/python -m edge.main --config configs/edge.yaml --source video.mp4 --output runs/edge/demo \
     --ground-url http://localhost:8000 --save-video
 # thêm --net-loss 0.2 --net-outage 30 90 để giả lập mạng chập chờn
+# thêm --target-person-px 10 để thu nhỏ khung theo độ cao trước khi phát hiện (mô hình fine-tune, TECHNICAL mục 4.5)
 
 # 3. Chạy lại phần sau detector mà không cần mô hình (RQ3): đọc lại phát hiện đã lưu
 .venv/bin/python -m edge.main --config configs/edge.yaml --source video.mp4 --replay runs/edge/demo/detections.jsonl \
@@ -165,6 +166,8 @@ Huấn luyện thật chạy trên Kaggle bằng [notebooks/kaggle_train.ipynb](
 5. **Chạy thật:** đổi `MODE = "train"`, đặt `EPOCHS` sao cho cả lần chạy dưới khoảng 10 giờ, rồi **Save Version → Save & Run All (Commit)**. Có thể đóng trình duyệt; theo dõi ở tab Versions.
 6. Chạy xong, tải `runs/train/<mã>/` trong Output về cùng chỗ trên máy.
 
+Lần huấn luyện dài hơn một phiên 12 giờ (E3 với đầu P2) thì chia phiên: phiên 1 đặt `STOP_AFTER` (E3: 32), giữ `EPOCHS` là tổng số epoch để lịch tốc độ học không đổi. Tải `runs/train/<mã>/weights/last_resume.pt` lên thành một Kaggle Dataset. Phiên 2 thì Add Input dataset đó, đặt `MODE = "resume"` và `STOP_AFTER = None` (TECHNICAL mục 13.5).
+
 Các thông báo lỗi bỏ qua được và hành vi của ultralytics cần biết khi chạy trên Kaggle: TECHNICAL mục 13.5.
 
 ### Trên máy cá nhân
@@ -204,7 +207,31 @@ python -m edge.main --config configs/edge.yaml --source runs/rq3/demo/frames.mp4
 python eval/rq3_metrics.py --run runs/rq3/demo/geo --truth runs/rq3/demo/ground_truth.json   # ghi runs/rq3/demo/geo/rq3_eval/
 ```
 
-Quét cả lưới tham số × seed từ một file YAML, chạy tiếp được khi bị ngắt: `python -m sim.sweep_rq3 --config configs/experiments/rq3_gps.yaml --jobs 4` (kết quả `runs/rq3/gps/summary.csv`).
+Quét cả lưới tham số × seed từ một file YAML, chạy tiếp được khi bị ngắt: `python -m sim.sweep_rq3 --config configs/experiments/rq3_gps.yaml --jobs 4` (kết quả `runs/rq3/gps/summary.csv`). Muốn detector giả có recall theo cỡ người thay cho recall cố định thì gọi `sim.make_rq3` với `--recall-curve runs/e6_sds/eval/recall_by_pixels.csv --recall-model E2c` (ví dụ ở `configs/experiments/rq3_altitude.yaml`).
+
+Recall theo số pixel trên người (E6): thu nhỏ ảnh nhiều mức, cắt ô ở mỗi mức, rồi gộp lại theo cỡ người. Lệnh đầy đủ ở `docs/results/e6_sds_pilot.md`:
+
+```bash
+python tools/rescale_dataset.py --images data/processed/sds_det/images/val --labels data/processed/sds_det/labels/val \
+    --dst data/processed/sds_rescale --factors 1 2 3 4 6
+python eval/recall_by_pixels.py --data data/processed/sds_rescale --runs runs/e6_sds --models E1 E2c \
+    --factors 1 2 3 4 6 --cluster-pattern '^(v\d+)_' --output runs/e6_sds/eval
+```
+
+Cắt ô có thu nhỏ theo độ cao. Độ cao của từng ảnh đọc từ CSV có cột `image, alt_agl_m`; `tools/make_sds_det.py` ghi file này thành `meta_<split>.csv`:
+
+```bash
+python scripts/run_tiled.py --source data/processed/sds_det/images/val --model runs/train/E2c_s0/weights/best.pt \
+    --tile 640 --overlap 0.2 --imgsz 640 --conf 0.001 --max-det 1000 --no-images \
+    --altitude-csv data/processed/sds_det/meta_val.csv --target-person-px 10 --output runs/sds_det/E2c_tiled_px10
+```
+
+Gộp cảnh báo thành sự cố ở trạm mặt đất, chấm trên video thật có nhãn theo track (`docs/results/alert_memory.md`):
+
+```bash
+python eval/incident_merge_eval.py --videos val-m100-DJI_0001-v21 --mot data/processed/sds_mot --runs runs/sds \
+    --confirm geo --output runs/sds/incident_merge.csv
+```
 
 Thời gian từng chặng (RQ2): `python eval/timing_summary.py --runs runs/edge/demo --output runs/edge/timing.csv`.
 

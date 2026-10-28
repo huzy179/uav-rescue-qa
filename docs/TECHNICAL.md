@@ -56,7 +56,7 @@ Từ video 4K quay thẳng xuống của UAV bay ở 30–100 m, tìm những ng
 
 | Ràng buộc | Hệ quả thiết kế |
 |---|---|
-| Người rất nhỏ (mục 2) | Không được thu ảnh về 640; phải dùng ảnh lớn hoặc cắt ô; cân nhắc đầu dò P2 |
+| Người rất nhỏ (mục 2) | Không được thu ảnh về 640; phải dùng ảnh lớn hoặc cắt ô; đầu dò P2 đã thử ở E3, lợi rất ít (mục 3.4) |
 | Thiết bị biên yếu (mục 14) | Chỉ xử lý khoảng 2 FPS; TensorRT FP16/INT8; cắt ô chạy theo lô |
 | Mạng chập chờn (mục 10–11) | Chỉ gửi gói cảnh báo; outbox lưu và gửi bù; toạ độ trước, ảnh sau |
 
@@ -224,7 +224,7 @@ Mỗi box có điểm `conf` từ 0 đến 1. Kết quả VisDrone cho thấy m�
 
 ## 4. Cắt ô (SAHI)
 
-**[Đã có]** qua thư viện SAHI trong `scripts/run_sahi.py`. **[Thiết kế]** bộ cắt ô riêng trong `edge/detector.py`.
+**[Đã có]** qua thư viện SAHI trong `scripts/run_sahi.py` (mốc đối chiếu) và bộ cắt ô riêng trong `edge/detector.py` (mục 4.5).
 
 ### 4.1. Nguyên lý
 
@@ -376,16 +376,16 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 |---|---|---|
 | `edge/sampler.py` | Đọc video/thư mục ảnh; `iter_timed_frames` lấy mẫu ở F FPS, `t` tính từ chỉ số khung | Đồng hồ mô phỏng (11.2) |
 | `edge/telemetry.py` | `SampledTelemetry` từ CSV hoặc `.SRT` DJI, nội suy theo `t`; `python -m edge.telemetry file.SRT` để kiểm tra file | Nội suy góc theo đường ngắn nhất (7.3) |
-| `edge/detector.py` | `YoloDetector` toàn ảnh hoặc cắt ô theo lô, gộp NMS theo IOS; `ReplayDetector` đọc lại `detections.jsonl`; `ByteTracker` bọc tracker của ultralytics. Nơi duy nhất import ultralytics | Cắt ô (4.5), ByteTrack (9.2) |
-| `edge/georef.py` | `pixel_to_gps`, `gps_to_pixel` (hàm ngược), `Camera.from_fov`, `frame_motion` (chuyển động mặt đất giữa hai khung) | Chiếu nadir (8), bù chuyển động (9.3) |
-| `edge/confirm.py` | `GeoConfirmer` (gom theo vị trí mặt đất), `TrackConfirmer` (theo track ByteTrack, có hoặc không bù chuyển động camera) | Xác nhận N khung (9) |
+| `edge/detector.py` | `YoloDetector` toàn ảnh hoặc cắt ô theo lô, gộp NMS theo IOS, thu nhỏ khung theo hệ số `scale` (`person_scale`); `ReplayDetector` đọc lại `detections.jsonl`; `ByteTracker` bọc tracker của ultralytics. Nơi duy nhất import ultralytics | Cắt ô, thu nhỏ theo độ cao (4.5), ByteTrack (9.2) |
+| `edge/georef.py` | `pixel_to_gps`, `gps_to_pixel` (hàm ngược), `Camera.from_fov`, `frame_motion` (chuyển động mặt đất giữa hai khung), `expected_person_px` (cỡ người dự kiến theo độ cao) | Chiếu nadir (8), bù chuyển động (9.3) |
+| `edge/confirm.py` | `GeoConfirmer` (gom theo vị trí mặt đất), `TrackConfirmer` (theo track ByteTrack, có hoặc không bù chuyển động camera), `AlertMemory` (`--suppress-s`, mặc định tắt) | Xác nhận N khung (9), bộ nhớ vị trí (9.7) |
 | `edge/alerts.py` | `Outbox` SQLite, `HttpTransport`, `FakeTransport`, cắt ảnh JPEG | Outbox, gửi lại lùi theo hàm mũ (10) |
 | `edge/main.py` | Nối các khối, ghi log JSONL; không chứa logic | (7.5) |
 | `edge/device.py` | Chọn thiết bị: CUDA → MPS → CPU | |
 
-**Trạm mặt đất (`ground/`):** `app.py` (FastAPI: nhận cảnh báo, bỏ trùng theo `alert_id`, lưu SQLite), `map.html` (bản đồ Leaflet). Chỉ import `shared/`.
+**Trạm mặt đất (`ground/`):** `app.py` (FastAPI: nhận cảnh báo, bỏ trùng theo `alert_id`, lưu SQLite, gắn cảnh báo vào sự cố), `incidents.py` (luật gộp cảnh báo thành sự cố, hàm thuần, 12.3), `map.html` (bản đồ Leaflet, hiện sự cố). Chỉ import `shared/`.
 
-**Giả lập (`sim/`):** `flight.py` (`StraightFlight`, telemetry giả lập), `scenario.py` (người, nhãn theo thời gian, nhiễu GPS, detector giả), `make_rq3.py` (sinh trọn một kịch bản RQ3), `sweep_rq3.py` (quét lưới tham số × seed, tổng hợp), `netem.py` (`NetemTransport`, mạng mất gói và mất sóng, có seed).
+**Giả lập (`sim/`):** `flight.py` (`StraightFlight`, telemetry giả lập), `scenario.py` (người, nhãn theo thời gian, nhiễu GPS, detector giả với recall cố định hoặc theo cỡ người `RecallCurve`), `make_rq3.py` (sinh trọn một kịch bản RQ3), `sweep_rq3.py` (quét lưới tham số × seed, tổng hợp), `netem.py` (`NetemTransport`, mạng mất gói và mất sóng, có seed).
 
 **Dùng chung (`shared/`):** `schema.py` (`Telemetry`, `Detection`, `Confirmation`, `Alert`, `AlertCrop`), `config.py` (`--config file.yaml`), `provenance.py` (`run_config.json` có commit git và máy chạy).
 
@@ -398,14 +398,17 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `eval/metrics.py` | IoU, IoA, ghép, AP, điểm vận hành, `bootstrap_ci`, `paired_bootstrap` (5, 15.3) |
 | `eval/splits.py` | Nhóm theo video, chia tập, dHash tìm ảnh gần trùng (15.6) |
 | `eval/track_confirm_eval.py` | Chấm khối xác nhận trên video thật có nhãn theo track: người được cảnh báo, cảnh báo nhầm, lặp, thời gian (9.6) |
+| `eval/incident_merge_eval.py` | Phát lại xác nhận qua luật gộp sự cố của trạm mặt đất với nhiều bán kính: sự cố lẫn nhiều người, người bị tách (12.3) |
+| `eval/recall_by_tag.py` | Recall và báo nhầm theo thẻ ảnh và thuộc tính người của tập lũ (5.7) |
+| `eval/recall_by_pixels.py` | E6: gộp người của mọi mức thu nhỏ, recall theo cạnh ngắn sau thu nhỏ (13.6) |
 | `eval/frames.py` | Chọn khung từ video để gán nhãn: lấy mẫu theo thời gian, bỏ khung gần trùng bằng dHash, rải đều |
 | `eval/rq3_metrics.py` | Chỉ số RQ3 từ log pipeline và nhãn theo thời gian (15.4) |
 | `eval/timing_summary.py` | Thời gian từng chặng, p50/p95, FPS đạt được (14) |
 | `eval/report.py`, `eval/draw.py` | Ghi CSV, tóm tắt, histogram; vẽ box |
 
-**Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
+**Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra; thu nhỏ theo độ cao bằng `--altitude-csv --target-person-px`), `eval_flood.sh` (cả chuỗi chấm tập lũ từ file xuất CVAT), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
 
-**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `prepare_afo.py` (dựng lại bố cục AFO từ bản Kaggle cho `convert_yolo_subset.py`), `convert_seadronessee_mot.py` (SeaDronesSee-MOT thành chuỗi khung, telemetry từ metadata drone, nhãn theo track), `make_sds_det.py` (tập phát hiện người dưới nước từ SeaDronesSee, 1 khung mỗi 15), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4).
+**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `prepare_afo.py` (dựng lại bố cục AFO từ bản Kaggle cho `convert_yolo_subset.py`), `convert_seadronessee_mot.py` (SeaDronesSee-MOT thành chuỗi khung, telemetry từ metadata drone, nhãn theo track), `make_sds_det.py` (tập phát hiện người dưới nước từ SeaDronesSee, 1 khung mỗi 15), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4), `rescale_dataset.py` (thu nhỏ ảnh nhiều mức cho E6, 13.6).
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
@@ -545,12 +548,14 @@ File SRT của DJI là phụ đề, mỗi khung (hoặc mỗi nhóm khung) có m
 class YoloDetector:
     def __init__(self, model_path: str, mode: Literal["full", "tiled"], imgsz: int,
                  tile: int = 640, overlap: float = 0.2, conf: float = 0.1, device: str | None = None): ...
-    def detect(self, frame: np.ndarray) -> tuple[list[Detection], dict[str, float]]: ...
+    def detect(self, frame: np.ndarray, frame_id: int, t: float,
+               scale: float = 1.0) -> tuple[list[Detection], dict[str, float]]: ...
 ```
 
 - `model_path` nhận `.pt`, `.onnx`, `.engine`. Ultralytics tự chọn backend theo đuôi file. `.engine` có kích thước đầu vào và batch cố định lúc xuất, nên cấu hình phải khớp với lúc xuất.
 - `mode="full"`: một lần `predict` ở `imgsz`.
 - `mode="tiled"`: bộ cắt ô ở mục 4.5.
+- `scale > 1`: thu nhỏ khung `scale` lần trước khi phát hiện, box quy lại toạ độ ảnh gốc; `main.py` tính `scale = person_scale(expected_person_px(tel, cam), target_person_px)` cho từng khung (mục 4.5).
 - Trả về thêm dict thời gian từng phần cho RQ2.
 - Ultralytics chỉ được import trong file này; các module khác làm việc với `Detection`.
 
@@ -831,7 +836,7 @@ Thời gian xử lý thật (cho RQ2 và cho demo) đo riêng bằng `perf_count
 
 ### 11.3. `flight.py`, `scenario.py`: chuyến bay và kịch bản giả lập [Đã có một phần]
 
-**[Đã có]** `sim/flight.py` (`StraightFlight`), `sim/scenario.py`, `sim/make_rq3.py`, `sim/sweep_rq3.py`: bay thẳng; người đứng yên hoặc trôi; nhiễu GPS Gauss–Markov; lệch hướng cố định (`--yaw-bias-deg`); camera nghiêng về phía trước (`--tilt-deg`, xấp xỉ bằng dời tâm vùng chụp h·tanθ, bỏ méo phối cảnh); phát hiện giả theo recall cố định và báo nhầm Poisson. **[Thiết kế]** đường zig-zag, nhiễu độ cao, recall theo kích thước người.
+**[Đã có]** `sim/flight.py` (`StraightFlight`), `sim/scenario.py`, `sim/make_rq3.py`, `sim/sweep_rq3.py`: bay thẳng; người đứng yên hoặc trôi; nhiễu GPS Gauss–Markov; lệch hướng cố định (`--yaw-bias-deg`); camera nghiêng về phía trước (`--tilt-deg`, xấp xỉ bằng dời tâm vùng chụp h·tanθ, bỏ méo phối cảnh); phát hiện giả theo recall cố định hoặc theo cỡ người (`RecallCurve`, đọc `recall_by_pixels.csv` của E6, `--recall-curve --recall-model`; cỡ người tính từ độ cao như mục 2.3) và báo nhầm Poisson; kết quả quét độ cao ở `results/rq3_altitude.md`. **[Thiết kế]** đường zig-zag, nhiễu độ cao.
 
 **Luồng một kịch bản RQ3 hoàn toàn giả lập:**
 
@@ -1024,7 +1029,7 @@ Notebook `notebooks/kaggle_train.ipynb` là lớp vỏ mỏng: mọi logic nằm
 
 Kết quả E2 lượt 1 ở `docs/results/visdrone_E2.md` (val và test-dev, so cặp với E1).
 
-**Chia một lần huấn luyện thành nhiều phiên** (E3: khoảng 17 phút/epoch, 55 epoch vượt 12 giờ). `train.py --stop-after-epochs K` dừng gọn sau K epoch nhưng giữ lịch tốc độ học của `--epochs`; sau mỗi lần lưu, `weights/last_resume.pt` được chép từ `last.pt` khi nó còn trạng thái optimizer (ultralytics xoá trạng thái này ở bước đánh giá cuối). Phiên sau: tải `last_resume.pt` thành một Kaggle Dataset, Add Input, `MODE = "resume"`: notebook chép nó thành `weights/last.pt` (kèm `results.csv`) và gọi `train.py --resume`, `train.py` dựng lại `data.yaml` trước khi chạy tiếp. Đã chạy thử trên máy: dừng sau 1/3 epoch rồi chạy tiếp epoch 2–3, `results.csv` liền mạch.
+**Chia một lần huấn luyện thành nhiều phiên** (E3: khoảng 17 phút/epoch, 55 epoch vượt 12 giờ). `train.py --stop-after-epochs K` dừng gọn sau K epoch nhưng giữ lịch tốc độ học của `--epochs`; sau mỗi lần lưu, `weights/last_resume.pt` được chép từ `last.pt` khi nó còn trạng thái optimizer (ultralytics xoá trạng thái này ở bước đánh giá cuối). Phiên sau: tải `last_resume.pt` thành một Kaggle Dataset, Add Input, `MODE = "resume"`: notebook chép nó thành `weights/last.pt` (kèm `results.csv`) và gọi `train.py --resume`, `train.py` dựng lại `data.yaml` trước khi chạy tiếp. Đã chạy thử trên máy: dừng sau 1/3 epoch rồi chạy tiếp epoch 2–3, `results.csv` liền mạch. Đã dùng thật cho E3: phiên 1 epoch 1–32, phiên 2 epoch 33–55 (`results/E3.md`).
 
 **Hai điểm phải nhớ khi viết kết quả E2:**
 - **mAP in trong log lần chạy thử không phải kết quả.** Nó chỉ sau một phần epoch, và do ultralytics tính. Số của E2 tính bằng `eval_by_size.py` sau khi tải trọng số về.
@@ -1032,7 +1037,7 @@ Kết quả E2 lượt 1 ở `docs/results/visdrone_E2.md` (val và test-dev, so
 
 ### 13.6. E6: recall theo số pixel trên người
 
-`tools/rescale_dataset.py`: thu nhỏ ảnh và nhãn theo các tỉ lệ 1, 1/1,5, 1/2,1, 1/3, 1/4 bằng `cv2.INTER_AREA` (nội suy theo diện tích, mô phỏng đúng việc cảm biến có ít điểm ảnh hơn, tránh răng cưa). Tuỳ chọn mô phỏng camera thật ở mỗi mức: làm mờ Gauss nhẹ, nén JPEG ở chất lượng tương đương video. Chạy cùng mô hình, vẽ recall theo kích thước người tính bằng pixel. Giới hạn: không tái tạo được nhiễu cảm biến và đặc tính ống kính.
+**[Đã có, chạy thử trên SDS]** `tools/rescale_dataset.py`: chia cạnh ảnh theo các hệ số `--factors` (bản thử dùng 1, 2, 3, 4, 6) bằng `cv2.INTER_AREA` (nội suy theo diện tích, mô phỏng đúng việc cảm biến có ít điểm ảnh hơn, tránh răng cưa), ghi JPEG theo `--jpeg-quality`; nhãn YOLO chuẩn hoá giữ nguyên. Mỗi mức chạy bộ cắt ô ô 640, không lượt toàn ảnh, để 1 pixel ảnh là 1 pixel vào mạng. `eval/recall_by_pixels.py` gộp người của mọi mức, nhóm theo cạnh ngắn sau thu nhỏ, bootstrap theo video. Kết quả và hệ quả (E2c yếu với người to, dẫn tới thu nhỏ theo độ cao ở mục 4.5): `results/e6_sds_pilot.md`. **[Thiết kế]** làm mờ Gauss nhẹ ở mỗi mức để gần camera thật. Giới hạn: không tái tạo được nhiễu cảm biến và đặc tính ống kính.
 
 ---
 
@@ -1232,7 +1237,7 @@ Chạy `check_leakage.py` với một tập (không có `--train`) thì tìm ả
 | VisDrone không có nước | Không kết luận được về cảnh lũ | Chỉ dùng làm mốc |
 | Tập test lũ nhỏ, ảnh từ nguồn công khai | Độ bất định lớn; không phân phối lại được ảnh | Bootstrap; chỉ công bố nhãn và nguồn |
 | E6 bằng thu nhỏ ảnh | Không tái tạo nhiễu cảm biến | Gọi là mô phỏng |
-| Không có Jetson (nếu không mua) | RQ2 chỉ là thứ hạng tương đối | Phương án B của đề cương |
+| Không có Jetson (chốt 21/10) | RQ2 chỉ là thứ hạng tương đối | Phương án B của đề cương; đo trên T4 (mục 14.4) |
 | Bản đồ cần internet | Không đúng ngữ cảnh mất mạng | Ô bản đồ ngoại tuyến hoặc ghi giới hạn |
 
 ---
