@@ -1,6 +1,6 @@
 ---
 name: run-experiment
-description: Chạy trọn một thí nghiệm của FloodEye (E0–E6) trên một tập dữ liệu - tạo file cấu hình nếu chưa có, chạy dự đoán, đánh giá theo nhóm kích thước ở IoU 0,5 và 0,3, rồi cập nhật bảng trong docs/results. Dùng khi người dùng nói "chạy E1 trên finland", "chạy lại E4", "đánh giá E2".
+description: Chạy trọn một thí nghiệm của FloodEye (E0–E6) trên một tập dữ liệu - tạo file cấu hình nếu chưa có, chạy dự đoán, đánh giá theo nhóm kích thước ở IoU 0,5 và 0,3, rồi cập nhật bảng trong docs/results. Dùng khi người dùng nói "chạy E1 trên sds", "chạy lại E4", "đánh giá E2c".
 argument-hint: <mã thí nghiệm> <tập dữ liệu>, ví dụ "E1 visdrone"
 ---
 
@@ -20,11 +20,13 @@ Tìm `configs/experiments/<Mã>_<tập>.yaml`.
 ## 2. Kiểm tra đầu vào
 
 - `data/processed/<tập>/images/<split>` và `labels/<split>` phải tồn tại. Thiếu thì dừng và đưa lệnh chuẩn bị dữ liệu trong `README.md`; không tự tải dữ liệu.
-- File trọng số trong cấu hình phải tồn tại. Thí nghiệm cần fine-tune (E2 trở đi) dùng trọng số tải về từ Kaggle; thiếu thì dừng và nói rõ, không huấn luyện trên Mac.
+- File trọng số trong cấu hình phải tồn tại. Thí nghiệm cần fine-tune (E2 trở đi) dùng trọng số tải về từ Kaggle; thiếu thì dừng và nói rõ, không huấn luyện trên máy cá nhân.
+- Tập `flood`: không làm theo skill này. Tập chưa khoá (`data/processed/flood/MANIFEST.sha256` chưa có) thì dừng; đã khoá thì dùng `scripts/eval_flood.sh <thư mục file xuất CVAT> <Mã>`, rồi làm tiếp từ bước 5.
 
 ## 3. Dự đoán
 
 - Cấu hình có `slice_size`: `scripts/run_sahi.py --config <file>`.
+- Cấu hình có `tile`: `scripts/run_tiled.py --config <file>` (thu nhỏ theo độ cao cần thêm `--altitude-csv` và `--target-person-px`).
 - Còn lại: `scripts/run_baseline.py --config <file>`.
 
 Lần chạy trên cả tập mất vài phút tới vài chục phút: chạy nền và báo khi xong.
@@ -42,19 +44,26 @@ for iou in 0.5 0.3; do
 done
 ```
 
-Thêm `--ignore $D/ignore/<split>` nếu thư mục đó tồn tại.
+Thêm `--ignore $D/ignore/<split>` nếu thư mục đó tồn tại, và `--cluster-pattern` nếu nhiều ảnh cùng một video (`sds_det`: `'^(v\d+)_'`). Hai lần chạy cùng `method` và `imgsz` (ví dụ hai mô hình cùng chạy toàn ảnh 1280) không gộp được vào một lệnh: chấm từng lần chạy riêng, `--output runs/<tập>/eval_<Mã>_iou$iou`.
+
+So với mốc gần nhất (thường là thí nghiệm trước của cùng tập) bằng bootstrap cặp, cũng ở cả hai ngưỡng:
+
+```bash
+.venv/bin/python eval/compare_runs.py --a runs/<tập>/<Mốc> --b runs/<tập>/<Mã> --images $D/images/<split> \
+    --labels $D/labels/<split> --iou $iou --output runs/<tập>/compare_<Mốc>_<Mã>_iou$iou
+```
 
 ## 5. Ghi kết quả
 
 Cập nhật file của tập trong `docs/results/` (tạo mới theo bố cục `visdrone_baseline.md` nếu chưa có):
 
-- chép số từ `eval_by_size.csv`, ba chữ số thập phân, dấu phẩy;
+- chép số từ `eval_by_size.csv` và `compare.csv`, ba chữ số thập phân, dấu phẩy; hiệu số lấy từ `compare.csv`, không tự trừ;
 - lấy phiên bản thư viện, mã băm trọng số, thiết bị từ `run_config.json`;
 - lấy ms/ảnh từ `per_image.csv`, ghi rõ đo trên máy nào;
 - thêm lệnh vừa chạy vào mục "Tái lập";
 - chép `eval_by_size.png` sang `docs/results/` nếu bảng có thay đổi.
 
-Không sửa số của thí nghiệm không được chạy lại.
+Không sửa số của thí nghiệm không được chạy lại. Thí nghiệm đổi trạng thái thì cập nhật cùng lúc bảng trạng thái ở TONG_QUAN mục 8 và ROADMAP mục 4.
 
 ## 6. Báo lại
 

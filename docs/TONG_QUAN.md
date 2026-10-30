@@ -67,7 +67,7 @@ Khi lũ lớn, người mắc kẹt trên mái nhà, bám vào vật nổi hoặ
 
 | Nửa | Câu hỏi | Bản chất công việc | Dữ liệu cần |
 |---|---|---|---|
-| **A. Mô hình phát hiện** | RQ1, RQ2 | Thí nghiệm học máy: chọn cấu hình, fine-tune, đo AP và recall, đo tốc độ | Ảnh có nhãn người: VisDrone, C2A, tập test lũ tự gán |
+| **A. Mô hình phát hiện** | RQ1, RQ2 | Thí nghiệm học máy: chọn cấu hình, fine-tune, đo AP và recall, đo tốc độ | Ảnh có nhãn người: VisDrone, AFO, SeaDronesSee, tập test lũ tự gán |
 | **B. Hệ thống** | RQ3 | Kỹ thuật hệ thống: định vị, xác nhận, gửi cảnh báo, chịu lỗi | Chuỗi khung theo thời gian kèm telemetry; dùng **mô phỏng** vì không có video lũ thật kèm nhãn theo thời gian |
 
 Hai nửa nối với nhau qua **recall mỗi khung**: RQ1 đo recall của detector; RQ3 dùng recall đó để tính xác suất một người được thấy đủ N khung (T 2.4).
@@ -117,9 +117,11 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | Bộ | Nội dung | Dùng để | Trạng thái |
 |---|---|---|---|
 | **VisDrone2019-DET** | Ảnh UAV đô thị Trung Quốc; val 548 ảnh, 13.969 người; train 6.471 ảnh, 106.396 người (`runs/data/visdrone_check.json`) | Huấn luyện (train), kiểm định (val), mốc so sánh với nghiên cứu khác | Đã chuyển, đã kiểm tra từng ảnh khớp nhãn gốc |
-| **C2A** | 10.215 ảnh thảm hoạ thật (lũ, cháy, nhà sập, tai nạn) có **ghép thêm hình người** (`data/processed/c2a/stats.json`) | Huấn luyện | Đã tải, đã chuyển |
-| **AFO** | Ảnh drone người và vật trôi trên mặt nước (biển) | Huấn luyện | Chưa tải (cần tài khoản Kaggle) |
-| **FinlandProper** | Người dưới nước, 1920×1024 | Huấn luyện và đánh giá | Chưa tải |
+| **C2A** | 10.215 ảnh thảm hoạ thật (lũ, cháy, nhà sập, tai nạn) có **ghép thêm hình người** (`data/processed/c2a/stats.json`) | Huấn luyện | Đã chuyển; chưa dùng trong lần huấn luyện nào (`E2b_s0.yaml` có cấu hình, chưa chạy) |
+| **AFO** | Ảnh drone người và vật trôi trên mặt nước (biển) | Huấn luyện (E2c), đánh giá (test, và test bỏ ảnh chung địa điểm với train) | Đã dùng |
+| **SeaDronesSee-MOT** | Video drone 4K người bơi trên biển, nhãn theo track, metadata GPS, độ cao | Đánh giá độc lập người dưới nước (`sds_det.md`); kiểm chứng khối xác nhận trên video thật (`sds_mot_confirm.md`) | Đã dùng |
+| **HydroVigilance** | Người bơi nhô đầu trên sông nước đục | Huấn luyện (E2d) | Đã chuyển; E2d chưa chạy |
+| **FinlandProper** | Người dưới nước, 1920×1024 | Huấn luyện và đánh giá | Tạm bỏ (162 GB, máy chủ không cho tải từng phần) |
 
 **Vì sao gộp về một lớp.** Đề tài chỉ quan tâm "có người hay không". VisDrone tách `pedestrian` (đứng, đi) và `people` (ngồi, nằm); cả hai đều là người cần cứu nên gộp lại. Người đi xe đạp, xe máy bị VisDrone gán vào lớp phương tiện nên bị bỏ (ghi rõ trong luận văn).
 
@@ -154,11 +156,10 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 **Cách khác.**
 | Phương án | Vì sao không chọn |
 |---|---|
-| Dùng bộ có sẵn (AFO, SeaDronesSee) làm tập test | Đó là người bơi ngoài biển, không phải cảnh lũ (mái nhà, nước đục, rác) |
-| Chỉ dùng FinlandProper làm tập test | Là người dưới nước nhưng không phải cảnh lũ đô thị và nông thôn Việt Nam; vẫn dùng làm tập đánh giá thứ hai |
+| Chỉ dùng bộ có sẵn (AFO, SeaDronesSee) làm tập test | Đó là người bơi ngoài biển, không phải cảnh lũ (mái nhà, nước đục, rác); vẫn dùng làm tập đánh giá phụ cho người dưới nước |
 | Tự bay UAV quay | Không có thiết bị, không có lũ đúng lúc |
 
-**Trạng thái.** **Chưa bắt đầu gán. Đây là rủi ro lớn nhất của đồ án** (ROADMAP 1.1). Công cụ trích khung và chuyển nhãn đã sẵn sàng. Phương án dự phòng nếu không kịp: khoá với tối thiểu 150 khung, hoặc lùi khoá tối đa tới 11/11 (quyết định #10, hỏi thầy).
+**Trạng thái.** **Chưa bắt đầu gán. Đây là rủi ro lớn nhất của đồ án** (ROADMAP 1.1). Đã trích và lọc tay 212 khung từ 10 video, đóng gói sẵn 10 task CVAT; công cụ chuyển nhãn và chấm (`scripts/eval_flood.sh`) đã sẵn sàng. 4 trong 10 video dưới 1080p (hai video 480p, hai video 720p), trái với LABELING mục 1: cần quyết giữ hay tải lại **trước khi** gán các video đó. Phương án dự phòng nếu không kịp: khoá với tối thiểu 150 khung, hoặc lùi khoá tối đa tới 11/11 (quyết định #10, hỏi thầy).
 
 **Ở đâu:** `docs/LABELING.md`, `tools/extract_frames.py` (logic ở `eval/frames.py`), `tools/convert_cvat.py`, `tools/check_leakage.py`; dữ liệu ở `data/raw/flood/`, `data/processed/flood/`.
 
@@ -201,7 +202,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 
 Đọc bảng:
 - **Tăng độ phân giải gần gấp đôi AP** và gấp ba ở người dưới 8 px: xác nhận lập luận bước 1.
-- Cắt ô **không** hơn 1280 trên VisDrone, vì ảnh VisDrone chỉ rộng khoảng 1360 px: ở 1280 đã gần như giữ nguyên độ phân giải. Với video 4K thì khác (1280 phải thu nhỏ 3 lần), nên **E4 phải đo lại trên dữ liệu độ phân giải cao**.
+- Cắt ô **không** hơn 1280 trên VisDrone, vì ảnh VisDrone chỉ rộng khoảng 1360 px: ở 1280 đã gần như giữ nguyên độ phân giải. Với video 4K thì khác (1280 phải thu nhỏ 3 lần), nên **E4 phải đo lại trên dữ liệu độ phân giải cao**. Đã đo trên SeaDronesSee 4K với E2c: cắt ô ở độ phân giải gốc lại kém toàn ảnh vì người ở đó to; thu nhỏ theo độ cao rồi cắt ô thì tốt nhất (bước 8, `scale_by_altitude.md`).
 
 **Trạng thái.** Xong.
 
@@ -251,7 +252,7 @@ Cấu hình cuối chạy **3 seed** (khởi tạo ngẫu nhiên khác nhau), b�
 | Khối | Làm gì | Lựa chọn thiết kế chính |
 |---|---|---|
 | Lấy mẫu (`sampler.py`) | Đọc video, lấy 2 khung mỗi giây | Thời gian lấy từ **chỉ số khung**, không từ đồng hồ máy, để chạy lại cho cùng kết quả |
-| Phát hiện (`detector.py`) | YOLO toàn ảnh hoặc cắt ô | Bước 7. Đây là file duy nhất dùng thư viện ultralytics; các khối khác test được mà không cần mô hình |
+| Phát hiện (`detector.py`) | YOLO toàn ảnh hoặc cắt ô; tuỳ chọn thu nhỏ khung theo độ cao trước khi cắt | Bước 7. Đây là file duy nhất dùng thư viện ultralytics; các khối khác test được mà không cần mô hình |
 | Định vị (`georef.py`) | Pixel → toạ độ GPS, từ vị trí, độ cao, hướng của UAV | Giả định camera nhìn thẳng xuống; có cả **hàm ngược** GPS → pixel để kiểm thử (đi một vòng phải về đúng điểm cũ) và để mô phỏng |
 | Xác nhận (`confirm.py`) | Chỉ cảnh báo khi một người được thấy ở ít nhất N khung; mỗi người chỉ một cảnh báo | Ba chiến lược (dưới) |
 | Cảnh báo (`alerts.py`) | Gói toạ độ (vài trăm byte) gửi trước, ảnh cắt gửi sau | Lưu SQLite **trước khi** gửi; lỗi thì gửi lại, chờ lâu dần (1, 2, 4… giây); trạm bỏ trùng theo mã cảnh báo |
@@ -353,7 +354,7 @@ flood-tiny-person/
 ├── tests/                   kiểm thử tự động, chạy không cần mô hình, GPU hay dữ liệu
 ├── docker/, compose.yaml    đóng gói (ảnh dev và ảnh trạm mặt đất)
 ├── .github/workflows/       chạy kiểm thử tự động mỗi lần đẩy mã lên GitHub
-├── docs/                    tài liệu: TONG_QUAN, TECHNICAL, ROADMAP, LABELING, results/ (bảng kết quả)
+├── docs/                    tài liệu: TONG_QUAN, THUAT_TOAN, TECHNICAL, ROADMAP, LABELING, results/ (bảng kết quả)
 ├── data/                    dữ liệu (KHÔNG lên git): raw/ bản gốc, processed/ đã chuyển về YOLO
 └── runs/                    kết quả mọi lần chạy (KHÔNG lên git): mỗi lần một thư mục có run_config.json
 ```
@@ -384,7 +385,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | **Không rò rỉ dữ liệu** | Chia tập theo video; kiểm tra ảnh gần trùng giữa tập test và tập huấn luyện; mọi lựa chọn tham số làm trên val | Rò rỉ cho kết quả đẹp giả mà không ai thấy |
 | **Khoá tập test** | Mã băm toàn bộ ảnh và nhãn; sau khi khoá không sửa | Không vô tình chỉnh tập test theo kết quả |
 | **Thống kê đúng** | Khoảng tin cậy, bootstrap cặp, nhiều seed | Tập test nhỏ; chênh lệch nhỏ có thể chỉ là ngẫu nhiên |
-| **Kiểm thử tự động** | 93 kiểm thử, chạy mỗi lần đẩy mã | Sửa một chỗ không làm hỏng chỗ khác mà không biết |
+| **Kiểm thử tự động** | `pytest` (125 kiểm thử ngày 28/10), chạy mỗi lần đẩy mã | Sửa một chỗ không làm hỏng chỗ khác mà không biết |
 | **Đồng hồ mô phỏng** | Pipeline lấy thời gian từ khung hình, không từ đồng hồ máy; ngẫu nhiên có seed | Chạy lại RQ3 cho đúng cùng kết quả; chạy nhanh hơn thời gian thực |
 
 ---
@@ -397,7 +398,9 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | Không có Jetson | Đã chốt | Đo T4, báo thứ hạng tương đối; nêu trong giới hạn |
 | Định vị giả định camera nhìn thẳng xuống | Trung bình | Mô phỏng định lượng sai số khi camera nghiêng 1–3°; nêu trong giới hạn |
 | Ống kính góc rộng có méo ở mép ảnh, chưa hiệu chỉnh | Trung bình | Nêu trong giới hạn; ước lượng nếu có thông số ống kính |
-| RQ3 dựa trên mô phỏng | Trung bình | Ghi rõ là mô phỏng; nếu kịp, chạy pipeline trên video lũ thật để minh hoạ |
+| RQ3 dựa trên mô phỏng | Trung bình | Ghi rõ là mô phỏng; đã kiểm chứng sơ bộ trên video thật SeaDronesSee (`sds_mot_confirm.md`); nếu kịp, chạy pipeline trên video lũ thật để minh hoạ |
+| Mô hình chính (E2c) yếu với người to | Trung bình | Thu nhỏ khung theo độ cao (`scale_by_altitude.md`); hoặc thêm dữ liệu người to khi huấn luyện (`e6_sds_pilot.md`) |
+| E2c, E3 mới có một seed | Trung bình | 3 seed cho cấu hình cuối (ROADMAP 1.3, tuần 14–20/11) |
 | Video lũ có bản quyền; C2A không ghi giấy phép | Cần hỏi | Chỉ công bố nhãn và nguồn; hỏi thầy (quyết định #12) |
 | Hạn mức GPU Kaggle | Thấp | Ngân sách theo tuần (ROADMAP 1.4); máy Windows nếu có GPU NVIDIA |
 

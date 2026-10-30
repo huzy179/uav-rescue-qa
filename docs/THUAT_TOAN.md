@@ -16,7 +16,7 @@ Ba ý tưởng này giải quyết ba khó khăn của bài toán:
 
 | Khó khăn | Ý tưởng giải quyết | Bước |
 |---|---|---|
-| Người rất nhỏ trong ảnh (khoảng 25 pixel trong khung 3840 pixel ở 50 m) | Cắt ảnh thành ô nhỏ, giữ nguyên độ phân giải | Bước 2 |
+| Người rất nhỏ trong ảnh (khoảng 25 pixel trong khung 3840 pixel ở 50 m) | Cắt ảnh thành ô nhỏ, giữ nguyên độ phân giải; khi bay thấp người to ra thì thu nhỏ khung theo độ cao trước khi cắt (tuỳ chọn) | Bước 2 |
 | Camera bay nên người "trôi" trên ảnh, tracking thông dụng không ghép được | Đổi sang toạ độ mặt đất, nơi người đứng yên | Bước 3, 4 |
 | Mô hình đôi khi nhận nhầm sóng, rác là người | Chỉ tin khi thấy lặp lại ở cùng chỗ nhiều lần | Bước 4 |
 
@@ -79,7 +79,7 @@ Chiều ngang 3840: `n = ⌈3200/512⌉ + 1 = 8`. Chiều dọc 2160: `n = ⌈15
 
 *Vì sao.* Mô hình YOLO thường thu ảnh về 640 pixel trước khi xử lý. Ảnh 3840 thu về 640 là chia 6: người 25 pixel còn khoảng 4 pixel, gần như biến mất. Cắt ô thì mỗi ô đã là 640 nên không phải thu nhỏ; người vẫn giữ 25 pixel. Các ô chồng nhau để người nằm ở mép ô vẫn trọn vẹn trong ít nhất một ô.
 
-**2b. Chạy mô hình theo lô.** Đưa **cả 32 ô vào YOLO trong một lần gọi**. Mô hình là YOLO26s đã **fine-tune** (học tiếp) trên ảnh UAV. YOLO trả về các **box** (hình chữ nhật bao quanh người, cho bằng toạ độ góc trên trái và góc dưới phải), mỗi box kèm **điểm tin cậy** (`conf`, từ 0 tới 1). Chỉ giữ box có `conf ≥ 0,1`.
+**2b. Chạy mô hình theo lô.** Đưa **cả 32 ô vào YOLO trong một lần gọi**. Mô hình là YOLO26s đã **fine-tune** (học tiếp) trên ảnh UAV: E2c, học trên VisDrone và AFO (`docs/results/E2c.md`). YOLO trả về các **box** (hình chữ nhật bao quanh người, cho bằng toạ độ góc trên trái và góc dưới phải), mỗi box kèm **điểm tin cậy** (`conf`, từ 0 tới 1). Chỉ giữ box có `conf ≥ 0,1`.
 
 *Vì sao theo lô.* GPU xử lý song song nhiều ảnh cùng lúc. Thư viện cắt ô có sẵn (SAHI) gọi mô hình từng ô một, chậm hơn trên GPU và khó dùng với mô hình đã tối ưu cho thiết bị biên (TensorRT).
 
@@ -107,7 +107,19 @@ IOS (Intersection over Smaller) = diện tích phần giao / diện tích box nh
 | Cắt ô bằng SAHI | 0,460 | 0,149 |
 | Cắt ô theo lô của dự án | 0,452 | 0,153 |
 
-Cắt ô không hơn 1280 trên VisDrone vì ảnh VisDrone chỉ rộng khoảng 1360 pixel; với video 4K, ưu thế của cắt ô cần đo lại. So với SAHI bằng bootstrap cặp, cắt ô của dự án kém hơn 0,008 AP50 (khoảng tin cậy −0,011 đến −0,003) nhưng tốt hơn ở người dưới 8 px.
+Cắt ô không hơn 1280 trên VisDrone vì ảnh VisDrone chỉ rộng khoảng 1360 pixel. So với SAHI bằng bootstrap cặp, cắt ô của dự án kém hơn 0,008 AP50 (khoảng tin cậy −0,011 đến −0,003) nhưng tốt hơn ở người dưới 8 px.
+
+Trên ảnh 4K thật (SeaDronesSee, người bơi, phần lớn to), cắt ô ở độ phân giải gốc với mô hình fine-tune lại **kém** chạy toàn ảnh: AP50 0,235 so với 0,468. Lý do ở bước 2d.
+
+**2d. Thu nhỏ khung theo độ cao (tuỳ chọn, `--target-person-px`).** Mô hình fine-tune học chủ yếu người nhỏ, nên bắt tốt người khoảng 6–23 pixel mà tụt mạnh với người trên 45 pixel (`docs/results/e6_sds_pilot.md`). Bay thấp thì người to, đúng chỗ mô hình yếu. Trước khi cắt ô, ước lượng người sẽ to bao nhiêu pixel từ độ cao trong telemetry, rồi thu nhỏ khung để người về cỡ mục tiêu:
+
+```
+px_dự_kiến = 0,5 m · f / h          (f: tiêu cự tính bằng pixel, h: độ cao)
+s = max(1, px_dự_kiến / mục_tiêu)   (không bao giờ phóng to)
+thu khung đi s lần → cắt ô → YOLO → nhân toạ độ box với s để về ảnh gốc
+```
+
+Ví dụ: ở 30 m người khoảng 42 pixel (T 2.3); mục tiêu 10 pixel thì `s = 4,2`, khung 3840 × 2160 còn khoảng 914 × 514, chỉ cần 2 ô thay vì 32. Box đã quy về ảnh gốc nên bước 3 và 4 không đổi. Trên SeaDronesSee 4K: AP50 từ 0,235 (cắt ô gốc) lên 0,531 với mục tiêu 10 pixel (`docs/results/scale_by_altitude.md`). Mới thử trên một tập biển; còn chờ kiểm chứng trên tập lũ. Mặc định tắt.
 
 ### Bước 3: Đổi vị trí trên ảnh sang toạ độ GPS (`edge/georef.py`)
 
@@ -202,7 +214,9 @@ Khoảng cách mặt đất tính bằng xấp xỉ mặt phẳng: đổi chênh
 | 1 m | 0,000 | 1,000 | 0,767 |
 | 3 m | 0,033 | 1,000 | 1,000 |
 
-Không có báo động giả nào ở cả ba cách: báo nhầm ngẫu nhiên không lặp lại ở cùng chỗ 3 lần. Cơ chế cụ thể khiến `bytetrack_cmc` bỏ sót ở 0,5 m chưa được xác nhận (T 15.4).
+Không có báo động giả nào ở cả ba cách: báo nhầm ngẫu nhiên không lặp lại ở cùng chỗ 3 lần. `bytetrack_cmc` bỏ sót chủ yếu do **độ chênh GPS giữa hai khung liên tiếp**, không phải sai số tuyệt đối: cùng sai số 0,5 m ở 50 m, GPS nhảy nhanh bỏ sót 0,900, trôi chậm chỉ 0,033 (`docs/results/rq3_cmc_cause.md`).
+
+**Kiểm chứng trên video thật** (SeaDronesSee, 2 khung mỗi giây, sơ bộ): `geo` xác nhận 12/19 người ở đoạn đông nhất, `bytetrack` 2/19 (`docs/results/sds_mot_confirm.md`).
 
 **Điểm yếu của `geo`:**
 - Hai người đứng gần nhau hơn `r` có thể bị gộp thành một cảnh báo. Trong cứu hộ, lỗi này ít nguy hiểm hơn bỏ sót: đội cứu hộ tới nơi vẫn thấy cả nhóm.
@@ -226,6 +240,8 @@ Lặp: lấy thông điệp chưa gửi được, đến hạn thử, ưu tiên 
 ```
 
 **Trạm mặt đất** bỏ qua thông điệp có mã đã nhận. Gửi lại bao nhiêu lần cũng không sinh cảnh báo trùng.
+
+**Gộp thành sự cố ở trạm** (`ground/incidents.py`). Trên video thật, `geo` đôi khi cảnh báo một người hai lần khi GPS trôi làm người đó rơi ra khỏi cụm cũ. Trạm gắn mỗi cảnh báo mới vào **sự cố** còn mở gần nhất trong 5 m và 300 giây (theo đồng hồ chuyến bay); không có thì mở sự cố mới. Vị trí sự cố là trung bình các cảnh báo; bản đồ hiện sự cố thay cho từng cảnh báo. Không cảnh báo nào bị bỏ, nên gộp nhầm chỉ làm bản đồ kém rõ chứ không làm mất người. Cách chặn ngay trên UAV (không cảnh báo lại trong bán kính quanh chỗ đã cảnh báo, `--suppress-s`) đã thử và tắt, vì nó chặn luôn người thật thứ hai đứng gần (`docs/results/alert_memory.md`).
 
 *Vì sao.* Ghi trước khi gửi để mất điện, mất mạng không làm mất cảnh báo. Toạ độ gửi trước vì quan trọng nhất và nhỏ nhất. Thời gian chờ tăng dần để không dội liên tục khi mất sóng; phần ngẫu nhiên để nhiều UAV không cùng gửi lại một lúc khi sóng có lại.
 
@@ -331,13 +347,15 @@ Cảnh báo "người tại (3; 20)" được ghi vào hàng đợi, gửi `coor
 | Tham số | Mặc định | Ý nghĩa | Cách chọn |
 |---|---|---|---|
 | Số khung mỗi giây `F` | 2 | Tần số xử lý | Đủ để mỗi người được thấy nhiều lần (bước 1); giới hạn bởi tốc độ thiết bị (RQ2) |
-| Cạnh ô, độ chồng | 640, 0,2 | Cắt ô | 640 là kích thước mô hình được huấn luyện; chồng 20% như SAHI |
+| Cạnh ô, độ chồng | 640, 0,2 | Cắt ô | Ô 640 chạy ở imgsz 640 nên 1 pixel ảnh là 1 pixel vào mạng; chồng 20% như SAHI |
+| Cỡ người mục tiêu `--target-person-px` | tắt | Thu nhỏ khung theo độ cao (bước 2d) | Đã thử 10 và 20 pixel trên SeaDronesSee; chọn trên dữ liệu ngoài tập test lũ |
 | Ngưỡng `conf` | 0,1 | Giữ box nào | Thấp để ít bỏ sót; bước 4 lọc báo nhầm |
 | Ngưỡng gộp IOS | 0,5 | Gộp box trùng giữa các ô | Như SAHI |
 | Bán kính gom `r` | 3 m | Cùng một người nếu gần hơn | Vài lần sai số định vị tương đối giữa hai khung; quét 1, 2, 3, 5, 8 m trong RQ3 |
 | Số lần thấy `N` | 3 | Xác nhận | Nhỏ hơn số lần tối đa nhìn thấy được (8 ở 50 m, 10 m/s); quét 1, 3, 5, 10 trong RQ3 |
 | Cửa sổ `T_win` | 5 s | Đếm lần thấy trong khoảng này | Cỡ thời gian người nằm trong khung |
 | Thời gian xoá `T_exp` | 6 s | Bỏ cụm không thấy lại | Lớn hơn `T_win` một chút |
+| Bán kính, cửa sổ gộp sự cố (trạm) | 5 m, 300 s | Gắn cảnh báo vào sự cố cũ | Trên ba đoạn SeaDronesSee, 10 m làm mọi người đều nằm trong sự cố lẫn người khác; 5 m không gộp nhầm ở hai đoạn thưa, còn đoạn đông nhất vẫn có (`alert_memory.md`, `runs/sds/incident_merge.csv`) |
 
 Đánh đổi chính của RQ3: **ngưỡng conf thấp với N lớn** hay **ngưỡng cao với N nhỏ**. Công thức nhị thức ở bước 1 giúp dự đoán trước.
 
@@ -378,6 +396,7 @@ Cột "Trạng thái" cho biết nguồn đã được tra trên mạng trong qu
 - **Kế thừa có cải tiến:** cắt ô theo lô; fine-tune và đánh giá theo nhóm kích thước người.
 - **Phân tích có cơ sở:** vì sao tracking trên ảnh gãy khi UAV bay nhanh và xử lý ít khung, có chứng minh bằng kiểm thử và mô phỏng.
 - **Đề xuất của dự án:** xác nhận bằng gom theo toạ độ mặt đất, ghép từ phép chiếu ảnh lên mặt đất và luật xác nhận M trên N. **Chưa khảo sát tài liệu một cách có hệ thống**, nên chưa khẳng định được đây là cách mới; cần tìm công trình gần nhất để trích dẫn và so sánh.
+- **Đề xuất đang cân nhắc** (quyết định #13 của ROADMAP): chọn thang ảnh theo độ cao bay (bước 2d), tức nối khối phát hiện với telemetry. Ý tưởng gần với "khớp thang kích thước" của TinyPerson (bảng trên), nhưng làm lúc chạy thay vì lúc huấn luyện; cũng cần tìm công trình gần nhất.
 
 ---
 
@@ -386,9 +405,9 @@ Cột "Trạng thái" cho biết nguồn đã được tra trên mạng trong qu
 | Bước | File | Hàm, lớp chính |
 |---|---|---|
 | 1 | `edge/sampler.py`, `edge/telemetry.py` | `iter_timed_frames`, `SampledTelemetry.at` |
-| 2 | `edge/detector.py` | `tile_origins`, `merge_boxes`, `YoloDetector.detect` |
+| 2 | `edge/detector.py`, `edge/georef.py` | `tile_origins`, `merge_boxes`, `YoloDetector.detect`, `person_scale`, `expected_person_px` |
 | 3 | `edge/georef.py` | `pixel_to_gps`, `gps_to_pixel`, `locate`, `frame_motion` |
 | 4 | `edge/confirm.py`, `edge/detector.py` | `GeoConfirmer`, `TrackConfirmer`, `ByteTracker` |
-| 5 | `edge/alerts.py`, `ground/app.py` | `Outbox.enqueue`, `Outbox.pump`, `create_app` |
+| 5 | `edge/alerts.py`, `ground/app.py`, `ground/incidents.py` | `Outbox.enqueue`, `Outbox.pump`, `create_app`, `choose_incident` |
 | Nối các bước | `edge/main.py` | `main`, `build_confirmer` |
 | Kiểm thử | `tests/test_georef.py`, `tests/test_confirm.py`, `tests/test_detector.py`, `tests/test_alerts.py` | Kiểm thử ByteTrack gãy và `geo` xác nhận ở khung thứ 3: `test_bytetrack_breaks_at_2fps_and_camera_motion_compensation_fixes_it` |

@@ -31,6 +31,8 @@ Khoảng tin cậy lấy mẫu lại theo **video** (`--cluster-pattern '^(v\d+)
 3. Vì vậy mức tăng lớn của E2c trên AFO test (0,103 → 0,568, `E2c.md`) **một phần là do test và train cùng nguồn AFO**. Kết luận đúng hiện tại: thêm dữ liệu nước giúp fine-tune **không đánh đổi** khả năng nhận người dưới nước; chưa chứng minh tốt hơn mô hình gốc với người dưới nước nói chung. Tập test lũ là nơi trả lời.
 4. Người ở đây phần lớn trên 32 px, loại mà mô hình COCO vốn nhận tốt; lợi ích chính của fine-tune nằm ở người nhỏ (VisDrone, nhóm dưới 8 px).
 
+**Cập nhật 26/10:** một phần khoảng cách với mô hình gốc là do cỡ người. E2c yếu với người to (`e6_sds_pilot.md`); cắt ô sau khi thu nhỏ khung theo độ cao cho E2c AP50 0,531 trên cùng tập, so với 0,535 của E1 (`scale_by_altitude.md`).
+
 ## Giới hạn
 
 - 11 video, khoảng tin cậy rộng; người lớn, ít người nhỏ.

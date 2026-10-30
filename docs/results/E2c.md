@@ -40,6 +40,8 @@ Ngày 23/10/2026, WSL2, RTX 5060; cùng quy ước như `visdrone_E2.md` (conf 0
 3. **Lưu ý từ một tập người dưới nước độc lập (SeaDronesSee, `sds_det.md`):** E2c 0,468 so với mô hình gốc 0,535 (hiệu không có ý nghĩa), tức mức tăng trên AFO một phần do test và train cùng nguồn. Thêm AFO giúp không đánh mất người dưới nước; chưa chứng minh hơn mô hình gốc ở người dưới nước nói chung.
 4. AFO test vẫn có phần chung địa điểm với AFO train (nhóm `a`); bản bỏ nhóm chung cho số cao hơn, nên không phải do rò rỉ mà có lẽ do các nhóm còn lại dễ hơn. Kết luận về cảnh lũ vẫn phải chờ tập test lũ.
 
+**Cập nhật:** E2c yếu với người từ 45 px trở lên (`e6_sds_pilot.md`); thu nhỏ khung theo độ cao bù được trên SeaDronesSee (`scale_by_altitude.md`). Thêm đầu P2 (E3) không đáng chi phí, E2c vẫn là mô hình chính (`E3.md`).
+
 ## Giới hạn
 
 - Một seed; E2 60 epoch, E2c 55 epoch (khác nhau do giới hạn 12 giờ của Kaggle).

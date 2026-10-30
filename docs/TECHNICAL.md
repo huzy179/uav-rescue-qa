@@ -860,7 +860,7 @@ Ba lớp tách riêng (sự thật, cảm biến, detector) vì mỗi lớp là 
 - Kịch bản người: danh sách toạ độ người (đứng yên hoặc trôi chậm theo dòng nước) và kích thước. Dùng hàm ngược `gps_to_pixel` để sinh nhãn theo thời gian: ở khung nào, pixel nào, ai đang trong tầm nhìn.
 
 Hai cách dùng:
-1. **Chỉ telemetry:** gắn telemetry giả lập vào video thật (video lũ, FinlandProper). Nhãn người lấy từ nhãn có sẵn.
+1. **Chỉ telemetry:** gắn telemetry giả lập vào video thật không có telemetry (video lũ). Nhãn người lấy từ nhãn có sẵn.
 2. **Hoàn toàn giả lập cho RQ3:** sinh chuỗi phát hiện giả theo recall và tỉ lệ báo nhầm đo được ở RQ1 (ví dụ mỗi người thật được phát hiện với xác suất `r(kích thước)`, cộng báo nhầm theo phân phối Poisson). Cho phép quét rất nhiều kịch bản và đối chiếu với công thức nhị thức. Phải ghi rõ là mô phỏng.
 
 ---
@@ -914,9 +914,9 @@ Leaflet hiển thị incident theo màu ưu tiên, bấm để xem ảnh cắt v
 Mọi bộ được chuyển về YOLO một lớp (như `tools/convert_visdrone.py`). Ultralytics nhận nhiều thư mục trong một `data.yaml`:
 
 ```yaml
-path: /kaggle/input
-train: [visdrone/images/train, finland/images/train, c2a/images/train]
-val:   [visdrone/images/val, finland/images/val]
+# E2c (configs/experiments/E2c_s0.yaml): train.py dựng data.yaml từ hai khoá train, val của file cấu hình
+train: [data/processed/visdrone/images/train, data/processed/afo/images/train]
+val:   [data/processed/visdrone/images/val, data/processed/afo/images/val]
 names: {0: person}
 ```
 
@@ -987,7 +987,7 @@ Cùng phép đo trên C2A val (`runs/stats/c2a_val_1280/size_stats.csv`): ảnh 
 Lúc triển khai (cắt ô ở độ phân giải gốc, video 4K, camera 82° chéo, `runs/gsd/m4t_diag82/gsd_table.csv`): người 42,2 px ở 30 m xuống 12,7 px ở 100 m; đầu người (thân đã ngập) 16,9 px xuống 5,1 px.
 
 Kết luận:
-- **E2 lượt 2 (`E2b_s0.yaml`) = VisDrone + C2A ở 1280**: hai bộ bù nhau về kích thước người (trên); FinlandProper và AFO thêm bằng file cấu hình mới khi có.
+- **Dự kiến ban đầu: E2 lượt 2 (`E2b_s0.yaml`) = VisDrone + C2A ở 1280**, hai bộ bù nhau về kích thước người (trên). Thực tế lượt 2 chuyển thành **E2c = VisDrone + AFO** vì E2 kém mô hình gốc với người dưới nước (`results/afo_E1_E2.md`); E2b chưa chạy. E6 thử sau đó cho thấy E2c yếu với người to (`results/e6_sds_pilot.md`), nên thêm C2A vẫn là một hướng đáng thử.
 - **E2 ở imgsz 1280 giữ `scale = 0.5`**: khoảng s từ 0,5 tới 1,5 phủ được từ đầu người 5 px tới người 42 px; mất nhãn chỉ đáng kể ở đầu dưới của khoảng s.
 - **Không huấn luyện ở imgsz 640 với `scale` mặc định**: tới 26,9% nhãn bị xoá ở s = 0,5. Nếu cần 640 (để batch lớn) thì dùng mảnh cắt (13.2), không thu cả ảnh.
 - `train.py` có `--scale` để giá trị này được ghi vào `run_config.json`; muốn thử giá trị khác thì tạo file cấu hình mới, không sửa E2_s0.
@@ -1084,9 +1084,12 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 
 | Tập | Vai trò | Lưu ý |
 |---|---|---|
-| VisDrone val | Mốc so sánh với các nghiên cứu khác | Đô thị, không có nước; ảnh độ phân giải thấp |
-| FinlandProper test | Người dưới nước, độ phân giải 1920×1024 | Chia theo video |
-| Tập test lũ | **Tập chính** cho kết luận về cảnh lũ | Khoá bằng mã băm trước khi chạy E3; không dùng để chọn tham số |
+| VisDrone val, test-dev | Mốc so sánh với các nghiên cứu khác | Đô thị, không có nước; ảnh độ phân giải thấp. Val chọn `best.pt` nên test-dev là tập độc lập (quyết định #11) |
+| AFO test | Người dưới nước | Cùng nguồn với AFO train (E2c): báo thêm bản bỏ ảnh chung địa điểm (`test-noshared`, `results/afo_E1_E2.md`) |
+| SeaDronesSee (`sds_det`) | Người bơi trên biển, ảnh 4K, **độc lập** với dữ liệu huấn luyện | 11 video: bootstrap theo video (`--cluster-pattern '^(v\d+)_'`); có độ cao từng ảnh (`meta_val.csv`) |
+| Tập test lũ | **Tập chính** cho kết luận về cảnh lũ | Khoá bằng mã băm trước khi chạy bất kỳ mô hình nào trên nó; không dùng để chọn tham số; bootstrap theo video |
+
+FinlandProper (dự kiến ban đầu là tập thứ hai) tạm bỏ vì 162 GB và máy chủ không cho tải từng phần.
 
 Mọi lựa chọn (ngưỡng conf, epoch, siêu tham số) làm trên val. Tập test lũ chỉ chạy một lần cho mỗi cấu hình cuối cùng.
 
@@ -1164,17 +1167,17 @@ Giới hạn của định nghĩa, cần ghi trong luận văn:
 
 Đọc bảng:
 - `bytetrack` không xác nhận được ai ở mọi mức nhiễu: gãy vì chuyển động camera (mục 9.2), không vì GPS.
-- `bytetrack_cmc` tốt như `geo` khi GPS gần như không nhiễu, rồi tụt nhanh từ σ = 0,5 m. Thực nghiệm khoanh vùng nguyên nhân (σ = 0,5 m, seed 0, một lần chạy mỗi biến thể; `runs/rq3/diag_cmc/missed.txt`, `fuse_score_check.txt`): bỏ sót chỉ xuất hiện khi có **đồng thời** detector bỏ sót khung (recall 0,7) **và** sai số GPS thay đổi theo thời gian (τ = 30 s). Recall 1 thì không bỏ sót ai; GPS lệch cố định (τ rất lớn) cũng không. Giữa hai khung, sai số GPS chỉ đổi khoảng 0,09 m (khoảng 5 px), nhỏ hơn nhiều so với box 25 px, nên **cơ chế chưa được xác nhận**. Giả thuyết đang xét: sau một khung bị bỏ sót, track ở trạng thái "mất" và vị trí dự đoán của Kalman dùng vận tốc ước lượng từ phần dư nhiễu; cộng với `fuse_score` (IoU nhân conf, conf giả lập 0,3–0,9) làm ngưỡng ghép rất chặt với box nhỏ. Tắt `fuse_score` chỉ cứu thêm 1/10 người, nên đó chỉ là một phần. Cần điều tra tiếp trước khi viết kết luận về cơ chế; còn kết luận thực nghiệm (cần GPS rất ổn định, cỡ RTK) thì vẫn đứng.
+- `bytetrack_cmc` tốt như `geo` khi GPS gần như không nhiễu, rồi tụt nhanh từ σ = 0,5 m. Thực nghiệm khoanh vùng nguyên nhân (σ = 0,5 m, seed 0, một lần chạy mỗi biến thể; `runs/rq3/diag_cmc/missed.txt`, `fuse_score_check.txt`): bỏ sót chỉ xuất hiện khi có **đồng thời** detector bỏ sót khung (recall 0,7) **và** sai số GPS thay đổi theo thời gian (τ = 30 s). Recall 1 thì không bỏ sót ai; GPS lệch cố định (τ rất lớn) cũng không. Giữa hai khung, sai số GPS chỉ đổi khoảng 0,09 m (khoảng 5 px), nhỏ hơn nhiều so với box 25 px. Giả thuyết: sau một khung bị bỏ sót, track ở trạng thái "mất" và vị trí dự đoán của Kalman dùng vận tốc ước lượng từ phần dư nhiễu; cộng với `fuse_score` (IoU nhân conf, conf giả lập 0,3–0,9) làm ngưỡng ghép rất chặt với box nhỏ. Tắt `fuse_score` chỉ cứu thêm 1/10 người, nên đó chỉ là một phần. **Quét τ của GPS đã xác định nguyên nhân chính là độ chênh GPS giữa hai khung** (cùng σ = 0,5 m ở 50 m: τ = 5 s bỏ sót 0,900, τ = 300 s 0,033; `results/rq3_cmc_cause.md`); chuỗi chi tiết qua Kalman và `fuse_score` chưa tách riêng. Kết luận thực nghiệm (cần GPS ổn định ngắn hạn, cỡ RTK) đứng.
 - `geo` gần như không bị ảnh hưởng tới σ = 3 m vì gom theo bán kính 3 m trên mặt đất và nhiễu GPS tương quan theo thời gian (mục 8.4); đổi lại sai số vị trí của cảnh báo tăng theo σ (trung vị 0,25 m ở σ = 0 lên 3,96 m ở σ = 3 m).
 - Không có báo động giả nào: báo nhầm ngẫu nhiên không lặp lại ở cùng một chỗ 3 lần.
 - Gộp nhầm khoảng 1 lần mỗi lượt chạy ở mọi chiến lược, kể cả khi không nhiễu: 10 người rải ngẫu nhiên trên dải rộng 50 m nên đôi khi hai người cách nhau dưới `r_eval` = 10 m, rơi vào giới hạn của định nghĩa ở trên. Bảng chính thức cần kịch bản đặt người cách nhau có kiểm soát, hoặc báo ở nhiều `r_eval`.
 
-Giới hạn: recall giả lập không phụ thuộc kích thước người, mới có đường bay thẳng, 3 seed. Kết luận chính thức chạy đủ lưới ở ROADMAP mục 4.
+Giới hạn: bảng trên dùng recall cố định 0,7 (từ 27/10 có thêm recall theo cỡ người, `results/rq3_altitude.md`), mới có đường bay thẳng, 3 seed. Kết luận chính thức chạy đủ lưới ở ROADMAP mục 4.
 
 ### 15.5. Nhãn theo thời gian cho RQ3
 
 Hai nguồn:
-1. Chuỗi khung của FinlandProper, nếu nhãn được gán liên tục và có định danh người qua các khung (cần kiểm tra khi tải về).
+1. **[Đã có]** SeaDronesSee-MOT: video thật có `track_id` và metadata GPS, độ cao, hướng từng khung (`tools/convert_seadronessee_mot.py`, mục 9.6). Drone gần như đứng yên ở các đoạn dùng được, nên chưa thay được mô phỏng cho trường hợp bay nhanh.
 2. Mô phỏng (mục 11.3): người đặt tại toạ độ cố định, nhãn suy ra bằng `gps_to_pixel`. **[Đã có]** `sim/make_rq3.py`.
 
 Nếu tự gán nhãn vài đoạn video lũ cho RQ3, gán ở 2 FPS và gán thêm định danh người (cùng một người giữ cùng một số qua các khung); CVAT hỗ trợ chế độ gán nhãn theo track.

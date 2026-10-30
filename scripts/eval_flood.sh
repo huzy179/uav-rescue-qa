@@ -25,6 +25,14 @@ CLUSTER='^(.+)_\d+$'   # tên ảnh <video>_<khung>.jpg của tools/extract_fram
 
 $PY tools/convert_cvat.py --xml "${XMLS[@]}" --images data/raw/flood/frames --dst "$D" --split test
 cat "$D/stats_test.json"
+# Tập đã khoá (LABELING mục 8): nhãn vừa chuyển phải trùng mã băm lúc khoá, kể cả không thêm bớt file.
+if [ -f "$D/MANIFEST.sha256" ]; then
+  (cd "$D" && sha256sum --check --quiet MANIFEST.sha256) || { echo "Tập test lũ khác lúc khoá (MANIFEST.sha256)"; exit 1; }
+  (cd "$D" && diff <(find -L images/test labels/test ignore/test boxes_test.csv tags_test.csv -type f | sort) \
+      <(awk '{print $2}' MANIFEST.sha256)) || { echo "Tập test lũ thêm hoặc bớt file so với lúc khoá"; exit 1; }
+else
+  echo "[cảnh báo] Chưa có $D/MANIFEST.sha256: tập test lũ chưa khoá (LABELING mục 8)"
+fi
 
 if [ $# -gt 0 ]; then names=("$@"); else names=(); for f in configs/experiments/*_flood.yaml; do b=$(basename "$f"); names+=("${b%_flood.yaml}"); done; fi
 runs=()

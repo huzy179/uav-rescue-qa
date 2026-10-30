@@ -10,11 +10,12 @@ Người đọc là thầy hướng dẫn: nắm đề tài, không theo dõi m�
 
 ## Thu thập
 
-1. Dòng của tuần này trong bảng mục 1 của `docs/ROADMAP.md`: các cột Code, Thí nghiệm, Gán nhãn, Viết, và cột "Báo cáo thứ Sáu" cho biết tuần này phải trình gì.
+1. Dòng của tuần này trong bảng mục 1.3 của `docs/ROADMAP.md`: các cột Code, Thí nghiệm, Gán nhãn, Viết, và cột "Báo cáo thứ Sáu" cho biết tuần này phải trình gì. Đọc thêm các khối "Cập nhật" ở mục 1.1 và bảng trạng thái ở mục 8 của `docs/TONG_QUAN.md`.
 2. `git log --since=<thứ Sáu tuần trước> --stat`: việc đã làm thật.
 3. Các file trong `docs/results/` thay đổi trong tuần: số liệu mới.
 4. Mục 6 của ROADMAP: quyết định còn treo có hạn rơi vào tuần này hoặc đã quá hạn.
-5. Hỏi người dùng những thứ không có trong kho: số khung đã gán nhãn, tiến độ viết chương, việc làm ngoài máy.
+5. Hỏi người dùng những thứ không có trong kho: số khung đã gán nhãn, tiến độ viết chương, việc làm ngoài máy, ý kiến của thầy ở buổi trước.
+6. Báo cáo trước trong `docs/reports/` (nếu có): việc hứa tuần trước mà tuần này chưa làm phải nhắc lại.
 
 ## Bố cục
 
@@ -28,7 +29,7 @@ Người đọc là thầy hướng dẫn: nắm đề tài, không theo dõi m�
 ## Quy tắc
 
 - Việc chưa xong thì viết là chưa xong. Không viết "đang hoàn thiện" cho việc chưa bắt đầu.
-- Không đưa số liệu ước lượng hay số chưa chạy ra.
+- Không đưa số liệu ước lượng hay số chưa chạy ra. Kết quả "sơ bộ" hay "mô phỏng" trong `docs/results/` giữ nguyên nhãn đó khi đưa vào báo cáo.
 - Dài không quá một trang; chi tiết thì dẫn tới file trong `docs/`.
 
 Lưu vào `docs/reports/<YYYY-MM-DD>.md` theo ngày thứ Sáu, rồi đưa nội dung cho người dùng xem lại trước khi gửi.

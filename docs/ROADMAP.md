@@ -49,7 +49,7 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 | Tuần | Dữ liệu | Thí nghiệm | Code (chỉ khi cần) | Viết | Gán nhãn | Báo cáo thứ Sáu |
 |---|---|---|---|---|---|---|
 | 21–23/10 | Gom video lũ, ghi `sources.csv`; dựng dự án CVAT theo LABELING.md; gán thử | E2 lượt 1 xong → `eval_by_size` trên VisDrone val, `compare_runs` với E1 | Push, xem CI chạy | Chương 2 | 30–50 | 23/10: bảng VisDrone (E0, E1, E4, cắt ô riêng); E2 nếu kịp; demo pipeline + trạm mặt đất (telemetry giả lập); RQ3 chạy thử; hỏi thầy quyết định #1, #7, #10 |
-| 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
+| 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` (thực tế: FinlandProper tạm bỏ) | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle (thực tế: E2c = VisDrone + AFO, xong 23/10; E3 xong 28/10) | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
 | 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E0–E2 trên tập test lũ | | Chương 4 | 200–250, **khoá 4/11** | 6/11: RQ1 trên tập test lũ (E0–E2) |
 | 7–13/11 | | E3, E4 (cắt ô, có và không thu nhỏ theo độ cao) trên tập lũ; E5 (YOLO11s); E6 nếu thầy duyệt; recall theo loại nhiễu; **RQ2 bắt đầu 9/11**: xuất TensorRT FP16/INT8 trên T4, đo từng chặng | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~ (đã có); notebook RQ2 trên Kaggle | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
 | 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
@@ -64,7 +64,7 @@ Mỗi lần huấn luyện ở 1280 khoảng 8–10 giờ T4 (E2 lượt 1, 60 e
 | Tuần | Lần chạy | Giờ GPU ước lượng |
 |---|---|---|
 | 21–23/10 | E2 lượt 1 | 8 |
-| 24–30/10 | E2 lượt 2 (thêm FinlandProper) | 10 |
+| 24–30/10 | E2 lượt 2 (thêm FinlandProper); thực tế: E3 | 10 |
 | 31/10–6/11 | ~~E3 (P2)~~ đã chạy trước (hai phiên); giờ trống dùng theo quyết định #14 | 10 |
 | 7–13/11 | E5 (YOLO11s); xuất TensorRT, đo RQ2 | 9 + 2 |
 | 14–20/11 | 2 seed thêm cho cấu hình cuối | 20 |
@@ -124,13 +124,13 @@ Giữ Docker để đóng gói demo, tách theo vai trò:
 | `docker/edge-jetson.Dockerfile` | Dựa trên ảnh Ultralytics cho JetPack | **Đã cắt** (21/10: không có Jetson) |
 | `compose.yaml` | `ground` + 2–3 dịch vụ `edge`, mỗi dịch vụ phát lại một video | Demo nhiều drone (mục 9 của đề cương) bằng một lệnh `docker compose up` |
 
-Ảnh `edge` và `ground` được viết khi hai gói đó có mã (tuần 24–30/10). Ảnh hiện tại (chạy các script đánh giá) giữ đến lúc đó.
+Trạng thái 31/10: đã có `docker/ground.Dockerfile` và `docker/dev.Dockerfile` (chạy các script đánh giá); `compose.yaml` có hai dịch vụ `dev`, `ground`. `docker/edge.Dockerfile` và demo nhiều drone bằng compose **chưa viết**; demo hiện chạy bằng `scripts/demo.sh` trên máy. Đây là phần mở rộng, cắt trước theo mục 1.5.
 
 ### Cài đặt không dùng Docker
 
 Cài theo vai trò: `pip install -e ".[edge]"` trên Jetson, `pip install -e ".[ground]"` cho trạm mặt đất, `pip install -e ".[dev]"` trên Mac. Cách này thay cho ba file `requirements-*.txt` và bỏ được đoạn `sys.path.insert` ở đầu các script.
 
-### Mã hiện có đi về đâu
+### Mã hiện có đi về đâu (đã chuyển xong, `src/` không còn)
 
 | Hiện tại | Chuyển thành |
 |---|---|
@@ -240,7 +240,7 @@ Notebook chỉ làm ba việc: clone kho mã ở một commit cố định, cài
 | E5 | E2 với YOLO11s | Chưa |
 | E6 | Recall theo số pixel trên người (thu nhỏ nhiều mức); 48 MP và 4K là hai điểm trên đường cong | Đã có `tools/rescale_dataset.py`, `eval/recall_by_pixels.py`; chạy thử trên SDS (`e6_sds_pilot.md`); xem mục 5.3 |
 
-Đánh giá trên ba tập: VisDrone val, test của FinlandProper, tập test lũ. Theo mục 8.5 của đề cương:
+Đánh giá trên: VisDrone val và test-dev, AFO test, SeaDronesSee (người dưới nước, độc lập với dữ liệu huấn luyện), tập test lũ (TECHNICAL 15.1). FinlandProper dự kiến ban đầu đã tạm bỏ (162 GB). Theo mục 8.5 của đề cương:
 - AP ở conf 0,001, recall vận hành ở conf 0,25;
 - `max_det=1000`;
 - IoU 0,3 cho nhóm dưới 8 px;
@@ -262,7 +262,7 @@ Cấu hình tốt nhất của RQ1 × {FP16, INT8} × chế độ công suất. 
 | Độ cao × vận tốc | 30/50/80/100 m × 5/10 m/s |
 | Mạng | tốt; mất gói 10–30%; mất sóng 30–120 s |
 
-Nhãn theo thời gian lấy từ `sim/flight.py` (mục 3.5), hoặc từ chuỗi khung của FinlandProper nếu bộ này có nhãn liên tục (cần kiểm tra khi tải về).
+Nhãn theo thời gian lấy từ `sim/flight.py` (mục 3.5); kiểm chứng trên video thật bằng SeaDronesSee-MOT (có `track_id` và metadata bay, `docs/results/sds_mot_confirm.md`).
 
 Chỉ số thêm cho phần xác nhận: số lần **gộp nhầm** (hai người thành một cảnh báo) và **tách nhầm** (một người thành nhiều cảnh báo), theo bán kính gom và mức nhiễu telemetry. Bán kính gom của `geo` phải gắn với sai số định vị: GPS lệch vài mét; camera lệch 1° ở 50 m làm điểm chiếu lệch khoảng 0,9 m (50 × tan 1°). Đây cũng là chỗ định lượng giới hạn của giả định "camera nhìn thẳng xuống".
 
@@ -331,4 +331,5 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 | 11 | So E2 với E0/E1 trên VisDrone test-dev thay vì val? E2 chọn `best.pt` theo val nên val thiên vị E2 (TECHNICAL 13.5). Đã chạy cả hai tập cho E1, E2: mức tăng giữ nguyên trên test-dev (`docs/results/visdrone_E2.md`); cần thầy chọn tập nào là bảng chính | Học viên, hỏi thầy | 23/10 |
 | 12 | Dùng video lũ có bản quyền (YouTube, báo chí) cho tập test, chỉ công bố nhãn và nguồn, không phát hành lại ảnh: có được chấp nhận? C2A không ghi giấy phép trên GitHub: dùng để huấn luyện có ổn? | Thầy | 23/10 |
 | 13 | Đưa "thu nhỏ khung theo độ cao" (`scale_by_altitude.md`) thành một đóng góp của khối phát hiện, đánh giá trên tập lũ cạnh E4 (cắt ô cố định)? Chọn mục tiêu px trên dữ liệu ngoài tập test lũ | Học viên, hỏi thầy | Trước khi chạy RQ1 trên tập lũ |
-| 14 | Tuần 31/10–6/11 dư khoảng 10 giờ GPU vì E3 xong sớm: dùng cho E2d (+ HydroVigilance) hay seed thứ hai của E2c? | Học viên | 31/10 |
+| 14 | Tuần 31/10–6/11 dư khoảng 10 giờ GPU vì E3 xong sớm: seed thứ hai của E2c, E2d (+ HydroVigilance), hay E2c + C2A (thêm người to, vì E2c yếu với người to: `e6_sds_pilot.md`)? | Học viên | 31/10 |
+| 15 | 4/10 video lũ dưới 1080p (thainguyen, duvall 480p; texas, sanangelo 720p), trái LABELING mục 1: tải lại bản cao hơn nếu có, hoặc giữ và ghi ngoại lệ vào LABELING mục 6. Phải quyết **trước khi gán** các video đó, vì nhãn gắn với độ phân giải ảnh | Học viên | Trước khi gán |

@@ -39,7 +39,7 @@ Số đọc từ `runs/sds_det/compare_<A>_<B>/compare.csv`.
 ## Nhận xét
 
 1. **Cắt ô ở độ phân giải gốc là cách tệ nhất cho E2c trên ảnh bay thấp** (AP50 0,235, precision 0,065): người to bị nhận thành nhiều mảnh hoặc không nhận, nền bị báo nhầm nhiều.
-2. **Thu nhỏ theo độ cao sửa được gần hết**: +0,29 AP50 so với cắt ô gốc, có ý nghĩa. So với E2c toàn ảnh, recall cao hơn có ý nghĩa (+0,114), AP50 cao hơn nhưng chưa có ý nghĩa.
+2. **Thu nhỏ theo độ cao sửa được gần hết**: +0,288 (mục tiêu 20 px) và +0,296 (10 px) AP50 so với cắt ô gốc, có ý nghĩa. So với E2c toàn ảnh, recall cao hơn có ý nghĩa (+0,114), AP50 cao hơn nhưng chưa có ý nghĩa.
 3. **E2c có thu nhỏ ngang mô hình gốc trên nước biển** (AP50 0,531 so với 0,535), trong khi vẫn giữ lợi thế lớn ở người nhỏ (`visdrone_E2.md`, `e6_sds_pilot.md`). Đây là câu trả lời tốt hơn cho lưu ý ở `sds_det.md` ("E2c chưa hơn mô hình gốc với người dưới nước"): một phần khoảng cách là do đưa người sai cỡ vào mô hình, không phải do mô hình.
 4. Mục tiêu 10 px cho recall cao hơn 20 px có ý nghĩa; vì ước lượng px đang thấp hơn thực tế, "10 px dự kiến" thực ra đưa người về cỡ lớn hơn 10 px, gần vùng E2c mạnh nhất. Khi có camera và góc nhìn thật của drone dùng cho lũ, nên hiệu chỉnh lại ước lượng này.
 5. Thu nhỏ còn giảm số ô phải chạy, nên nhanh hơn; chưa đo kỹ thời gian (máy RTX 5060, không phải Jetson).
