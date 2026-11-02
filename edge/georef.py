@@ -58,6 +58,37 @@ def expected_person_px(tel: Telemetry, cam: Camera, person_m: float = 0.5) -> fl
     return person_m * cam.f_px / tel.alt_agl_m
 
 
+@dataclass(frozen=True)
+class ErrorModel:
+    """Độ lệch chuẩn của từng nguồn sai số định vị (TECHNICAL mục 8.4). Mặc định: GPS thường, chưa hiệu chỉnh."""
+
+    gps_sigma_m: float = 3.0
+    alt_sigma_m: float = 2.0
+    yaw_sigma_deg: float = 2.0
+    tilt_sigma_deg: float = 1.0
+    box_sigma_px: float = 2.0
+
+
+def position_error_m(u: float, v: float, tel: Telemetry, cam: Camera, model: ErrorModel) -> float:
+    """Sai số vị trí (1σ, mét) của điểm ảnh (u, v) sau pixel_to_gps: căn tổng bình phương các nguồn độc lập.
+
+    Với d là khoảng cách mặt đất từ điểm ngay dưới UAV tới điểm đó và h là độ cao:
+    GPS σ_GPS; độ cao d·δh/h; hướng d·δψ; nghiêng camera h·(1 + d²/h²)·δθ (đạo hàm của h·tanθ tại θ = atan(d/h):
+    ở tâm là h·δθ, ra mép lớn dần); box lệch δpx·h/f. Điểm càng xa tâm ảnh thì sai số càng lớn.
+    """
+    h = tel.alt_agl_m
+    gsd = h / cam.f_px
+    d = math.hypot(u - cam.width / 2.0, v - cam.height / 2.0) * gsd
+    parts = (
+        model.gps_sigma_m,
+        d * model.alt_sigma_m / h,
+        d * math.radians(model.yaw_sigma_deg),
+        h * (1.0 + (d / h) ** 2) * math.radians(model.tilt_sigma_deg),
+        model.box_sigma_px * gsd,
+    )
+    return math.sqrt(sum(p * p for p in parts))
+
+
 def pixel_to_gps(u: float, v: float, tel: Telemetry, cam: Camera) -> tuple[float, float]:
     """Pixel (u sang phải, v xuống dưới) → (lat, lon) của điểm trên mặt đất."""
     scale = tel.alt_agl_m / cam.f_px

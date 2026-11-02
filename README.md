@@ -54,6 +54,8 @@ FLOODEYE_GROUND_DB=runs/ground/ground.sqlite .venv/bin/python -m uvicorn --facto
 
 Có file `.SRT` mới thì kiểm tra trước bộ đọc có hiểu định dạng không: `.venv/bin/python -m edge.telemetry DJI_0001.SRT`. Khi chạy với telemetry giả lập, video có dòng chữ "TELEMETRY GIA LAP" và `run_config.json` ghi `telemetry_source`.
 
+Demo hai drone: `scripts/demo_multi.sh` (đoạn SeaDronesSee có telemetry thật; drone thứ hai phát lại cùng đoạn với GPS dời thêm vài mét). Trạm gộp cảnh báo của hai drone thành một sự cố và xếp sự cố theo ưu tiên; bấm một chấm trên bản đồ để gắn thẻ "dưới nước", "trên mái", hoặc đóng sự cố ("đã cứu", "báo nhầm"). API: `PATCH /api/incidents/<id>` với `{"tag": "water"}` hay `{"status": "resolved"}`.
+
 Mỗi lần chạy ghi vào `--output`: `detections.jsonl`, `confirmations.jsonl`, `alerts.jsonl`, `alerts_sent.jsonl` (từng lần gửi, kể cả thất bại), `timings.jsonl` (ms từng chặng), `outbox.sqlite`, `run_config.json`.
 
 ## Cài đặt
@@ -234,6 +236,17 @@ python eval/incident_merge_eval.py --videos val-m100-DJI_0001-v21 --mot data/pro
 ```
 
 Thời gian từng chặng (RQ2): `python eval/timing_summary.py --runs runs/edge/demo --output runs/edge/timing.csv`.
+
+RQ2 trọn một lệnh (TECHNICAL mục 14.5): xuất E2c sang TensorRT FP16 và INT8, chấm độ chính xác, đo thời gian cả pipeline, ghép thành bảng và hình recall theo FPS (`runs/rq2/rq2.csv`). Cần GPU NVIDIA; chạy thật trên Kaggle T4 bằng [notebooks/kaggle_rq2.ipynb](notebooks/kaggle_rq2.ipynb) (Add Input: `best.pt` của E2c, AFO, SeaDronesSee-MOT):
+
+```bash
+python scripts/run_rq2.py --config configs/experiments/rq2_t4.yaml                       # mọi biến thể
+python scripts/run_rq2.py --config configs/experiments/rq2_t4.yaml --only pt_tiled fp16_tiled --steps export accuracy
+```
+
+Tần số xử lý theo độ cao: `python -m edge.main ... --min-views 6 --fps 8` xử lý dày khi bay thấp, thưa khi bay cao, để mỗi người được thấy khoảng 6 lần. Sai số vị trí trong cảnh báo tính theo vị trí trong ảnh và độ cao (`--gps-sigma-m`, `--alt-sigma-m`, `--yaw-sigma-deg`, `--tilt-sigma-deg`); `--position-error-m` ép một hằng số.
+
+Mô phỏng thêm: `python -m sim.make_rq3 ... --pattern zigzag --leg-m 200` (bay quét luống cày), `--alt-bias-m 2` (độ cao đo lệch), `--target-person-px 10` (detector giả lấy recall ở cỡ người sau khi thu nhỏ). Quét so sánh tần số cố định và theo độ cao: `python -m sim.sweep_rq3 --config configs/experiments/rq3_adaptive.yaml --jobs 8`.
 
 Nhãn tập lũ từ CVAT: `python tools/convert_cvat.py --xml task1.zip task2.zip … --images data/raw/flood/frames --dst data/processed/flood --split test` (nhận nhiều file xuất "CVAT for images 1.1", .zip hoặc .xml). Cả bước chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu: `scripts/eval_flood.sh <thư mục chứa các file xuất>`.
 

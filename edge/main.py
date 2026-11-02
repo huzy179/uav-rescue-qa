@@ -20,8 +20,10 @@ import numpy as np
 from edge.alerts import FakeTransport, HttpTransport, Outbox, Transport, crop_jpeg_base64, make_alert
 from edge.confirm import Confirmer, GeoConfirmer, TrackConfirmer
 from edge.detector import ByteTracker, Detector, ReplayDetector, YoloDetector, person_scale
-from edge.georef import Camera, expected_person_px, frame_motion, gps_to_pixel, locate
-from edge.sampler import iter_timed_frames
+from edge.georef import (
+    Camera, ErrorModel, expected_person_px, frame_motion, gps_to_pixel, ground_distance_m, locate, position_error_m,
+)
+from edge.sampler import iter_timed_frames, views_fps
 from edge.telemetry import SampledTelemetry, TelemetrySource
 from eval.draw import draw_boxes
 from shared.config import parse_args_with_config
@@ -39,7 +41,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", type=Path, required=True, help="File video hoặc thư mục chuỗi khung")
     parser.add_argument("--source-fps", type=float, default=None, help="FPS của chuỗi khung (bắt buộc khi nguồn là thư mục)")
-    parser.add_argument("--fps", type=float, default=2.0, help="Số khung xử lý mỗi giây")
+    parser.add_argument("--fps", type=float, default=2.0, help="Số khung xử lý mỗi giây; với --min-views là mức trần")
+    parser.add_argument("--min-views", type=float, default=None,
+                        help="Đổi tần số theo độ cao và vận tốc để mỗi người được thấy khoảng số lần này (giữa --fps-min và --fps); không đặt thì cố định --fps")
+    parser.add_argument("--fps-min", type=float, default=0.5, help="Tần số xử lý tối thiểu khi dùng --min-views")
     parser.add_argument("--max-frames", type=int, default=None, help="Giới hạn số khung xử lý")
     parser.add_argument("--model", default="yolo26s.pt", help="Trọng số .pt, .onnx hoặc .engine")
     parser.add_argument("--replay", type=Path, default=None, help="Đọc lại detections.jsonl thay cho chạy mô hình (RQ3)")
@@ -71,7 +76,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--window-s", type=float, default=5.0, help="Cửa sổ đếm lần thấy (giây)")
     parser.add_argument("--expire-s", type=float, default=6.0, help="Xoá cụm không được thấy quá số giây này")
     parser.add_argument("--uav-id", default="uav1", help="Mã UAV, đứng đầu alert_id")
-    parser.add_argument("--position-error-m", type=float, default=5.0, help="Sai số định vị ghi vào cảnh báo (GPS thường chiếm phần lớn)")
+    parser.add_argument("--position-error-m", type=float, default=None,
+                        help="Sai số định vị cố định ghi vào cảnh báo; không đặt thì tính theo vị trí trong ảnh và độ cao (TECHNICAL 8.4)")
+    parser.add_argument("--gps-sigma-m", type=float, default=3.0, help="Sai số GPS của UAV (1σ, m); RTK thì khoảng 0,05")
+    parser.add_argument("--alt-sigma-m", type=float, default=2.0, help="Sai số độ cao so với mặt nước (1σ, m)")
+    parser.add_argument("--yaw-sigma-deg", type=float, default=2.0, help="Sai số hướng (1σ, độ)")
+    parser.add_argument("--tilt-sigma-deg", type=float, default=1.0, help="Lệch khỏi nhìn thẳng xuống (1σ, độ)")
     parser.add_argument("--ground-url", default=None, help="Địa chỉ trạm mặt đất; không có thì dùng transport giả luôn ack")
     parser.add_argument("--net-loss", type=float, default=0.0, help="Giả lập: xác suất mất mỗi lần gửi")
     parser.add_argument("--net-outage", type=float, nargs=2, action="append", default=None, metavar=("START", "END"), help="Giả lập: khoảng mất sóng (giây), lặp được")
@@ -171,6 +181,8 @@ def main() -> None:
     if synthetic:
         print("[cảnh báo] Telemetry giả lập: toạ độ GPS và vòng xác nhận trên video chỉ để minh hoạ, không phải vị trí thật.")
 
+    next_t, fps_now = 0.0, args.fps
+    error_model = ErrorModel(args.gps_sigma_m, args.alt_sigma_m, args.yaw_sigma_deg, args.tilt_sigma_deg)
     cam: Camera | None = None
     confirmer: Confirmer | None = None
     video: cv2.VideoWriter | None = None
@@ -188,11 +200,28 @@ def main() -> None:
                 cam = Camera.from_fov(args.fov_deg, args.fov_type, frame.shape[1], frame.shape[0])
                 confirmer = build_confirmer(args, telemetry, cam)
             tel = telemetry.at(t)
+            if args.min_views is not None:
+                # Bỏ khung tới hạn kế tiếp; hạn tính lại mỗi khung xử lý theo độ cao và vận tốc hiện tại.
+                if t + 1e-9 < next_t:
+                    continue
+                prev = telemetry.at(max(t - 1.0, 0.0))
+                speed = ground_distance_m(prev.lat, prev.lon, tel.lat, tel.lon) / max(min(t, 1.0), 1e-9) if t > 0 else 0.0
+                footprint_m = cam.height * tel.alt_agl_m / cam.f_px
+                # Khung đầu chưa có vận tốc (không nhìn trước telemetry): dùng tần số trần thay vì sàn.
+                fps_now = views_fps(footprint_m, speed, args.min_views, args.fps_min, args.fps) if t > 0 else args.fps
+                # Cộng dồn từ hạn trước (không từ t) để làm tròn theo khung nguồn không kéo tần số thực xuống.
+                next_t = max(next_t + 1.0 / fps_now, t + 0.5 / fps_now)
+                # Xử lý thưa thì N lần thấy trải dài hơn: cửa sổ đếm phải phủ thời gian một người nằm trong khung,
+                # nếu không bay cao (ít khung) lại bỏ sót nhiều hơn (runs/rq3/adaptive, lần quét đầu).
+                in_frame_s = footprint_m / speed if speed > 0 else args.window_s
+                confirmer.window_s = max(args.window_s, in_frame_s)
+                confirmer.expire_s = max(args.expire_s, confirmer.window_s + 1.0 / fps_now)
             scale = person_scale(expected_person_px(tel, cam, args.person_m), args.target_person_px)
             dets, timings = detector.detect(frame, frame_id, t, scale)
             start = time.perf_counter()
             dets = [locate(d, tel, cam) for d in dets]
             timings["georef_ms"] = (time.perf_counter() - start) * 1000.0
+            timings["fps_target"] = fps_now
             start = time.perf_counter()
             new_confirmed = confirmer.update(dets, t)
             timings["confirm_ms"] = (time.perf_counter() - start) * 1000.0
@@ -201,7 +230,11 @@ def main() -> None:
                 write_jsonl(det_log, d.model_dump())
             for c in new_confirmed:
                 write_jsonl(conf_log, c.model_dump())
-                alert = make_alert(c, args.uav_id, len(confirmed) + 1, tel, args.position_error_m, model_name)
+                error_m = args.position_error_m
+                if error_m is None:
+                    x1, _, x2, y2 = c.box_px
+                    error_m = position_error_m((x1 + x2) / 2.0, y2, tel, cam, error_model)
+                alert = make_alert(c, args.uav_id, len(confirmed) + 1, tel, round(error_m, 2), model_name)
                 outbox.enqueue(alert, AlertCrop(alert_id=alert.alert_id, jpeg_base64=crop_jpeg_base64(frame, c.box_px)), t)
                 write_jsonl(alert_log, alert.model_dump())
                 confirmed.append(c)

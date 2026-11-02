@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pytest
 
-from edge.georef import Camera, ground_offset_m, gps_to_pixel, pixel_to_gps
+from edge.georef import Camera, ErrorModel, ground_offset_m, gps_to_pixel, pixel_to_gps, position_error_m
 from shared.schema import Telemetry
 
 CAM = Camera(width=3840, height=2160, hfov_deg=90.0)  # f = 1920 px: 1 px = h/1920 m
@@ -67,3 +67,16 @@ def test_co_nguoi_du_kien_va_he_so_thu_nho() -> None:
     assert person_scale(40.0, 20.0) == 2.0
     assert person_scale(10.0, 20.0) == 1.0  # không phóng to
     assert person_scale(40.0, None) == 1.0
+
+
+def test_sai_so_vi_tri_tinh_tay() -> None:
+    # Ảnh rộng 1000 px, góc ngang 90°: f = 500 px; ở 50 m GSD = 0,1 m/px.
+    cam = Camera(1000, 1000, 90.0)
+    tel = Telemetry(t=0, lat=21.0, lon=105.8, alt_agl_m=50.0, yaw_deg=0.0)
+    model = ErrorModel(gps_sigma_m=3.0, alt_sigma_m=2.0, yaw_sigma_deg=2.0, tilt_sigma_deg=1.0, box_sigma_px=2.0)
+    # Tâm ảnh (d = 0): GPS 3, nghiêng 50·tan1° ≈ 0,8727, box 0,2.
+    assert position_error_m(500, 500, tel, cam, model) == pytest.approx(math.sqrt(9 + 0.872665**2 + 0.04), rel=1e-5)
+    # Mép phải (d = 50 m): GPS 3; độ cao 50·2/50 = 2; hướng 50·0,034907 = 1,745; nghiêng 50·2·0,017453 = 1,745; box 0,2.
+    assert position_error_m(1000, 500, tel, cam, model) == pytest.approx(math.sqrt(9 + 4 + 2 * 1.745329**2 + 0.04), rel=1e-5)
+    # Không có sai số nào trừ GPS: đúng bằng σ_GPS ở mọi chỗ.
+    assert position_error_m(1000, 0, tel, cam, ErrorModel(3.0, 0, 0, 0, 0)) == pytest.approx(3.0)

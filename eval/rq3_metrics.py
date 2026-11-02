@@ -127,6 +127,9 @@ def main() -> None:
     sends = read_jsonl(args.run / "alerts_sent.jsonl")
     truth = json.loads(args.truth.read_text(encoding="utf-8"))
     summary, per_person = compute_metrics(alerts, sends, truth, args.r_eval_m, args.tail_s)
+    # Chi phí tính toán: số khung đã chạy detector (khác nhau khi tần số xử lý đổi theo độ cao, --min-views).
+    timings = args.run / "timings.jsonl"
+    summary["frames_processed"] = len(read_jsonl(timings)) if timings.exists() else None
     (output / "rq3_metrics.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     (output / "rq3_per_person.json").write_text(json.dumps(per_person, indent=2, ensure_ascii=False), encoding="utf-8")
     write_run_config(output, Path(__file__).name, None, None, vars(args))

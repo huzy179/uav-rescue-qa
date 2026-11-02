@@ -20,3 +20,20 @@ def test_recall_curve_bac_thang_va_ngoai_mien(tmp_path: Path) -> None:
     assert dets == []  # recall 0 ở mọi cỡ
     dets = simulate_detections(0, 0.0, boxes, cam, lambda px: 1.0 if px >= 30 else 0.0, 0.0, random.Random(0))
     assert [d.box_px for d in dets] == [(100.0, 100.0, 130.0, 130.0)]
+
+
+def test_duong_recall_khi_thu_nho() -> None:
+    curve = RecallCurve((0.0, 10.0), (10.0, float("inf")), (0.2, 0.8))
+    half = curve.scaled(2.0)  # thu nhỏ 2 lần: người 15 px còn 7,5 px
+    assert curve(15.0) == 0.8 and half(15.0) == 0.2 and half(25.0) == 0.8
+
+
+def test_bay_zigzag_di_ve_va_chuyen_duong() -> None:
+    from sim.flight import ZigzagFlight
+
+    f = ZigzagFlight(21.0, 105.8, 50.0, 10.0, 0.0, leg_m=100.0, spacing_m=40.0)
+    assert f.local(5.0) == (50.0, 0.0, 0.0)  # đường 1, đi về phía trước
+    assert f.local(12.0) == (100.0, 20.0, 90.0)  # đang chuyển sang đường 2
+    assert f.local(19.0) == (50.0, 40.0, 180.0)  # đường 2, đi ngược lại
+    assert f.at(19.0).yaw_deg == 180.0
+    assert f.n_legs(60.0) == 4  # 600 m: 100 + 40 + 100 + 40 + 100 + 40 + 100 = 520 m

@@ -18,7 +18,7 @@ from pathlib import Path
 
 from edge.georef import Camera, gps_to_pixel, offset_gps
 from shared.schema import Detection, Telemetry
-from sim.flight import StraightFlight
+from sim.flight import StraightFlight, ZigzagFlight
 
 PERSON_WIDTH_M = 0.5  # như scripts/gsd_calc.py
 
@@ -50,6 +50,12 @@ class RecallCurve:
                 return r
         return self.recall[0] if px < self.lo[0] else self.recall[-1]
 
+    def scaled(self, factor: float) -> RecallCurve:
+        """Đường recall khi khung bị thu nhỏ factor lần trước khi phát hiện: người px trên ảnh gốc còn px/factor."""
+        return RecallCurve(
+            tuple(lo * factor for lo in self.lo), tuple(hi * factor for hi in self.hi), self.recall
+        )
+
 
 @dataclass(frozen=True)
 class Person:
@@ -66,14 +72,19 @@ class Person:
 
 
 def place_people(
-    flight: StraightFlight, n: int, along_m: tuple[float, float], lateral_m: float, drift_mps: float, seed: int
+    flight: StraightFlight | ZigzagFlight, n: int, along_m: tuple[float, float], lateral_m: float, drift_mps: float,
+    seed: int, right_m: tuple[float, float] | None = None,
 ) -> list[Person]:
-    """Rải n người dọc đường bay: cách điểm xuất phát along_m (mét, theo hướng bay), lệch ngang tối đa ±lateral_m."""
+    """Rải n người: cách điểm xuất phát along_m (mét, theo hướng bay), lệch ngang tối đa ±lateral_m.
+
+    right_m (bay zig-zag): lệch ngang lấy đều trong khoảng này thay cho ±lateral_m, để phủ cả vùng quét.
+    """
     rng = random.Random(seed)
     yaw = math.radians(flight.yaw_deg)
     people = []
     for i in range(n):
-        forward, right = rng.uniform(*along_m), rng.uniform(-lateral_m, lateral_m)
+        forward = rng.uniform(*along_m)
+        right = rng.uniform(*right_m) if right_m is not None else rng.uniform(-lateral_m, lateral_m)
         north = forward * math.cos(yaw) - right * math.sin(yaw)
         east = forward * math.sin(yaw) + right * math.cos(yaw)
         lat, lon = offset_gps(flight.lat0, flight.lon0, north, east)
@@ -117,11 +128,17 @@ class GaussMarkovGps:
         return self._error
 
 
-def noisy_telemetry(tel: Telemetry, gps: GaussMarkovGps, yaw_bias_deg: float = 0.0) -> Telemetry:
-    """Telemetry UAV thấy: vị trí thật cộng sai số GPS, hướng thật cộng sai số la bàn cố định."""
+def noisy_telemetry(tel: Telemetry, gps: GaussMarkovGps, yaw_bias_deg: float = 0.0, alt_bias_m: float = 0.0) -> Telemetry:
+    """Telemetry UAV thấy: vị trí thật cộng sai số GPS, hướng và độ cao thật cộng sai số cố định.
+
+    alt_bias_m: độ cao đo (khí áp kế, so với điểm cất cánh) lệch so với độ cao thật trên mặt nước; làm vị trí xa tâm
+    ảnh lệch theo tỉ lệ d·δh/h và làm sai hệ số thu nhỏ theo độ cao (TECHNICAL 8.4).
+    """
     north, east = gps.step(tel.t)
     lat, lon = offset_gps(tel.lat, tel.lon, north, east)
-    return tel.model_copy(update={"lat": lat, "lon": lon, "yaw_deg": (tel.yaw_deg + yaw_bias_deg) % 360.0})
+    return tel.model_copy(update={
+        "lat": lat, "lon": lon, "yaw_deg": (tel.yaw_deg + yaw_bias_deg) % 360.0, "alt_agl_m": tel.alt_agl_m + alt_bias_m,
+    })
 
 
 def tilted_view(tel: Telemetry, tilt_deg: float) -> Telemetry:

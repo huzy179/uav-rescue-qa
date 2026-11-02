@@ -25,10 +25,11 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from edge.detector import person_scale
 from edge.georef import Camera
 from shared.config import parse_args_with_config
 from shared.provenance import write_run_config
-from sim.flight import StraightFlight
+from sim.flight import StraightFlight, ZigzagFlight
 from sim.scenario import (
     GaussMarkovGps, RecallCurve, noisy_telemetry, place_people, simulate_detections, tilted_view, visible_boxes,
 )
@@ -55,11 +56,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--gps-sigma-m", type=float, default=0.0, help="Độ lệch chuẩn nhiễu GPS mỗi trục (m)")
     parser.add_argument("--gps-tau-s", type=float, default=30.0, help="Thời gian tương quan của nhiễu GPS (giây)")
     parser.add_argument("--yaw-bias-deg", type=float, default=0.0, help="Sai số cố định của hướng trong telemetry (độ)")
+    parser.add_argument("--alt-bias-m", type=float, default=0.0, help="Sai số cố định của độ cao trong telemetry (m)")
+    parser.add_argument("--pattern", choices=["straight", "zigzag"], default="straight", help="Đường bay thẳng hoặc quét luống cày")
+    parser.add_argument("--leg-m", type=float, default=200.0, help="Zig-zag: chiều dài mỗi đường bay (m)")
+    parser.add_argument("--spacing-m", type=float, default=None, help="Zig-zag: khoảng cách giữa hai đường (m); mặc định bằng bề ngang vùng chụp × 0,8")
     parser.add_argument("--tilt-deg", type=float, default=0.0, help="Camera thật nghiêng về phía trước (độ); pipeline vẫn giả định nhìn thẳng xuống")
     parser.add_argument("--recall", type=float, default=0.7, help="Xác suất phát hiện một người có trong khung")
     parser.add_argument("--recall-curve", type=Path, default=None,
                         help="recall_by_pixels.csv (eval/recall_by_pixels.py): recall theo cỡ người thay cho --recall")
     parser.add_argument("--recall-model", default=None, help="Cột model cần lấy trong --recall-curve")
+    parser.add_argument("--target-person-px", type=float, default=None,
+                        help="Pipeline thu nhỏ khung theo độ cao về cỡ này (edge/main.py): recall lấy ở cỡ người sau thu nhỏ")
     parser.add_argument("--fp-per-frame", type=float, default=0.5, help="Số báo nhầm trung bình mỗi khung")
     parser.add_argument("--seed", type=int, default=0, help="Seed cho vị trí người, nhiễu GPS và detector giả")
     return parser
@@ -75,14 +82,29 @@ def main() -> None:
     args = parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     cam = Camera.from_fov(args.fov_deg, args.fov_type, args.width, args.height)
-    flight = StraightFlight(args.lat0, args.lon0, args.alt_m, args.speed_mps, args.yaw_deg)
     # Người nằm trong quãng bay, chừa nửa khung ở hai đầu để ai cũng có cơ hội đi qua trọn khung.
     half_footprint_m = cam.height / 2.0 * args.alt_m / cam.f_px
-    path_m = args.speed_mps * args.duration_s
-    people = place_people(flight, args.n_people, (half_footprint_m, path_m - half_footprint_m), args.lateral_m, args.drift_mps, args.seed)
+    flight: StraightFlight | ZigzagFlight
+    if args.pattern == "zigzag":
+        # Mặc định hai đường kề nhau chồng 20% bề ngang vùng chụp, như quy hoạch bay khảo sát thông thường.
+        spacing = args.spacing_m or 0.8 * cam.width * args.alt_m / cam.f_px
+        flight = ZigzagFlight(args.lat0, args.lon0, args.alt_m, args.speed_mps, args.yaw_deg, args.leg_m, spacing)
+        right_m = (0.0, (flight.n_legs(args.duration_s) - 1) * spacing)
+        along = (half_footprint_m, args.leg_m - half_footprint_m)
+        people = place_people(flight, args.n_people, along, args.lateral_m, args.drift_mps, args.seed, right_m)
+    else:
+        flight = StraightFlight(args.lat0, args.lon0, args.alt_m, args.speed_mps, args.yaw_deg)
+        path_m = args.speed_mps * args.duration_s
+        people = place_people(flight, args.n_people, (half_footprint_m, path_m - half_footprint_m), args.lateral_m, args.drift_mps, args.seed)
     gps = GaussMarkovGps(args.gps_sigma_m, args.gps_tau_s, args.seed + 1)
     rng = random.Random(args.seed + 2)
     recall = RecallCurve.from_csv(args.recall_curve, args.recall_model) if args.recall_curve else args.recall
+    if args.target_person_px is not None:
+        if not isinstance(recall, RecallCurve):
+            raise SystemExit("--target-person-px cần --recall-curve (recall cố định không phụ thuộc cỡ người)")
+        # Cùng công thức với edge/main.py; độ cao trong mô phỏng không đổi nên hệ số thu nhỏ là hằng số.
+        # Pipeline tính hệ số từ độ cao ĐO (có sai số), không phải độ cao thật.
+        recall = recall.scaled(person_scale(0.5 * cam.f_px / (args.alt_m + args.alt_bias_m), args.target_person_px))
 
     n_frames = int(args.duration_s * args.fps)
     black = np.zeros((cam.height, cam.width, 3), dtype=np.uint8)
@@ -97,7 +119,7 @@ def main() -> None:
         for frame_id in range(n_frames):
             t = frame_id / args.fps
             true_tel = flight.at(t)
-            seen = noisy_telemetry(true_tel, gps, args.yaw_bias_deg)
+            seen = noisy_telemetry(true_tel, gps, args.yaw_bias_deg, args.alt_bias_m)
             tel_writer.writerow([t, f"{seen.lat:.9f}", f"{seen.lon:.9f}", seen.alt_agl_m, seen.yaw_deg])
             boxes = visible_boxes(people, tilted_view(true_tel, args.tilt_deg), cam, t)
             frames_truth.append({"frame_id": frame_id, "t": t, "visible": [{"person_id": pid, "box_px": box} for pid, box in boxes]})

@@ -97,3 +97,15 @@ def _iter_video(
             index += 1
     finally:
         cap.release()
+
+
+def views_fps(footprint_m: float, speed_mps: float, min_views: float, fps_min: float, fps_max: float) -> float:
+    """Tần số xử lý để mỗi điểm mặt đất được thấy khoảng min_views lần khi bay qua (TECHNICAL mục 2.4).
+
+    Một điểm nằm trong khung footprint_m / speed_mps giây (footprint_m là chiều dài vùng chụp dọc hướng bay), nên
+    cần min_views × speed / footprint khung mỗi giây. Bay thấp thì vùng chụp ngắn, cần nhiều khung hơn; bay cao hoặc
+    đứng yên thì ít hơn, tiết kiệm tính toán. Kẹp trong [fps_min, fps_max].
+    """
+    if speed_mps <= 0 or footprint_m <= 0:
+        return fps_min
+    return min(fps_max, max(fps_min, min_views * speed_mps / footprint_m))

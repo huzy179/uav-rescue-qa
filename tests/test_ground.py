@@ -91,3 +91,15 @@ def test_cham_gop_su_co_dem_lan_va_tach() -> None:
     # sự cố 0: người 1 và 2 (lẫn); sự cố 1: người 2 nữa (người 2 bị tách); sự cố 2: chỉ cảnh báo nhầm
     r = purity([0, 0, 1, 2], [1, 2, 2, None])
     assert r == {"incidents": 3, "people": 2, "mixed_incidents": 1, "people_split": 1, "people_merged": 2}
+
+
+def test_ban_kinh_rong_hon_khi_khac_drone() -> None:
+    # Sự cố của uav1 sai số 4 m; cảnh báo mới sai số 3 m cách 5,6 m.
+    incidents = [{"incident_id": 1, "lat": 21.0, "lon": 105.8, "position_error_m": 4.0, "last_t": 0.0, "uav_ids": "uav1"}]
+    far = 21.00005  # khoảng 5,6 m
+    rule = MergeRule(radius_m=5.0)
+    # Cùng drone: GPS lệch cùng chiều, giữ 5 m.
+    assert choose_incident(far, 105.8, 3.0, 0.0, incidents, rule, "uav1") is None
+    # Drone khác: căn(3² + 4²) = 5 m chưa đủ; hệ số 1,2 thì 6 m, gộp.
+    assert choose_incident(far, 105.8, 3.0, 0.0, incidents, rule, "uav2") is None
+    assert choose_incident(far, 105.8, 3.0, 0.0, incidents, MergeRule(radius_m=5.0, cross_uav_error_weight=1.2), "uav2") == 1

@@ -13,6 +13,9 @@ from shared.schema import Confirmation, Detection
 
 
 class Confirmer(Protocol):
+    window_s: float  # edge/main.py dãn hai giá trị này khi tần số xử lý đổi theo độ cao (--min-views)
+    expire_s: float
+
     def update(self, dets: list[Detection], t: float) -> list[Confirmation]: ...
 
 

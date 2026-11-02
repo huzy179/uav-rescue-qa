@@ -42,6 +42,15 @@ def _sha256(path: Path) -> str | None:
     return digest.hexdigest()
 
 
+def _gpu_name() -> str | None:
+    """Tên GPU nếu torch đã được nạp sẵn (không tự import torch, để edge nhẹ vẫn chạy được); None nếu không có."""
+    torch = sys.modules.get("torch")
+    try:
+        return torch.cuda.get_device_name(0) if torch is not None and torch.cuda.is_available() else None
+    except Exception:  # noqa: BLE001 - chỉ là thông tin phụ, không được làm hỏng lần chạy
+        return None
+
+
 def write_run_config(
     out_dir: Path, script: str, model: str | None, device: str | None, args: dict[str, Any]
 ) -> Path:
@@ -64,7 +73,10 @@ def write_run_config(
             "sahi": _package_version("sahi"),
             "opencv-python": _package_version("opencv-python"),
             "numpy": _package_version("numpy"),
+            "tensorrt": _package_version("tensorrt") or _package_version("tensorrt-cu12"),
+            "onnx": _package_version("onnx"),
         },
+        "gpu": _gpu_name(),
         "platform": platform.platform(),
         "machine": platform.machine(),
         "git": _git_state(),

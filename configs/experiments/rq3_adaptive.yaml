@@ -1,0 +1,24 @@
+# RQ3 mô phỏng: tần số xử lý theo độ cao (--min-views) và thu nhỏ khung theo độ cao (--target-person-px), với recall
+# theo cỡ người của E2c đo ở E6 thử (runs/e6_sds/eval/recall_by_pixels.csv). Kịch bản quay 8 khung/giây; pipeline xử lý
+# cố định 2 hoặc 8 khung/giây, hoặc đổi theo độ cao để mỗi người được thấy khoảng 6, 12, 20 lần, trần 2 hoặc 8.
+# So tỉ lệ bỏ sót với số khung phải chạy detector (chi phí). Kịch bản như rq3_altitude.yaml.
+output: runs/rq3/adaptive
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  lateral_m: 15
+  gps_sigma_m: 0.5
+  fp_per_frame: 0.5
+  fps: 8
+  recall_curve: runs/e6_sds/eval/recall_by_pixels.csv
+  recall_model: E2c
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+  confirm: geo
+grid:
+  scenario.alt_m: [30, 50, 80, 120]
+  scenario.target_person_px: [null, 10]
+  pipeline.fps: [2, 8]
+  pipeline.min_views: [null, 6, 12, 20]

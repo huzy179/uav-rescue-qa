@@ -41,7 +41,7 @@ from shared.provenance import write_run_config
 
 METRICS = [
     "n_alerts", "false_alarms_per_min", "missed_rate", "merge_errors", "split_errors",
-    "time_to_alert_s_median", "position_error_m_median", "delivery_delay_s_median", "lost_rate", "kb_per_alert",
+    "time_to_alert_s_median", "position_error_m_median", "delivery_delay_s_median", "lost_rate", "kb_per_alert", "frames_processed",
 ]
 # Do sweep tự đặt cho từng lần chạy; không được ghi đè trong cấu hình.
 RESERVED = {"scenario": {"output", "seed"}, "pipeline": {"source", "telemetry", "replay", "output", "seed", "source_fps"}}

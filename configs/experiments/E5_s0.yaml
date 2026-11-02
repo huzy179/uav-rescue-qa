@@ -1,0 +1,15 @@
+# E5, seed 0: như E2c_s0.yaml nhưng mô hình YOLO11s (đối chứng đời mô hình, ROADMAP mục 4); fine-tune YOLO11s ở imgsz 1280 trên VisDrone + AFO (người dưới nước, tools/prepare_afo.py).
+# Chạy với EPOCHS = 55 trong notebook, như E2c (`docs/results/E2c.md`), để chỉ khác mô hình.
+# Thêm AFO vì E2 lượt 1 (chỉ VisDrone) kém mô hình gốc với người dưới nước (docs/results/afo_E1_E2.md).
+# Ảnh AFO thu về cạnh dài 1920 px khi chuẩn bị (prepare_afo.py --max-side 1920): ảnh 4K đọc chậm gấp 3 lần, nghẽn CPU Kaggle.
+# best.pt chọn theo val gộp VisDrone + AFO. Số epoch thật đặt từ notebook sau lần chạy thử (giới hạn 12 giờ).
+train: [data/processed/visdrone/images/train, data/processed/afo/images/train]
+val: [data/processed/visdrone/images/val, data/processed/afo/images/val]
+model: yolo11s.pt
+imgsz: 1280
+epochs: 100
+patience: 20
+batch: 8
+seed: 0
+scale: 0.5
+output: runs/train/E5_s0

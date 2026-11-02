@@ -161,6 +161,55 @@ def merge_boxes(boxes: np.ndarray, confs: np.ndarray, threshold: float = 0.5) ->
     return np.array(keep, dtype=int)
 
 
+def export_model(
+    weights: str,
+    output: Path,
+    fmt: Literal["engine", "onnx"] = "engine",
+    quantize: int = 16,
+    imgsz: int = 640,
+    batch: int = 1,
+    dynamic: bool = False,
+    data: Path | None = None,
+    fraction: float = 1.0,
+    workspace: float | None = None,
+    max_det: int = 1000,
+    device: str = "0",
+) -> Path:
+    """Xuất trọng số .pt sang TensorRT hoặc ONNX (RQ2, TECHNICAL mục 14.1), ghi đúng vào `output`.
+
+    quantize: 32 (FP32), 16 (FP16) hoặc 8 (INT8, cần `data`: data.yaml có phần val dùng hiệu chỉnh). Engine cắt ô
+    xuất với dynamic=True và batch bằng số ô tối đa mỗi khung, vì số ô đổi theo kích thước khung (thu nhỏ theo độ cao).
+    YOLO26 end-to-end nướng TopK k = max_det vào engine; mặc định 1000 như quy ước đo, khớp lần chạy .pt.
+    Ultralytics ghi file cạnh trọng số với cùng tên gốc, nên trọng số được chép thành `output` đuôi .pt trước khi
+    xuất: file ra nằm trong thư mục của `output` (trọng số gốc có thể ở chỗ chỉ đọc, như /kaggle/input), FP16 và INT8
+    không đè nhau.
+    """
+    import shutil
+
+    from ultralytics import YOLO
+
+    if quantize == 8 and data is None:
+        raise ValueError("Xuất INT8 cần data.yaml cho ảnh hiệu chỉnh (data)")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    source = output.with_suffix(".pt")
+    if Path(weights).exists():
+        shutil.copyfile(weights, source)
+    else:  # tên mô hình chuẩn (yolo26s.pt): ultralytics tự tải
+        source = Path(weights)
+    kwargs: dict[str, Any] = dict(
+        format=fmt, imgsz=imgsz, batch=batch, dynamic=dynamic, device=device, fraction=fraction, max_det=max_det,
+        quantize=None if quantize == 32 else quantize,
+    )
+    if data is not None:
+        kwargs["data"] = str(data)
+    if workspace is not None:
+        kwargs["workspace"] = workspace
+    exported = Path(YOLO(str(source)).export(**kwargs))
+    if exported.resolve() != output.resolve():
+        exported.replace(output)
+    return output
+
+
 class YoloDetector:
     """Chạy được .pt, .onnx, .engine; với .engine, imgsz/tile và batch phải khớp lúc xuất.
 

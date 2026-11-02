@@ -15,16 +15,29 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, ConfigDict
 
 from ground.incidents import MergeRule, choose_incident, merged_position
+from ground.priority import STATUSES, TAGS, PriorityRule, rank
 from shared.schema import Alert, AlertCrop
 
 MAP_HTML = Path(__file__).with_name("map.html")
 
 
-def create_app(db_path: Path | str, rule: MergeRule | None = None) -> FastAPI:
+class IncidentUpdate(BaseModel):
+    """Người vận hành cập nhật một sự cố: trạng thái và thẻ (dưới nước, trên mái); trường không gửi thì giữ nguyên."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str | None = None
+    tag: str | None = None
+    clear_tag: bool = False
+
+
+def create_app(db_path: Path | str, rule: MergeRule | None = None, priority_rule: PriorityRule | None = None) -> FastAPI:
     """Tạo ứng dụng với một file SQLite; tách hàm để kiểm thử dùng file tạm."""
     rule = rule or MergeRule()
+    priority_rule = priority_rule or PriorityRule()
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     db_path = str(db_path)
     with sqlite3.connect(db_path) as db:
@@ -42,6 +55,11 @@ def create_app(db_path: Path | str, rule: MergeRule | None = None) -> FastAPI:
                 incident_id INTEGER PRIMARY KEY, lat REAL NOT NULL, lon REAL NOT NULL, position_error_m REAL NOT NULL,
                 first_t REAL NOT NULL, last_t REAL NOT NULL, n_alerts INTEGER NOT NULL, uav_ids TEXT NOT NULL)"""
         )
+        columns = {row[1] for row in db.execute("PRAGMA table_info(incidents)")}
+        if "status" not in columns:  # file cũ, trước khi có xếp ưu tiên
+            db.execute("ALTER TABLE incidents ADD COLUMN status TEXT NOT NULL DEFAULT 'open'")
+        if "tag" not in columns:
+            db.execute("ALTER TABLE incidents ADD COLUMN tag TEXT")
         db.execute("CREATE TABLE IF NOT EXISTS crops (alert_id TEXT PRIMARY KEY, jpeg BLOB NOT NULL, received_at TEXT NOT NULL)")
 
     app = FastAPI(title="FloodEye – trạm mặt đất")
@@ -81,7 +99,9 @@ def create_app(db_path: Path | str, rule: MergeRule | None = None) -> FastAPI:
     def attach_incident(db: sqlite3.Connection, alert: Alert) -> None:
         db.row_factory = sqlite3.Row
         candidates = [dict(r) for r in db.execute("SELECT * FROM incidents WHERE last_t >= ?", (alert.t - rule.window_s,))]
-        incident_id = choose_incident(alert.lat, alert.lon, alert.position_error_m, alert.t, candidates, rule)
+        incident_id = choose_incident(
+            alert.lat, alert.lon, alert.position_error_m, alert.t, candidates, rule, alert.uav_id
+        )
         if incident_id is None:
             incident_id = db.execute(
                 "INSERT INTO incidents (lat, lon, position_error_m, first_t, last_t, n_alerts, uav_ids)"
@@ -128,7 +148,8 @@ def create_app(db_path: Path | str, rule: MergeRule | None = None) -> FastAPI:
 
     @app.get("/api/incidents")
     def list_incidents() -> list[dict[str, Any]]:
-        """Sự cố, mới nhất trước; mỗi sự cố kèm danh sách cảnh báo (mới nhất trước) để mở ảnh cắt."""
+        """Sự cố theo ưu tiên giảm dần (ground/priority.py), sự cố đã đóng xếp cuối; mỗi sự cố kèm điểm, lý do và
+        danh sách cảnh báo (mới nhất trước) để mở ảnh cắt."""
         with sqlite3.connect(db_path) as db:
             db.row_factory = sqlite3.Row
             incidents = [dict(r) for r in db.execute("SELECT * FROM incidents ORDER BY last_t DESC")]
@@ -142,7 +163,24 @@ def create_app(db_path: Path | str, rule: MergeRule | None = None) -> FastAPI:
         for inc in incidents:
             inc["uav_ids"] = inc["uav_ids"].split(",")
             inc["alerts"] = by_incident.get(inc["incident_id"], [])
-        return incidents
+            inc["max_confidence"] = max((a["confidence"] for a in inc["alerts"]), default=0.0)
+        return rank(incidents, priority_rule)
+
+    @app.patch("/api/incidents/{incident_id}")
+    def update_incident(incident_id: int, update: IncidentUpdate) -> dict[str, Any]:
+        """Người vận hành gắn thẻ (water, roof) hoặc đóng sự cố (resolved, false_alarm); open để mở lại."""
+        if update.status is not None and update.status not in STATUSES:
+            raise HTTPException(400, f"status phải là một trong {sorted(STATUSES)}")
+        if update.tag is not None and update.tag not in TAGS:
+            raise HTTPException(400, f"tag phải là một trong {sorted(TAGS)}")
+        with sqlite3.connect(db_path) as db:
+            if db.execute("SELECT 1 FROM incidents WHERE incident_id = ?", (incident_id,)).fetchone() is None:
+                raise HTTPException(404, "Không có sự cố này")
+            if update.status is not None:
+                db.execute("UPDATE incidents SET status = ? WHERE incident_id = ?", (update.status, incident_id))
+            if update.tag is not None or update.clear_tag:
+                db.execute("UPDATE incidents SET tag = ? WHERE incident_id = ?", (update.tag, incident_id))
+        return {"incident_id": incident_id, "status": update.status, "tag": update.tag}
 
     @app.get("/api/alerts/{alert_id}/crop")
     def get_crop(alert_id: str) -> Response:

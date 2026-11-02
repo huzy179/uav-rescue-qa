@@ -56,7 +56,9 @@ def summarize_timings(records: list[dict[str, Any]]) -> dict[str, Any]:
             "total_ms_mean": round(float(total.mean()), 2),
             "total_ms_p50": round(float(np.percentile(total, 50)), 2),
             "total_ms_p95": round(float(np.percentile(total, 95)), 2),
-            "n_tiles": records[0].get("n_tiles"),
+            # Số ô đổi theo khung khi thu nhỏ theo độ cao, nên báo trung bình.
+            "n_tiles": round(float(np.mean([r.get("n_tiles", np.nan) for r in records])), 1),
+            "scale_mean": round(float(np.mean([r.get("scale", 1.0) for r in records])), 2),
             "n_dets_mean": round(float(np.mean([r.get("n_dets", 0) for r in records])), 1),
         }
     )
@@ -79,6 +81,7 @@ def main() -> None:
                 "run": str(run),
                 "machine": config.get("machine"),
                 "device": config.get("device"),
+                "gpu": config.get("gpu"),
                 "model": config.get("model"),
                 "mode": run_args.get("mode"),
                 "imgsz": run_args.get("imgsz"),

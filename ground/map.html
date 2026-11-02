@@ -14,13 +14,17 @@
   #side h1 { font-size: 16px; margin: 4px 0 8px; }
   .item { padding: 6px 4px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
   .item:hover { background: #f3f3f3; }
+  .item.closed { color: #888; }
+  .why { color: #555; font-size: 12px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .actions button { margin: 2px 2px 0 0; font-size: 12px; }
   @media (max-width: 700px) { #wrap { flex-direction: column; } #side { width: 100%; height: 40%; border-left: 0; } }
 </style>
 </head>
 <body>
 <div id="wrap">
   <div id="map"></div>
-  <div id="side"><h1>Sự cố (<span id="count">0</span>) · cảnh báo (<span id="nalerts">0</span>)</h1><div id="list"></div></div>
+  <div id="side"><h1>Sự cố theo ưu tiên (<span id="count">0</span>) · cảnh báo (<span id="nalerts">0</span>)</h1><div id="list"></div></div>
 </div>
 <script>
   // Ô bản đồ cần internet; khi mất mạng thật cần ô bản đồ ngoại tuyến (TECHNICAL mục 12.5).
@@ -36,14 +40,31 @@
   const markers = {};
   let fitted = false;
 
-  // Mỗi sự cố (ground/incidents.py) là một điểm; mở ra thấy ảnh cắt mới nhất và mọi cảnh báo đã gộp vào.
+  // Màu theo điểm ưu tiên (ground/priority.py); sự cố đã đóng màu xám.
+  function color(inc) {
+    if (inc.status !== "open") return "#888888";
+    return inc.priority >= 3 ? "#d62728" : inc.priority >= 1.5 ? "#ff7f0e" : "#e6b800";
+  }
+
+  async function update(id, body) {
+    await fetch(`/api/incidents/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    refresh();
+  }
+
+  // Mỗi sự cố (ground/incidents.py) là một điểm; mở ra thấy ảnh cắt mới nhất, lý do ưu tiên và nút cho người vận hành.
   function popup(inc) {
     const a = inc.alerts[0];
     const crop = a && a.has_crop ? `<br><img src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" width="200">` : "<br><i>Chưa có ảnh cắt</i>";
     const ids = inc.alerts.map(x => x.alert_id).join(", ");
-    return `<b>Sự cố #${inc.incident_id}</b><br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.join(", ")}<br>`
-      + `Sai số ±${inc.position_error_m.toFixed(1)} m · độ tin cậy cao nhất ${Math.max(...inc.alerts.map(x => x.confidence)).toFixed(2)}`
-      + `${crop}<br><small>${ids}</small>`;
+    const id = inc.incident_id;
+    const actions = inc.status === "open"
+      ? `<button onclick='update(${id}, {tag: "water"})'>Dưới nước</button><button onclick='update(${id}, {tag: "roof"})'>Trên mái</button>`
+        + `<button onclick='update(${id}, {status: "resolved"})'>Đã cứu</button><button onclick='update(${id}, {status: "false_alarm"})'>Báo nhầm</button>`
+      : `<button onclick='update(${id}, {status: "open"})'>Mở lại</button>`;
+    return `<b>Sự cố #${id}</b> · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")}<br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.join(", ")}<br>`
+      + `Sai số ±${inc.position_error_m.toFixed(1)} m · độ tin cậy cao nhất ${inc.max_confidence.toFixed(2)}`
+      + `<div class="why">${inc.priority_reasons.join("; ")}</div>`
+      + `${crop}<div class="actions">${actions}</div><small>${ids}</small>`;
   }
 
   async function refresh() {
@@ -56,13 +77,20 @@
       for (const inc of incidents) {
         const key = inc.incident_id;
         if (!markers[key]) {
-          markers[key] = L.circleMarker([inc.lat, inc.lon], { color: "#d62728", weight: 2 }).addTo(map);
+          markers[key] = L.circleMarker([inc.lat, inc.lon], { weight: 2 }).addTo(map).bindPopup("");
         }
-        markers[key].setLatLng([inc.lat, inc.lon]).setRadius(Math.min(8 + 2 * (inc.n_alerts - 1), 16));
-        markers[key].bindPopup(popup(inc));
+        markers[key].setLatLng([inc.lat, inc.lon]).setRadius(Math.min(8 + 2 * (inc.n_alerts - 1), 16)).setStyle({ color: color(inc) });
+        // Cập nhật nội dung thay vì gắn popup mới, để popup đang mở không bị đóng mỗi lần hỏi lại.
+        markers[key].setPopupContent(popup(inc));
         const item = document.createElement("div");
-        item.className = "item";
-        item.textContent = `#${key} · ${inc.n_alerts} cảnh báo · ${inc.uav_ids.length} UAV · ${inc.lat.toFixed(6)}, ${inc.lon.toFixed(6)}`;
+        item.className = inc.status === "open" ? "item" : "item closed";
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.style.background = color(inc);
+        const why = document.createElement("div");
+        why.className = "why";
+        why.textContent = inc.priority_reasons.join("; ");
+        item.append(dot, `#${key} · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")} · ${inc.n_alerts} cảnh báo · ${inc.uav_ids.length} UAV`, why);
         item.onclick = () => { map.setView([inc.lat, inc.lon], 19); markers[key].openPopup(); };
         list.appendChild(item);
       }
