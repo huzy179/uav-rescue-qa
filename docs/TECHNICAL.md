@@ -413,6 +413,8 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
+**Giao diện thử nghiệm (`console/`, `python -m console`):** `errors.py` (so khớp từng ảnh ở một ngưỡng conf như `eval/metrics.match_image`, kể cả ưu tiên nhãn trong nhóm kích thước, nên recall, precision khớp `eval_by_size.csv`; dùng lại `_short_side` làm tròn 0,01 px, nếu không người rộng đúng 8 px rơi nhầm sang nhóm dưới 8 px), `runs.py` (chạy `edge/main.py --save-frames` thành tiến trình con, chỉ với nguồn liệt kê trong `configs/console.yaml`), `app.py` (FastAPI), `index.html`. Bật kèm trạm mặt đất. Tập lũ chỉ hiện khi có `MANIFEST.sha256`; video tập lũ không nằm trong danh sách nguồn chạy thử, để không xem dự đoán khi đang gán nhãn.
+
 **Kiểm thử (`tests/`):** chạy không cần mô hình, GPU hay `data/`; mỗi khối thuần có test (georef đi–về, outbox khi mất mạng, AP tính tay, bootstrap…).
 
 ### 6.2. Định dạng dữ liệu trao đổi

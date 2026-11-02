@@ -13,7 +13,8 @@ ground/             trạm mặt đất: FastAPI + SQLite + Leaflet, gộp cản
 sim/                giả lập chuyến bay và đường truyền mạng
 eval/               đánh giá AP/recall theo nhóm kích thước, báo cáo, biểu đồ
 tools/              chuyển nhãn bộ dữ liệu, thống kê
-scripts/            chạy baseline, SAHI, tính GSD, đo tốc độ
+scripts/            chạy baseline, SAHI, cắt ô, RQ2, demo, tính GSD, đo tốc độ
+console/            giao diện thử nghiệm: xem lỗi, chạy thử, trạm mặt đất (python -m console)
 training/           huấn luyện (notebook Kaggle, yaml mô hình)
 tests/              kiểm thử, chạy không cần mô hình
 docker/             Dockerfile
@@ -21,6 +22,18 @@ data/, runs/        dữ liệu và kết quả chạy (không đưa lên git)
 ```
 
 `edge/` đã có đủ pipeline lấy mẫu → phát hiện → định vị → xác nhận → outbox cảnh báo; `ground/` nhận cảnh báo và hiện trên bản đồ. Xem lịch ở ROADMAP.
+
+**Giao diện thử nghiệm** (mở `http://localhost:8501`; bật kèm trạm mặt đất ở cổng 8000):
+
+```bash
+.venv/bin/python -m console
+```
+
+- **Xem lỗi**: chọn tập (VisDrone, AFO, SDS; tập lũ chỉ hiện sau khi khoá), lần chạy, IoU, ngưỡng conf, nhóm kích thước, thẻ ảnh. Danh sách ảnh xếp theo số người bị bỏ sót hoặc số báo nhầm; ảnh vẽ người được thấy (xanh), bị bỏ sót (đỏ, có vòng to để thấy người vài pixel), báo nhầm (cam), vùng bỏ qua (xám); lăn chuột để phóng, bấm một lỗi để phóng tới. Recall, precision khớp đúng `eval_by_size.csv` ở cùng ngưỡng.
+- **Chạy thử**: chọn video demo hoặc đoạn SeaDronesSee có telemetry thật, trọng số, cắt ô hay toàn ảnh, thu nhỏ theo độ cao, chiến lược xác nhận, số lần nhìn mỗi người; xem từng khung đã vẽ, cảnh báo kèm ảnh cắt, thời gian từng chặng, lệnh tương đương. Kết quả ở `runs/console/<mã>/`. Video của tập test lũ cố ý không có trong danh sách nguồn.
+- **Trạm mặt đất**: bản đồ sự cố.
+
+Danh sách tập và nguồn ở `configs/console.yaml`.
 
 Demo hai phía trên một máy, một lệnh (trạm mặt đất + pipeline, rồi giữ bản đồ mở tới khi Ctrl+C):
 

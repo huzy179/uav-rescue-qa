@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FloodEye – thử nghiệm</title>
+<style>
+  :root { --bg: #f6f7f9; --panel: #fff; --line: #dde1e6; --text: #1d2430; --muted: #687385; --accent: #1f6fb2;
+          --tp: #2ca02c; --fn: #d62728; --fp: #ff8c00; --ign: #8a8a8a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font: 14px/1.4 system-ui, sans-serif; color: var(--text); background: var(--bg); }
+  header { display: flex; align-items: center; gap: 16px; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  .tab { border: 0; background: none; padding: 8px 10px; font: inherit; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab.on { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  main { height: calc(100% - 50px); }
+  .page { display: none; height: 100%; }
+  .page.on { display: flex; }
+  .side { width: 300px; flex: none; overflow-y: auto; padding: 12px; background: var(--panel); border-right: 1px solid var(--line); }
+  .list { width: 280px; flex: none; overflow-y: auto; background: var(--panel); border-right: 1px solid var(--line); }
+  .view { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  label { display: block; margin: 8px 0 2px; color: var(--muted); font-size: 12px; }
+  select, input[type=number], input[type=text] { width: 100%; padding: 5px 6px; border: 1px solid var(--line); border-radius: 4px; font: inherit; background: #fff; }
+  .row2 { display: flex; gap: 8px; } .row2 > div { flex: 1; }
+  button.primary { margin-top: 12px; width: 100%; padding: 8px; border: 0; border-radius: 4px; background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  .card { margin-top: 12px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fafbfc; }
+  .stat { display: flex; justify-content: space-between; } .stat b { font-variant-numeric: tabular-nums; }
+  .item { padding: 6px 10px; border-bottom: 1px solid #eef0f3; cursor: pointer; display: flex; justify-content: space-between; gap: 6px; font-size: 13px; }
+  .item:hover { background: #f1f4f8; } .item.on { background: #e3eefa; }
+  .item .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge { display: inline-block; min-width: 22px; padding: 0 4px; border-radius: 8px; font-size: 11px; text-align: center; color: #fff; }
+  .b-fn { background: var(--fn); } .b-fp { background: var(--fp); } .b-tp { background: var(--tp); } .b-run { background: var(--accent); } .b-err { background: #7a1f1f; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 13px; }
+  .toolbar label { display: inline; margin: 0; color: var(--text); font-size: 13px; }
+  .legend span { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 10px; border: 2px solid; }
+  #canvasWrap { flex: 1; position: relative; overflow: hidden; background: #222; cursor: grab; }
+  #canvas { position: absolute; left: 0; top: 0; }
+  .hint { color: var(--muted); font-size: 12px; }
+  .details { max-height: 30%; overflow-y: auto; padding: 8px 12px; background: var(--panel); border-top: 1px solid var(--line); font-size: 13px; }
+  .details a { color: var(--accent); cursor: pointer; margin-right: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 4px 6px; border-bottom: 1px solid #eef0f3; text-align: right; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  .runview { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .frame { width: 100%; max-height: 60vh; object-fit: contain; background: #222; border-radius: 4px; }
+  .crops { display: flex; flex-wrap: wrap; gap: 8px; }
+  .crops figure { margin: 0; width: 140px; font-size: 12px; }
+  .crops img { width: 140px; height: 140px; object-fit: cover; border-radius: 4px; background: #ddd; }
+  pre { white-space: pre-wrap; font-size: 12px; background: #f1f3f6; padding: 8px; border-radius: 4px; }
+  iframe { flex: 1; border: 0; }
+  .empty { padding: 24px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>FloodEye · thử nghiệm</h1>
+  <button class="tab on" data-page="errors">Xem lỗi</button>
+  <button class="tab" data-page="run">Chạy thử</button>
+  <button class="tab" data-page="ground">Trạm mặt đất</button>
+</header>
+<main>
+  <!-- ======================= Xem lỗi ======================= -->
+  <section class="page on" id="page-errors">
+    <div class="side">
+      <label>Tập dữ liệu</label><select id="eDataset"></select>
+      <label>Lần chạy</label><select id="eRun"></select>
+      <label>Cấu hình trong lần chạy</label><select id="eConfig"></select>
+      <div class="row2">
+        <div><label>IoU</label><select id="eIou"><option>0.5</option><option>0.3</option></select></div>
+        <div><label>Ngưỡng conf</label><input id="eConf" type="number" step="0.05" min="0.01" max="0.95" value="0.25"></div>
+      </div>
+      <div class="row2">
+        <div><label>Nhóm kích thước</label><select id="eSize"></select></div>
+        <div><label>Thẻ ảnh</label><select id="eTag"><option value="">tất cả</option></select></div>
+      </div>
+      <label>Sắp xếp</label>
+      <select id="eSort">
+        <option value="fn">nhiều người bị bỏ sót nhất</option>
+        <option value="fp">nhiều báo nhầm nhất</option>
+        <option value="name">theo tên ảnh</option>
+      </select>
+      <label><input type="checkbox" id="eOnlyErr" checked> chỉ ảnh có lỗi</label>
+      <div class="card" id="eTotal"><span class="hint">Chọn tập và lần chạy.</span></div>
+      <p class="hint">Recall và precision ở đây tính ở đúng ngưỡng conf đang chọn, cùng cách so khớp với eval_by_size; AP chỉ có trong bảng của docs/results.</p>
+    </div>
+    <div class="list" id="eList"></div>
+    <div class="view">
+      <div class="toolbar">
+        <span id="eName" class="hint">Chọn một ảnh</span>
+        <span class="legend"><span style="border-color:var(--tp)"></span>thấy<span style="border-color:var(--fn)"></span>bỏ sót<span style="border-color:var(--fp)"></span>báo nhầm<span style="border-color:var(--ign)"></span>vùng bỏ qua</span>
+        <label><input type="checkbox" class="eShow" value="tp" checked> thấy</label>
+        <label><input type="checkbox" class="eShow" value="fn" checked> bỏ sót</label>
+        <label><input type="checkbox" class="eShow" value="fp" checked> báo nhầm</label>
+        <label><input type="checkbox" class="eShow" value="ign"> bỏ qua</label>
+        <span class="hint">Lăn chuột để phóng, kéo để di chuyển, nhấp đúp để vừa khung</span>
+      </div>
+      <div id="canvasWrap"><canvas id="canvas"></canvas></div>
+      <div class="details" id="eDetails"></div>
+    </div>
+  </section>
+
+  <!-- ======================= Chạy thử ======================= -->
+  <section class="page" id="page-run">
+    <div class="side">
+      <label>Nguồn</label><select id="rSource"></select>
+      <label>Trọng số</label><select id="rModel"></select>
+      <div class="row2">
+        <div><label>Cách chạy</label><select id="rMode"><option value="tiled">cắt ô 640</option><option value="full">toàn ảnh</option></select></div>
+        <div><label>imgsz (toàn ảnh)</label><input id="rImgsz" type="number" value="1280" step="320"></div>
+      </div>
+      <div class="row2">
+        <div><label>Ngưỡng conf</label><input id="rConf" type="number" value="0.1" step="0.05"></div>
+        <div><label>Khung/giây</label><input id="rFps" type="number" value="2" step="0.5"></div>
+      </div>
+      <div class="row2">
+        <div><label>Số khung tối đa</label><input id="rMax" type="number" value="60"></div>
+        <div><label>Độ cao giả lập (m)</label><input id="rAlt" type="number" value="50"></div>
+      </div>
+      <label>Xác nhận</label>
+      <select id="rConfirm"><option value="geo">geo (theo mặt đất)</option><option value="bytetrack">bytetrack</option><option value="bytetrack_cmc">bytetrack_cmc</option></select>
+      <div class="row2">
+        <div><label>N lần thấy</label><input id="rN" type="number" value="3"></div>
+        <div><label>Bán kính gom (m)</label><input id="rRadius" type="number" value="3" step="0.5"></div>
+      </div>
+      <div class="row2">
+        <div><label>Thu nhỏ về (px), trống: tắt</label><input id="rTarget" type="number" step="5" placeholder="10"></div>
+        <div><label>Lần nhìn/người, trống: tắt</label><input id="rViews" type="number" step="2" placeholder="12"></div>
+      </div>
+      <label>Ghi chú</label><input id="rLabel" type="text" placeholder="ví dụ: E2c cắt ô px10">
+      <label><input type="checkbox" id="rGround"> gửi cảnh báo về trạm mặt đất</label>
+      <button class="primary" id="rStart">Chạy</button>
+      <p class="hint" id="rHint">Video không có telemetry dùng chuyến bay thẳng giả lập (vị trí chỉ minh hoạ). Chuỗi SeaDronesSee có telemetry thật.</p>
+    </div>
+    <div class="list" id="rList"></div>
+    <div class="view"><div class="runview" id="rView"><div class="empty">Chọn một lần chạy, hoặc bấm Chạy.</div></div></div>
+  </section>
+
+  <!-- ======================= Trạm mặt đất ======================= -->
+  <section class="page" id="page-ground"><div class="empty" id="gEmpty">Trạm mặt đất không bật (chạy lại không có --no-ground).</div></section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const vn = (x, d = 3) => x === null || x === undefined ? "–" : Number(x).toFixed(d).replace(".", ",");
+const get = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error((await r.json()).detail || r.status); return r.json(); };
+const el = (tag, props = {}, ...children) => { const e = Object.assign(document.createElement(tag), props); e.append(...children); return e; };
+let info = {};
+
+// ---------- Tabs ----------
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("on", p.id === "page-" + b.dataset.page));
+  if (b.dataset.page === "run") refreshRuns();
+  if (b.dataset.page === "errors") fit();
+});
+
+// ================= Xem lỗi =================
+let datasets = [], summary = null, current = null, imgEl = new Image(), view = { s: 1, x: 0, y: 0 };
+const canvas = $("canvas"), ctx = canvas.getContext("2d"), wrap = $("canvasWrap");
+
+async function loadDatasets() {
+  datasets = await get("/api/datasets");
+  $("eDataset").replaceChildren(...datasets.map(d => el("option", { value: d.name, textContent: `${d.title} (${d.runs.length})` })));
+  $("eSize").replaceChildren(...info.size_bins.map(s => el("option", { value: s, textContent: s === "all" ? "tất cả" : s + " px" })));
+  onDataset();
+}
+function onDataset() {
+  const d = datasets.find(x => x.name === $("eDataset").value);
+  $("eRun").replaceChildren(...(d ? d.runs : []).map(r => el("option", { value: r.name, textContent: r.name })));
+  onRun();
+}
+function onRun() {
+  const d = datasets.find(x => x.name === $("eDataset").value);
+  const r = d && d.runs.find(x => x.name === $("eRun").value);
+  $("eConfig").replaceChildren(...(r ? r.configs : []).map(c => el("option", { value: c, textContent: c })));
+  loadSummary();
+}
+function params(extra = {}) {
+  return new URLSearchParams({ dataset_name: $("eDataset").value, run: $("eRun").value, config: $("eConfig").value,
+    iou: $("eIou").value, conf: $("eConf").value, ...extra });
+}
+async function loadSummary() {
+  if (!$("eConfig").value) { $("eList").replaceChildren(); return; }
+  $("eTotal").textContent = "Đang chấm…";
+  try {
+    summary = await get("/api/errors?" + params({ size: $("eSize").value, tag: $("eTag").value }));
+  } catch (e) { $("eTotal").textContent = "Lỗi: " + e.message; return; }
+  const keep = $("eTag").value;
+  $("eTag").replaceChildren(el("option", { value: "", textContent: "tất cả" }), ...summary.tags.map(t => el("option", { value: t, textContent: t })));
+  $("eTag").value = keep;
+  const t = summary.total;
+  $("eTotal").replaceChildren(
+    ...[["Ảnh", t.n_images], ["Người", t.n_gt], ["Thấy", t.tp], ["Bỏ sót", t.fn], ["Báo nhầm", t.fp]]
+      .map(([k, v]) => el("div", { className: "stat" }, k, el("b", { textContent: v }))),
+    el("div", { className: "stat" }, "Recall", el("b", { textContent: vn(t.recall) })),
+    el("div", { className: "stat" }, "Precision", el("b", { textContent: vn(t.precision) })));
+  renderList();
+}
+function renderList() {
+  let rows = summary.images.slice();
+  if ($("eOnlyErr").checked) rows = rows.filter(r => r.fn + r.fp > 0);
+  const key = $("eSort").value;
+  rows.sort((a, b) => key === "name" ? a.image.localeCompare(b.image) : (b[key] - a[key]) || a.image.localeCompare(b.image));
+  $("eList").replaceChildren(...rows.map(r => {
+    const item = el("div", { className: "item" + (current === r.image ? " on" : "") },
+      el("span", { className: "name", textContent: r.image, title: r.image }),
+      el("span", {}, el("span", { className: "badge b-fn", textContent: r.fn, title: "bỏ sót" }), " ",
+        el("span", { className: "badge b-fp", textContent: r.fp, title: "báo nhầm" })));
+    item.onclick = () => { current = r.image; renderList(); loadImage(); };
+    return item;
+  }));
+  if (!rows.length) $("eList").append(el("div", { className: "empty", textContent: "Không có ảnh nào khớp bộ lọc." }));
+}
+let boxes = null;
+async function loadImage() {
+  $("eName").textContent = current;
+  boxes = await get("/api/errors/image?" + params({ image: current }));
+  imgEl = new Image();
+  imgEl.onload = () => { fit(); };
+  imgEl.src = "/api/image?" + new URLSearchParams({ dataset_name: $("eDataset").value, image: current });
+  const link = (kind, b) => { const a = el("a", { textContent: `${b.px} px` + (b.conf !== undefined ? ` · ${vn(b.conf, 2)}` : "") }); a.onclick = () => zoomTo(b.box); return a; };
+  $("eDetails").replaceChildren(
+    el("div", {}, el("b", { textContent: `Bỏ sót (${boxes.fn.length}): ` }), ...boxes.fn.map(b => link("fn", b))),
+    el("div", {}, el("b", { textContent: `Báo nhầm (${boxes.fp.length}): ` }), ...boxes.fp.map(b => link("fp", b))),
+    el("div", { className: "hint", textContent: `Thấy ${boxes.tp.length} người; ${boxes.ignored_preds.length} dự đoán nằm trong vùng bỏ qua. Bấm một mục để phóng tới.` }));
+}
+function fit() {
+  if (!imgEl.naturalWidth) return;
+  canvas.width = wrap.clientWidth; canvas.height = wrap.clientHeight;
+  const s = Math.min(canvas.width / imgEl.naturalWidth, canvas.height / imgEl.naturalHeight);
+  view = { s, x: (canvas.width - imgEl.naturalWidth * s) / 2, y: (canvas.height - imgEl.naturalHeight * s) / 2 };
+  draw();
+}
+function zoomTo(b) {
+  const w = Math.max(b[2] - b[0], b[3] - b[1], 20) * 8;
+  const s = Math.min(canvas.width, canvas.height) / w;
+  view = { s, x: canvas.width / 2 - ((b[0] + b[2]) / 2) * s, y: canvas.height / 2 - ((b[1] + b[3]) / 2) * s };
+  draw();
+}
+function draw() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#222"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!imgEl.naturalWidth) return;
+  ctx.setTransform(view.s, 0, 0, view.s, view.x, view.y);
+  ctx.imageSmoothingEnabled = view.s < 2;
+  ctx.drawImage(imgEl, 0, 0);
+  if (!boxes) return;
+  const show = new Set([...document.querySelectorAll(".eShow:checked")].map(c => c.value));
+  const lw = Math.max(1.5 / view.s, 0.5);
+  const rect = (b, color, dash = []) => { ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash.map(d => d / view.s)); ctx.strokeRect(b[0], b[1], b[2] - b[0], b[3] - b[1]); };
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v);
+  if (show.has("ign")) { boxes.ignore_regions.forEach(b => rect(b, css("--ign"), [4, 3])); boxes.ignored_preds.forEach(p => rect(p.box, css("--ign"))); }
+  if (show.has("tp")) boxes.tp.forEach(p => rect(p.box, css("--tp")));
+  if (show.has("fp")) boxes.fp.forEach(p => rect(p.box, css("--fp")));
+  // Bỏ sót vẽ thêm một vòng lớn để thấy được người vài pixel khi chưa phóng to.
+  if (show.has("fn")) boxes.fn.forEach(p => { rect(p.box, css("--fn"));
+    const cx = (p.box[0] + p.box[2]) / 2, cy = (p.box[1] + p.box[3]) / 2;
+    ctx.beginPath(); ctx.arc(cx, cy, 14 / view.s + (p.box[2] - p.box[0]) / 2, 0, 2 * Math.PI); ctx.setLineDash([]); ctx.stroke(); });
+}
+wrap.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const f = Math.exp(-e.deltaY * 0.0015), r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  view = { s: view.s * f, x: mx - (mx - view.x) * f, y: my - (my - view.y) * f }; draw();
+}, { passive: false });
+let drag = null;
+wrap.onmousedown = (e) => { drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; wrap.style.cursor = "grabbing"; };
+window.onmouseup = () => { drag = null; wrap.style.cursor = "grab"; };
+window.onmousemove = (e) => { if (drag) { view.x = drag.vx + e.clientX - drag.x; view.y = drag.vy + e.clientY - drag.y; draw(); } };
+wrap.ondblclick = fit;
+window.onresize = fit;
+document.querySelectorAll(".eShow").forEach(c => c.onchange = draw);
+$("eDataset").onchange = onDataset; $("eRun").onchange = onRun;
+["eConfig", "eIou", "eConf", "eSize", "eTag"].forEach(id => $(id).onchange = async () => { await loadSummary(); if (current) loadImage(); });
+$("eSort").onchange = renderList; $("eOnlyErr").onchange = renderList;
+
+// ================= Chạy thử =================
+let sources = [], selectedRun = null, pollTimer = null, frameTimer = null;
+async function loadSources() {
+  const s = await get("/api/sources");
+  sources = s.sources;
+  const groups = [["video", "Video (telemetry giả lập)"], ["sequence", "SeaDronesSee (telemetry thật)"]];
+  $("rSource").replaceChildren(...groups.map(([k, title]) => el("optgroup", { label: title },
+    ...sources.filter(x => x.kind === k).map(x => el("option", { value: x.path, textContent: x.path.replace(/^data\/(raw|processed)\//, "") })))));
+  $("rModel").replaceChildren(...s.weights.map(w => el("option", { value: w, textContent: w })));
+  $("rGround").disabled = !info.ground_url;
+}
+$("rStart").onclick = async () => {
+  const num = (id) => $(id).value === "" ? null : Number($(id).value);
+  const body = { source: $("rSource").value, model: $("rModel").value, mode: $("rMode").value, imgsz: num("rImgsz"),
+    conf: num("rConf"), fps: num("rFps"), max_frames: num("rMax"), confirm: $("rConfirm").value, n_confirm: num("rN"),
+    radius_m: num("rRadius"), target_person_px: num("rTarget"), min_views: num("rViews"), alt_m: num("rAlt"),
+    label: $("rLabel").value, send_to_ground: $("rGround").checked };
+  $("rStart").disabled = true;
+  try {
+    const r = await fetch("/api/runs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail ? JSON.stringify(j.detail) : r.status);
+    selectedRun = j.id; await refreshRuns(); showRun();
+  } catch (e) { alert("Không chạy được: " + e.message); }
+  $("rStart").disabled = false;
+};
+async function refreshRuns() {
+  const runs = await get("/api/runs");
+  $("rList").replaceChildren(...runs.map(r => {
+    const q = r.request, cls = { running: "b-run", done: "b-tp", error: "b-err" }[r.status];
+    const item = el("div", { className: "item" + (r.id === selectedRun ? " on" : "") },
+      el("span", { className: "name", title: q.source,
+        textContent: `${r.id.slice(4, 8)}-${r.id.slice(9, 13)} · ${q.label || q.model.split("/").slice(-3, -2)[0] || q.model} · ${q.mode}${q.target_person_px ? " px" + q.target_person_px : ""}` }),
+      el("span", { className: "badge " + cls, textContent: { running: "đang chạy", done: "xong", error: "lỗi" }[r.status] }));
+    item.onclick = () => { selectedRun = r.id; refreshRuns(); showRun(); };
+    return item;
+  }));
+  if (!runs.length) $("rList").append(el("div", { className: "empty", textContent: "Chưa có lần chạy nào." }));
+}
+async function showRun() {
+  clearTimeout(pollTimer); clearInterval(frameTimer);
+  if (!selectedRun) return;
+  const d = await get("/api/runs/" + selectedRun);
+  const view = $("rView");
+  const frameImg = el("img", { className: "frame" });
+  const slider = el("input", { type: "range", min: 0, max: Math.max(d.frames.length - 1, 0), value: Math.max(d.frames.length - 1, 0), style: "width:100%" });
+  const caption = el("span", { className: "hint" });
+  const setFrame = () => { const f = d.frames[slider.value]; if (f) { frameImg.src = `/api/runs/${d.id}/frame/${f}`; caption.textContent = `Khung ${f} (${Number(slider.value) + 1}/${d.frames.length}) · hộp đỏ: phát hiện, vòng xanh: người đã xác nhận`; } };
+  slider.oninput = setFrame;
+  const play = el("button", { textContent: "▶ Phát" });
+  play.onclick = () => { if (frameTimer) { clearInterval(frameTimer); frameTimer = null; play.textContent = "▶ Phát"; return; }
+    play.textContent = "❚❚ Dừng"; frameTimer = setInterval(() => { slider.value = (Number(slider.value) + 1) % d.frames.length; setFrame(); }, 500); };
+  const t = d.timing;
+  const stages = [["Cắt ô", "tile_ms"], ["Suy luận", "infer_ms"], ["Gộp", "merge_ms"], ["Định vị", "georef_ms"], ["Xác nhận", "confirm_ms"], ["Tổng", "total_ms"]];
+  const timing = t ? el("table", {}, el("tr", {}, ...["Chặng", "trung bình (ms)", "p50", "p95"].map(h => el("th", { textContent: h }))),
+    ...stages.map(([name, k]) => el("tr", {}, el("td", { textContent: name }), ...["mean", "p50", "p95"].map(s => el("td", { textContent: vn(t[`${k}_${s}`], 1) }))))) : el("p", { className: "hint", textContent: "Chưa có số đo." });
+  const crops = el("div", { className: "crops" }, ...d.alerts.map(a => el("figure", {},
+    el("img", { src: `/api/runs/${d.id}/crop/${encodeURIComponent(a.alert_id)}`, loading: "lazy" }),
+    el("figcaption", { textContent: `${a.alert_id} · t=${vn(a.t, 1)} s · conf ${vn(a.confidence, 2)} · ±${vn(a.position_error_m, 1)} m` }))));
+  view.replaceChildren(
+    el("h3", { textContent: `${d.id} · ${{ running: "đang chạy…", done: "xong", error: "lỗi" }[d.status]}`, style: "margin:0 0 8px" }),
+    d.frames.length ? frameImg : el("div", { className: "empty", textContent: "Chưa có khung nào (mô hình đang nạp?)." }),
+    d.frames.length ? el("div", {}, play, " ", caption, slider) : "",
+    el("div", { className: "card" },
+      el("div", { className: "stat" }, "Khung đã xử lý", el("b", { textContent: t ? t.n_frames : 0 })),
+      el("div", { className: "stat" }, "Phát hiện (tổng)", el("b", { textContent: d.n_detections })),
+      el("div", { className: "stat" }, "Cảnh báo (người đã xác nhận)", el("b", { textContent: d.alerts.length })),
+      el("div", { className: "stat" }, "Số ô mỗi khung (trung bình)", el("b", { textContent: t ? vn(t.n_tiles, 1) : "–" })),
+      el("div", { className: "stat" }, "FPS đạt được theo p95", el("b", { textContent: t ? vn(t.fps_at_p95, 2) : "–" }))),
+    el("h4", { textContent: "Thời gian từng chặng (máy này, chỉ so sánh tương đối)" }), timing,
+    el("h4", { textContent: `Cảnh báo (${d.alerts.length})` }), crops,
+    el("h4", { textContent: "Lệnh tương đương" }), el("pre", { textContent: d.command }),
+    el("h4", { textContent: "Log" }), el("pre", { textContent: d.log_tail }));
+  setFrame();
+  if (d.status === "running") pollTimer = setTimeout(() => { refreshRuns(); showRun(); }, 2000);
+}
+
+// ================= Khởi động =================
+(async () => {
+  info = await get("/api/info");
+  if (info.ground_url) $("page-ground").replaceChildren(el("iframe", { src: info.ground_url }));
+  await Promise.all([loadDatasets(), loadSources()]);
+})();
+</script>
+</body>
+</html>

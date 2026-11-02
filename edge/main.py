@@ -89,6 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0, help="Seed cho giả lập mạng và nhiễu thời gian chờ gửi lại")
     parser.add_argument("--output", type=Path, default=Path("runs/edge/demo"), help="Thư mục log")
     parser.add_argument("--save-video", action="store_true", help="Ghi annotated.mp4: box đỏ là phát hiện, vòng xanh là người đã xác nhận")
+    parser.add_argument("--save-frames", action="store_true", help="Ghi từng khung đã xử lý (vẽ như --save-video) thành frames/<frame_id>.jpg, cạnh dài tối đa 1920 px; giao diện console đọc")
     return parser
 
 
@@ -105,6 +106,15 @@ def track_color(track_id: int) -> tuple[int, int, int]:
     """Màu cố định cho mỗi track (BGR), để mắt theo được một người qua các khung."""
     hue = (track_id * 47) % 180
     return tuple(int(c) for c in cv2.cvtColor(np.uint8([[[hue, 220, 255]]]), cv2.COLOR_HSV2BGR)[0, 0])
+
+
+def save_frame(image: Any, path: Path, max_side: int = 1920) -> None:
+    """Ghi một khung đã vẽ thành JPEG, thu cạnh dài về max_side để trình duyệt tải nhanh."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    scale = max_side / max(image.shape[:2])
+    if scale < 1:
+        image = cv2.resize(image, (round(image.shape[1] * scale), round(image.shape[0] * scale)), interpolation=cv2.INTER_AREA)
+    cv2.imwrite(str(path), image, [cv2.IMWRITE_JPEG_QUALITY, 85])
 
 
 def annotate(
@@ -243,12 +253,16 @@ def main() -> None:
             write_jsonl(time_log, {"frame_id": frame_id, "t": t, "n_dets": len(dets), **timings})
             n_frames += 1
 
-            if args.save_video:
-                if video is None:
-                    path = str(args.output / "annotated.mp4")
-                    video = cv2.VideoWriter(path, cv2.VideoWriter.fourcc(*"mp4v"), args.fps, (cam.width, cam.height))
+            if args.save_video or args.save_frames:
                 tracks = getattr(confirmer, "last_assignments", None)
-                video.write(annotate(frame, [d.box_px for d in dets], [d.conf for d in dets], confirmed, tel, cam, synthetic, tracks))
+                drawn = annotate(frame, [d.box_px for d in dets], [d.conf for d in dets], confirmed, tel, cam, synthetic, tracks)
+                if args.save_video:
+                    if video is None:
+                        path = str(args.output / "annotated.mp4")
+                        video = cv2.VideoWriter(path, cv2.VideoWriter.fourcc(*"mp4v"), args.fps, (cam.width, cam.height))
+                    video.write(drawn)
+                if args.save_frames:
+                    save_frame(drawn, args.output / "frames" / f"{frame_id:06d}.jpg")
         # Hết video: tiếp tục gửi bù mỗi giây, như UAV vẫn bay tiếp và giữ kết nối.
         for k in range(1, int(args.drain_s) + 1):
             if outbox.pending() == 0:

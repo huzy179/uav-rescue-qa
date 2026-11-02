@@ -19,6 +19,7 @@
 .venv/bin/python scripts/run_tiled.py --config configs/experiments/E4tiled_visdrone.yaml   # cấu hình có khoá tile:
 .venv/bin/python eval/eval_by_size.py --help
 scripts/eval_flood.sh <thư mục file xuất CVAT>   # cả chuỗi trên tập test lũ, chỉ sau khi khoá
+.venv/bin/python -m console                      # giao diện thử nghiệm, http://localhost:8501
 ```
 
 Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Chạy cả một thí nghiệm thì dùng skill `/run-experiment`.

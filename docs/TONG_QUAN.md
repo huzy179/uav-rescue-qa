@@ -353,6 +353,7 @@ flood-tiny-person/
 ├── tools/                   xử lý dữ liệu: chuyển nhãn, kiểm tra nhãn, trích khung, chia tập, kiểm tra rò rỉ
 ├── training/                train.py: fine-tune
 ├── notebooks/               notebook Kaggle (chỉ là lớp vỏ gọi training/train.py)
+├── console/                 giao diện thử nghiệm: xem lỗi theo ảnh, chạy thử pipeline, trạm mặt đất
 ├── tests/                   kiểm thử tự động, chạy không cần mô hình, GPU hay dữ liệu
 ├── docker/, compose.yaml    đóng gói (ảnh dev và ảnh trạm mặt đất)
 ├── .github/workflows/       chạy kiểm thử tự động mỗi lần đẩy mã lên GitHub
@@ -440,6 +441,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 10. Trạm mặt đất | Xong; bản đồ Esri (ô OpenStreetMap không tải được); gộp cảnh báo thành sự cố, bán kính 5 m (`alert_memory.md`), rộng hơn khi hai drone khác nhau; xếp ưu tiên có lý do, người vận hành gắn thẻ và đóng sự cố; demo hai drone |
 | 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`); quét độ cao với recall theo cỡ người (`rq3_altitude.md`) |
 | 12. RQ2 | Mã xong (2/11): xuất TensorRT FP16/INT8, chấm độ chính xác, đo cả pipeline, bảng recall theo FPS; chạy thử phần PyTorch trên máy cá nhân; **chưa chạy trên Kaggle T4** |
+| Giao diện thử nghiệm | Xong 3/11 (`python -m console`): xem lỗi từng ảnh (bỏ sót, báo nhầm theo nhóm kích thước và thẻ), chạy thử pipeline, trạm mặt đất; dùng cho phân tích lỗi chương 5 và demo |
 | 13. Luận văn | Đã báo cáo ý tưởng thuật toán với cô 23/10 (slide 22 trang) |
 
 Kết quả chính tới nay: fine-tune tăng mạnh người nhỏ trên VisDrone (`visdrone_E2.md`); thêm AFO giữ được người dưới nước (`E2c.md`), nhưng trên tập nước độc lập SeaDronesSee chưa hơn mô hình gốc (`sds_det.md`). Lý do một phần là cỡ người: E2c yếu với người to; **thu nhỏ khung theo độ cao bay** (`--target-person-px`) đưa E2c cắt ô trên SDS 4K từ AP50 0,235 lên 0,531, ngang mô hình gốc (`scale_by_altitude.md`). Cảnh báo lặp của geo: chặn ở biên (`--suppress-s`) làm mất người ở cảnh đông nên tắt; gộp thành sự cố ở trạm mặt đất thay thế (`alert_memory.md`).

@@ -1,0 +1,20 @@
+# Giao diện thử nghiệm (.venv/bin/python -m console): tập dữ liệu cho tab "Xem lỗi" và nguồn cho tab "Chạy thử".
+# Mỗi tập: thư mục kết quả chứa các lần chạy (<runs>/<tên>/boxes.csv) và ảnh, nhãn, vùng bỏ qua dùng để chấm.
+# Tập lũ chỉ hiện khi đã khoá (có MANIFEST.sha256): không xem dự đoán trên tập test trước khi khoá (CLAUDE.md).
+datasets:
+  - {name: visdrone, title: VisDrone val, runs: runs/visdrone, images: data/processed/visdrone/images/val,
+     labels: data/processed/visdrone/labels/val, ignore: data/processed/visdrone/ignore/val}
+  - {name: visdrone-testdev, title: VisDrone test-dev, runs: runs/visdrone-testdev, images: data/processed/visdrone/images/test-dev,
+     labels: data/processed/visdrone/labels/test-dev, ignore: data/processed/visdrone/ignore/test-dev}
+  - {name: afo, title: AFO test, runs: runs/afo, images: data/processed/afo/images/test, labels: data/processed/afo/labels/test,
+     ignore: data/processed/afo/ignore/test}
+  - {name: sds_det, title: SeaDronesSee val (4K), runs: runs/sds_det, images: data/processed/sds_det/images/val,
+     labels: data/processed/sds_det/labels/val}
+  - {name: flood, title: Tập test lũ, runs: runs/flood, images: data/processed/flood/images/test,
+     labels: data/processed/flood/labels/test, ignore: data/processed/flood/ignore/test,
+     tags: data/processed/flood/tags_test.csv, require_lock: data/processed/flood/MANIFEST.sha256}
+# Nguồn cho tab "Chạy thử". Không đưa video của tập test lũ vào đây: xem dự đoán trên chúng khi đang gán nhãn làm
+# lệch nhãn.
+videos: [data/raw/demo]
+sequences: data/processed/sds_mot   # mỗi thư mục con có frames/ và telemetry.csv, 30 khung/giây
+weights: [yolo26s.pt, runs/train/*/weights/best.pt]

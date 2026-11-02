@@ -24,6 +24,8 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 
 Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ liệu** và **thí nghiệm**; code chỉ làm khi một thí nghiệm cần.
 
+**Cập nhật 3/11 (mã):** giao diện thử nghiệm `python -m console`: xem lỗi từng ảnh theo nhóm kích thước và thẻ (khớp `eval_by_size.csv`), chạy thử pipeline có vẽ khung, cảnh báo, thời gian; nhúng trạm mặt đất. Công cụ cho tuần phân tích lỗi 21–27/11.
+
 **Cập nhật 2/11 (mã):**
 - **RQ2 sẵn sàng chạy trên Kaggle**: `scripts/run_rq2.py` + `configs/experiments/rq2_t4.yaml` + `notebooks/kaggle_rq2.ipynb` (xuất TensorRT FP16/INT8, hiệu chỉnh INT8 trên ô 640 từ ảnh val, chấm độ chính xác, đo cả pipeline, bảng recall theo FPS). Đã chạy thử phần PyTorch trên máy cá nhân; phần TensorRT chưa chạy (máy cá nhân không cài `tensorrt`). Có thể chạy trước 9/11.
 - Sai số vị trí trong cảnh báo tính từ vị trí trong ảnh và độ cao, thay hằng số 5 m; trạm gộp cảnh báo của hai drone khác nhau theo sai số của cả hai; trạm xếp ưu tiên sự cố và cho người vận hành gắn thẻ, đóng sự cố; demo hai drone (`scripts/demo_multi.sh`).

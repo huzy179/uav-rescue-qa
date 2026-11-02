@@ -34,13 +34,16 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["shared*", "edge*", "ground*", "sim*", "eval*"]
+include = ["shared*", "edge*", "ground*", "sim*", "eval*", "console*"]
 
 [tool.setuptools.package-data]
 ground = ["*.html"]
+console = ["*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Gói mới (console/) chạy được từ thư mục gốc mà không phải cài lại bản editable.
+pythonpath = ["."]
 
 [tool.pyright]
 venvPath = "."
