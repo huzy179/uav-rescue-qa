@@ -27,7 +27,7 @@ Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ 
 **Cập nhật 2/11 (mã):**
 - **RQ2 sẵn sàng chạy trên Kaggle**: `scripts/run_rq2.py` + `configs/experiments/rq2_t4.yaml` + `notebooks/kaggle_rq2.ipynb` (xuất TensorRT FP16/INT8, hiệu chỉnh INT8 trên ô 640 từ ảnh val, chấm độ chính xác, đo cả pipeline, bảng recall theo FPS). Đã chạy thử phần PyTorch trên máy cá nhân; phần TensorRT chưa chạy (máy cá nhân không cài `tensorrt`). Có thể chạy trước 9/11.
 - Sai số vị trí trong cảnh báo tính từ vị trí trong ảnh và độ cao, thay hằng số 5 m; trạm gộp cảnh báo của hai drone khác nhau theo sai số của cả hai; trạm xếp ưu tiên sự cố và cho người vận hành gắn thẻ, đóng sự cố; demo hai drone (`scripts/demo_multi.sh`).
-- Tần số xử lý theo độ cao (`--min-views`); mô phỏng thêm bay zig-zag, sai số độ cao, recall sau thu nhỏ theo độ cao; quét `rq3_adaptive.yaml`.
+- Tần số xử lý theo độ cao (`--min-views`); mô phỏng thêm bay zig-zag, sai số độ cao, recall sau thu nhỏ theo độ cao. Quét `rq3_adaptive.yaml` (`docs/results/rq3_adaptive.md`): 12 lần nhìn, trần 8 khung/giây không kém 2 khung/giây cố định ở độ cao nào, tốt hơn hẳn ở 30 m, ít khung hơn từ 80 m.
 
 **Cập nhật 28/10:**
 - **E3 (P2) xong sớm một tuần**, kết quả âm: người dưới 8 px chỉ +0,012 (val) và +0,013 (test-dev) AP50, kém hơn ở người to; giữ E2c làm mô hình chính (`docs/results/E3.md`). Tuần 31/10–6/11 dư khoảng 10 giờ GPU (quyết định #14).

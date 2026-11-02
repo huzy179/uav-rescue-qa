@@ -584,7 +584,7 @@ Ba chế độ chạy thường dùng:
 |---|---|---|
 | Demo đủ hai phía | `--ground-url http://localhost:8000 --save-video` | Không có `--telemetry` thì video có dòng "TELEMETRY GIA LAP" |
 | Thử mạng chập chờn | `--net-loss 0.2 --net-outage 30 90 --seed 1` | `NetemTransport` bọc ngoài transport |
-| Tần số theo độ cao | `--min-views 6 --fps 8 --fps-min 0.5` | Mỗi khung xử lý tính lại hạn khung kế: `views_fps` = min_views × vận tốc / chiều dài vùng chụp (mục 2.4), kẹp trong [`--fps-min`, `--fps`]; vận tốc từ telemetry một giây trước. Bay thấp xử lý dày hơn, bay cao thưa hơn. Ghi `fps_target` vào `timings.jsonl` |
+| Tần số theo độ cao | `--min-views 6 --fps 8 --fps-min 0.5` | Mỗi khung xử lý tính lại hạn khung kế: `views_fps` = min_views × vận tốc / chiều dài vùng chụp (mục 2.4), kẹp trong [`--fps-min`, `--fps`]; vận tốc từ telemetry một giây trước. Bay thấp xử lý dày hơn, bay cao thưa hơn; cửa sổ đếm của khối xác nhận dãn bằng thời gian một người nằm trong khung (không dãn thì bay cao lại bỏ sót nhiều hơn). Ghi `fps_target` vào `timings.jsonl`. Mô phỏng: `results/rq3_adaptive.md` |
 | Quét tham số RQ3 không cần GPU | `--replay runs/.../detections.jsonl --confirm bytetrack_cmc --n-confirm 5` | Phát hiện đọc lại từ lần chạy trước; georef, confirm, alerts chạy lại |
 
 ## 8. Định vị (georef)
