@@ -382,6 +382,8 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `edge/alerts.py` | `Outbox` SQLite, `HttpTransport`, `FakeTransport`, cắt ảnh JPEG | Outbox, gửi lại lùi theo hàm mũ (10) |
 | `edge/main.py` | Nối các khối, ghi log JSONL; không chứa logic | (7.5) |
 | `edge/device.py` | Chọn thiết bị: CUDA → MPS → CPU | |
+| `edge/device_sim.py` | `DeviceProfile` (hồ sơ `configs/devices/*.yaml`), `BusyDevice` (bận tới t + độ trễ, bỏ khung tới trong lúc bận), `inference_counts` (số ô của một khung) | Giả lập thời gian thiết bị biên (14.6) |
+| `edge/pacing.py` | `RealtimePacer`: ngủ cho đồng hồ thật bắt kịp thời gian mô phỏng (`--realtime`, chỉ cho demo) | (14.6) |
 
 **Trạm mặt đất (`ground/`):** `app.py` (FastAPI: nhận cảnh báo, bỏ trùng theo `alert_id`, lưu SQLite, gắn cảnh báo vào sự cố, người vận hành gắn thẻ và đóng sự cố), `incidents.py` (luật gộp cảnh báo thành sự cố, hàm thuần, 12.3), `priority.py` (điểm ưu tiên kèm lý do, hàm thuần, 12.4), `map.html` (bản đồ Leaflet, sự cố tô màu theo ưu tiên). Chỉ import `shared/`.
 
@@ -407,9 +409,9 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `eval/timing_summary.py` | Thời gian từng chặng, p50/p95, FPS đạt được (14) |
 | `eval/report.py`, `eval/draw.py` | Ghi CSV, tóm tắt, histogram; vẽ box |
 
-**Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra; thu nhỏ theo độ cao bằng `--altitude-csv --target-person-px`), `eval_flood.sh` (cả chuỗi chấm tập lũ từ file xuất CVAT), `run_rq2.py` (RQ2 trọn một lệnh, 14.5), `demo_multi.sh` (demo hai drone), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
+**Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra; thu nhỏ theo độ cao bằng `--altitude-csv --target-person-px`), `eval_flood.sh` (cả chuỗi chấm tập lũ từ file xuất CVAT), `run_rq2.py` (RQ2 trọn một lệnh, 14.5), `demo_multi.sh` (demo hai drone), `demo_bao_ve.sh` (demo bảo vệ: phát lại theo thời gian thực với thiết bị giả lập, so hai thiết bị; `docs/DEMO_BAO_VE.md`), `ghep_video.py` (ghép hai video cạnh nhau), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
 
-**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `prepare_afo.py` (dựng lại bố cục AFO từ bản Kaggle cho `convert_yolo_subset.py`), `convert_seadronessee_mot.py` (SeaDronesSee-MOT thành chuỗi khung, telemetry từ metadata drone, nhãn theo track), `make_sds_det.py` (tập phát hiện người dưới nước từ SeaDronesSee, 1 khung mỗi 15), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4), `rescale_dataset.py` (thu nhỏ ảnh nhiều mức cho E6, 13.6), `make_tiles.py` (cắt ô có nhãn, 13.2), `shift_telemetry.py` (dời telemetry giả lập drone thứ hai).
+**Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `prepare_afo.py` (dựng lại bố cục AFO từ bản Kaggle cho `convert_yolo_subset.py`), `convert_seadronessee_mot.py` (SeaDronesSee-MOT thành chuỗi khung, telemetry từ metadata drone, nhãn theo track), `make_sds_det.py` (tập phát hiện người dưới nước từ SeaDronesSee, 1 khung mỗi 15), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4), `rescale_dataset.py` (thu nhỏ ảnh nhiều mức cho E6, 13.6), `make_tiles.py` (cắt ô có nhãn, 13.2), `shift_telemetry.py` (dời telemetry giả lập drone thứ hai), `fit_device_profile.py` (hiệu chỉnh hồ sơ thiết bị từ `timings.jsonl` của RQ2, 14.6).
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
@@ -1098,7 +1100,7 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 3. **Thời gian**: `edge/main.py` trên đoạn SDS-MOT v21 (4K, telemetry thật, 2 khung/giây) để có đủ các chặng; `timing_summary.py`.
 4. **Ghép**: `eval/rq2_tradeoff.py` ghi `rq2.csv` (AP50, recall, recall người dưới 8 px ở IoU 0,3, thời gian p50/p95, FPS theo p95) và `rq2_<tập>.png` (recall theo FPS, đường dọc ở 2 FPS).
 
-Chạy thử 2/11 trên RTX 5060 (máy cá nhân, chỉ các biến thể PyTorch, 12 khung) để kiểm tra luồng: AP50 trên SDS trùng các lần chạy trước (`scale_by_altitude.md`). Lần thử cho thấy bước thu nhỏ khung 4K bằng `cv2.INTER_AREA` tốn đáng kể trên CPU so với suy luận; số đo chính thức chờ T4.
+Chạy thử 2/11 trên RTX 5060 (máy cá nhân, chỉ các biến thể PyTorch, 12 khung) để kiểm tra luồng: AP50 trên SDS trùng các lần chạy trước (`scale_by_altitude.md`). Lần thử cho thấy bước thu nhỏ khung 4K bằng `cv2.INTER_AREA` tốn đáng kể trên CPU so với suy luận; số đo chính thức chờ T4. `runs/rq2/speed/<biến thể>/timings.jsonl` của lần chạy T4 cũng là đầu vào hiệu chỉnh hồ sơ thiết bị (14.6).
 
 ### 14.6. Giả lập thời gian thiết bị biên [Đã có]
 
