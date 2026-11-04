@@ -34,6 +34,11 @@ Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ 
 
 Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặc một thí nghiệm cần.
 
+**Cập nhật 5/11:**
+- **Thuật ngữ chuẩn hoá:** `docs/THUAT_NGU.md` là bảng chuẩn duy nhất (thuật ngữ ngành, khái niệm dự án đặt tên tiếng Việt, ký hiệu nội bộ, quy tắc dùng trong luận văn); TECHNICAL mục 18 trỏ sang.
+- **Tab "Hiểu dự án"** trong `python -m console`: bản đồ dự án 6 khâu (làm gì, vì sao, kết quả kèm file nguồn, file mã), đọc mọi tài liệu với giải thích thuật ngữ khi di chuột, tìm kiếm, xem mã.
+- **Lịch gán nhãn đổi:** 5–6/11 học dự án và chạy Kaggle (E2e, RQ2), gán nhãn 7–9/11, khoá vẫn 11/11 (LABELING mục 9). Rủi ro: khoảng 4 giờ gán mỗi ngày trong ba ngày.
+
 **Cập nhật 4/11 (giả lập thiết bị, demo bảo vệ):** pipeline giả lập thời gian xử lý của thiết bị biên (`--device-profile`, `edge/device_sim.py`, TECHNICAL 14.6): bỏ khung tới trong lúc bận, cảnh báo gửi lúc xử lý xong. Hồ sơ T4, Orin Nano Super, Orin NX, AGX Orin trong `configs/devices/` lấy từ bảng YOLO26 của Ultralytics, **chưa hiệu chỉnh**; sau khi chạy RQ2 trên T4 thì hiệu chỉnh bằng `tools/fit_device_profile.py`. Demo bảo vệ một lệnh (`scripts/demo_bao_ve.sh`): phát lại SDS v21 (telemetry thật) theo thời gian thực, không cần GPU; bản đồ trạm chạy không cần internet (Leaflet đóng gói, ô bản đồ đã xem được giữ lại); banner mất sóng; video so hai thiết bị (`scripts/ghep_video.py`).
 
 **Cập nhật 4/11 (mã):** xuất báo cáo phân tích lỗi và so hai lần chạy trong giao diện; trạm đẩy cập nhật qua `/api/stream`; mô phỏng độ cao đổi giữa chuyến (`docs/results/rq3_altprofile.md`: 12 lần nhìn, trần 8 khung/giây gần bằng 8 khung/giây cố định, với 137 khung thay vì 480).

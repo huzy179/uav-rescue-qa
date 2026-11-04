@@ -120,12 +120,13 @@ Giữ lại thư mục `exports/` và commit dòng mã băm của `MANIFEST.sha2
 
 Lịch gốc (50 khung ngày 16/10, 200 khung ngày 30/10) đã trễ; lịch lại ngày 31/10 (212 khung, khoá 4/11) cũng trễ: tới 4/11 chưa gán khung nào. Lịch lại ngày 4/11, khoá 11/11 (quyết định #10). Gán 6 video 1080p trước (114 khung), rồi 4 video độ phân giải thấp (74 khung, mục 6). Ngày 4/11 gộp hai video San Angelo, tập còn 188 khung (mục 6).
 
+Lịch lại ngày 5/11: 5–6/11 học toàn bộ dự án trước (tab "Hiểu dự án" của `python -m console`) và chạy Kaggle; gán nhãn dồn vào 7–9/11, khoảng 60–80 khung mỗi ngày (khoảng 4 giờ ở 15–20 khung mỗi giờ). Lùi quá 11/11 thì RQ1 trên tập lũ không kịp báo cáo 13/11 (ROADMAP mục 1.5).
+
 | Hạn | Số khung cộng dồn |
 |---|---|
-| 5/11 | 50 (đo tốc độ gán, chỉnh các mốc dưới) |
-| 6/11 | 100 |
-| 7/11 | 150 |
-| 8/11 | 188 |
-| 9/11 | Gán lại 20 khung trong 50 khung đầu để kiểm tra nhất quán (mục 7) |
-| 10/11 | Rà toàn bộ theo mục 7 |
+| 5–6/11 | Học dự án; đọc kỹ mục 1–6 của tài liệu này trước khi gán |
+| 7/11 | 50 (đo tốc độ gán, chỉnh các mốc dưới) |
+| 8/11 | 120 |
+| 9/11 | 188 |
+| 10/11 | Gán lại 20 khung trong 50 khung đầu (sau ít nhất hai ngày, mục 7); rà toàn bộ theo mục 7 |
 | 11/11 | Chuyển nhãn, `check_leakage`, khoá (mục 8) |
