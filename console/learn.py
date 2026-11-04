@@ -23,6 +23,8 @@ SOURCE_SUFFIXES = {".py", ".sh", ".yaml", ".yml", ".html", ".toml", ".md"}
 STAGES: list[dict[str, Any]] = [
     {
         "id": "camera", "title": "1. Camera và lấy khung",
+        "icon": "📷", "color": "#3772cf", "summary": "Lấy vài khung mỗi giây từ video 4K",
+        "metrics": [],
         "what": "Camera trên UAV quay video 4K, 30 khung/giây. Máy trên UAV không xử lý kịp mọi khung, nên chỉ lấy vài khung mỗi giây; bay thấp thì lấy nhiều hơn, bay cao lấy ít hơn (tần số theo độ cao).",
         "why": "Người trong ảnh rất nhỏ nên phải giữ ảnh 4K; máy nhỏ chỉ chạy được vài khung mỗi giây. Cần chứng minh vài khung mỗi giây là đủ để không bỏ sót người.",
         "results": [
@@ -35,6 +37,13 @@ STAGES: list[dict[str, Any]] = [
     },
     {
         "id": "detect", "title": "2. Phát hiện người",
+        "icon": "🔍", "color": "#00a37f", "summary": "Tìm và vẽ box quanh từng người",
+        "metrics": [
+            {"label": "AP50 trên VisDrone val, mọi cỡ người", "a_label": "mô hình nền", "a": 0.497, "b_label": "tinh chỉnh", "b": 0.758, "max": 1, "doc": "docs/results/visdrone_E2.md"},
+            {"label": "AP50 với người dưới 8 px", "a_label": "mô hình nền", "a": 0.167, "b_label": "tinh chỉnh", "b": 0.554, "max": 1, "doc": "docs/results/visdrone_E2.md"},
+            {"label": "AP50 với người dưới nước (AFO test)", "a_label": "chỉ VisDrone", "a": 0.103, "b_label": "VisDrone + AFO", "b": 0.568, "max": 1, "doc": "docs/results/E2c.md"},
+            {"label": "AP50 trên SeaDronesSee 4K", "a_label": "cắt ô gốc", "a": 0.235, "b_label": "thu nhỏ theo độ cao", "b": 0.531, "max": 1, "doc": "docs/results/scale_by_altitude.md"},
+        ],
         "what": "Mô hình YOLO26s tìm người trong khung và vẽ box quanh mỗi người. Mô hình được tinh chỉnh thêm trên ảnh drone (VisDrone) và ảnh người dưới nước (AFO). Ảnh 4K được cắt thành ô 640 px để người nhỏ không bị mất; có thể thu nhỏ khung theo độ cao bay trước khi cắt.",
         "why": "Mô hình gốc học trên ảnh chụp ngang, người to; ảnh drone nhìn từ trên xuống, người chỉ vài pixel. Đây là câu hỏi 1: phát hiện người nhỏ chính xác tới đâu, kỹ thuật nào giúp được bao nhiêu.",
         "results": [
@@ -49,6 +58,8 @@ STAGES: list[dict[str, Any]] = [
     },
     {
         "id": "georef", "title": "3. Định vị",
+        "icon": "📍", "color": "#7c4dcc", "summary": "Đổi pixel trên ảnh thành toạ độ GPS",
+        "metrics": [],
         "what": "Đổi vị trí box trên ảnh (pixel) thành toạ độ GPS trên mặt đất, dùng dữ liệu bay: vị trí, độ cao, hướng của UAV và góc nhìn camera.",
         "why": "Đội cứu hộ cần biết người ở đâu ngoài thực địa, không phải ở pixel nào. Toạ độ mặt đất cũng là nền cho bước xác nhận.",
         "results": [
@@ -60,6 +71,10 @@ STAGES: list[dict[str, Any]] = [
     },
     {
         "id": "confirm", "title": "4. Xác nhận",
+        "icon": "✅", "color": "#d97706", "summary": "Thấy đủ 3 lần mới tin là người",
+        "metrics": [
+            {"label": "Người được xác nhận trên video thật (SeaDronesSee v21, 2 khung/giây)", "a_label": "ByteTrack", "a": 2, "b_label": "theo toạ độ mặt đất", "b": 12, "max": 19, "unit": "/19", "doc": "docs/results/sds_mot_confirm.md"},
+        ],
         "what": "Chỉ cảnh báo khi một người được thấy đủ 3 lần trong 5 giây. Các lần thấy được gom theo toạ độ mặt đất (cách `geo`), không theo vị trí trên ảnh.",
         "why": "Một lần thấy có thể là báo nhầm (sóng, rác trôi). Cách theo dõi thông thường (ByteTrack) ghép box theo độ chồng lấn trên ảnh, nhưng ở 2 khung/giây box hai khung liền nhau gần như không chồng nhau nên gãy.",
         "results": [
@@ -72,6 +87,8 @@ STAGES: list[dict[str, Any]] = [
     },
     {
         "id": "send", "title": "5. Gửi cảnh báo",
+        "icon": "📡", "color": "#d45656", "summary": "Gửi toạ độ trước, ảnh sau, không mất khi mất sóng",
+        "metrics": [],
         "what": "Mỗi cảnh báo gồm toạ độ (vài trăm byte, gửi trước) và ảnh cắt nhỏ (gửi sau). Cảnh báo được lưu vào hàng đợi trên UAV trước khi gửi; mất mạng thì gửi lại khi có sóng, trạm bỏ qua bản trùng.",
         "why": "Vùng lũ thường mất sóng; không gửi được video về. Không được mất cảnh báo nào khi mạng chập chờn.",
         "results": [
@@ -83,6 +100,8 @@ STAGES: list[dict[str, Any]] = [
     },
     {
         "id": "ground", "title": "6. Trạm mặt đất và bản đồ",
+        "icon": "🗺️", "color": "#0e7490", "summary": "Gộp cảnh báo thành sự cố, hiện trên bản đồ",
+        "metrics": [],
         "what": "Máy của đội cứu hộ nhận cảnh báo, gộp các cảnh báo gần nhau thành một sự cố, xếp ưu tiên và hiện trên bản đồ. Người vận hành gắn thẻ (dưới nước, trên mái) và đóng sự cố.",
         "why": "GPS trôi làm một người sinh nhiều cảnh báo; gộp lại để người vận hành không bị ngợp. Bản đồ phải chạy được khi mất mạng.",
         "results": [
@@ -99,6 +118,8 @@ STAGES: list[dict[str, Any]] = [
 SIDE_TOPICS: list[dict[str, Any]] = [
     {
         "id": "edge", "title": "Chạy trên thiết bị biên",
+        "icon": "⚡", "color": "#b45309", "summary": "Nhanh tới đâu trên máy nhỏ gắn trên drone",
+        "metrics": [],
         "what": "Đo mô hình chạy nhanh tới đâu khi nén bằng TensorRT (FP16, INT8) trên GPU T4 của Kaggle, và giả lập thời gian của Jetson để xem pipeline theo kịp bao nhiêu khung/giây.",
         "why": "Không có Jetson thật; T4 cùng nền tảng NVIDIA nên thứ hạng giữa các cấu hình vẫn đúng. Đây là câu hỏi 2.",
         "results": [
@@ -111,6 +132,8 @@ SIDE_TOPICS: list[dict[str, Any]] = [
     },
     {
         "id": "data", "title": "Dữ liệu và cách đánh giá",
+        "icon": "🗂️", "color": "#475569", "summary": "Huấn luyện, đánh giá và tập ảnh lũ tự gán",
+        "metrics": [],
         "what": "Huấn luyện trên VisDrone và AFO; đánh giá trên VisDrone, AFO, SeaDronesSee và tập ảnh lũ tự gán nhãn (188 khung, chưa khoá). Kết quả chia theo nhóm cỡ người, có khoảng tin cậy.",
         "why": "Chưa có bộ công khai nào chụp người trong lũ từ UAV có nhãn; tập tự gán là nơi duy nhất trả lời câu hỏi về cảnh lũ thật.",
         "results": [
@@ -216,7 +239,10 @@ def load_glossary(path: Path = GLOSSARY) -> list[dict[str, Any]]:
         english = row.get("tiếng anh", "")
         meaning = row.get("nghĩa") or row.get("tên mô tả") or ""
         aliases = _aliases(name) + [a for a in _aliases(english) if a.lower() not in name.lower()]
+        # Loại để tô màu gạch chân: thuật ngữ ngành, khái niệm dự án đặt tên tiếng Việt, ký hiệu nội bộ.
+        kind = "nganh" if section.startswith("1.") else "du_an" if section.startswith("2.") else "noi_bo"
         entries.append({
+            "kind": kind,
             "term": name.replace("`", ""), "english": english, "meaning": meaning, "note": row.get("ghi chú", ""),
             "section": section, "aliases": aliases,
         })
