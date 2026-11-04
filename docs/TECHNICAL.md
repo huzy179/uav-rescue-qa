@@ -56,7 +56,7 @@ Từ video 4K quay thẳng xuống của UAV bay ở 30–100 m, tìm những ng
 
 | Ràng buộc | Hệ quả thiết kế |
 |---|---|
-| Người rất nhỏ (mục 2) | Không được thu ảnh về 640; phải dùng ảnh lớn hoặc cắt ô; đầu dò P2 đã thử ở E3, lợi rất ít (mục 3.4) |
+| Người rất nhỏ (mục 2) | Không được thu ảnh về 640; phải dùng ảnh lớn hoặc cắt ô; nhánh phát hiện P2 đã thử ở E3, lợi rất ít (mục 3.4) |
 | Thiết bị biên yếu (mục 14) | Chỉ xử lý khoảng 2 FPS; TensorRT FP16/INT8; cắt ô chạy theo lô |
 | Mạng chập chờn (mục 10–11) | Chỉ gửi gói cảnh báo; outbox lưu và gửi bù; toạ độ trước, ảnh sau |
 
@@ -1285,33 +1285,10 @@ Chạy `check_leakage.py` với một tập (không có `--train`) thì tìm ả
 | Tập test lũ nhỏ, ảnh từ nguồn công khai | Độ bất định lớn; không phân phối lại được ảnh | Bootstrap; chỉ công bố nhãn và nguồn |
 | E6 bằng thu nhỏ ảnh | Không tái tạo nhiễu cảm biến | Gọi là mô phỏng |
 | Không có Jetson (chốt 21/10) | RQ2 chỉ là thứ hạng tương đối | Phương án B của đề cương; đo trên T4 (mục 14.4) |
-| Bản đồ cần internet | Không đúng ngữ cảnh mất mạng | Ô bản đồ ngoại tuyến hoặc ghi giới hạn |
+| Bản đồ dùng ô Esri | Ô chưa xem khi có mạng thì không hiện lúc mất mạng; điều khoản Esri hạn chế tải trước cả vùng | Giữ ô đã xem (mục 12.5); triển khai thật cần nguồn ô có giấy phép dùng ngoại tuyến |
 
 ---
 
 ## 18. Thuật ngữ
 
-| Thuật ngữ | Nghĩa |
-|---|---|
-| AGL | Above Ground Level: độ cao so với mặt đất (hoặc mặt nước) ngay bên dưới |
-| AP, AP50, AP50:95 | Average Precision: diện tích dưới đường precision-recall; ở IoU 0,5; trung bình ở IoU 0,5–0,95 |
-| Backbone, neck, head | Ba phần của mạng phát hiện: trích đặc trưng, trộn đặc trưng nhiều tầng, dự đoán |
-| Bootstrap | Lấy mẫu lại có hoàn lại để ước lượng độ bất định của một chỉ số |
-| CMC | Camera Motion Compensation: bù chuyển động camera |
-| conf | Điểm tin cậy của một box |
-| DFOV, HFOV, VFOV | Góc nhìn chéo, ngang, dọc |
-| Edge | Thiết bị biên: máy tính đặt tại nơi thu dữ liệu (trên UAV) thay vì máy chủ xa |
-| End-to-end (YOLO26) | Mô hình xuất kết quả cuối, không cần NMS |
-| FP16, INT8 | Số thực 16 bit, số nguyên 8 bit: giảm độ chính xác số để chạy nhanh hơn |
-| GSD | Ground Sampling Distance: số mét mặt đất ứng với 1 pixel |
-| IoU, IoA, IOS | Giao trên hợp; giao trên diện tích của một box; giao trên diện tích box nhỏ hơn |
-| Letterbox | Thu ảnh giữ tỉ lệ rồi đệm viền cho vừa kích thước đầu vào |
-| NMS | Non-Maximum Suppression: xoá các box trùng, giữ box điểm cao nhất |
-| Outbox | Bảng lưu thông điệp trước khi gửi, để không mất khi mất mạng |
-| P2, P3, … | Tầng đặc trưng có stride 4, 8, …: số càng nhỏ, độ phân giải càng cao |
-| Pareto | Tập các phương án không bị phương án nào khác vượt trên mọi tiêu chí |
-| Recall, precision | Tỉ lệ người thật được phát hiện; tỉ lệ phát hiện là người thật |
-| SAHI | Slicing Aided Hyper Inference: suy luận theo ô ảnh |
-| Stride | Hệ số giảm độ phân giải của một tầng so với ảnh đầu vào |
-| TensorRT | Bộ biên dịch và chạy mô hình tối ưu cho GPU NVIDIA |
-| Telemetry | Dữ liệu trạng thái chuyến bay: vị trí, độ cao, hướng, thời gian |
+Xem [THUAT_NGU.md](THUAT_NGU.md): bảng chuẩn duy nhất của dự án (thuật ngữ ngành, khái niệm do dự án đặt tên tiếng Việt, ký hiệu nội bộ) và quy tắc dùng trong tài liệu và luận văn.

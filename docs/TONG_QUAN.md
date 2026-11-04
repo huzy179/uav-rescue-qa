@@ -34,7 +34,7 @@ Khi lũ lớn, người mắc kẹt trên mái nhà, bám vào vật nổi hoặ
 
 > Ghi chú: đây là tóm tắt từ kế hoạch thí nghiệm; khi trình bày, dùng đúng câu chữ trong đề cương đã nộp.
 
-- **RQ1, độ chính xác:** phát hiện người nhỏ trong ảnh UAV vùng lũ chính xác tới mức nào, và những kỹ thuật nào (độ phân giải đầu vào, cắt ô, fine-tune, đầu dò P2) giúp được bao nhiêu, đặc biệt với người dưới 16 px?
+- **RQ1, độ chính xác:** phát hiện người nhỏ trong ảnh UAV vùng lũ chính xác tới mức nào, và những kỹ thuật nào (độ phân giải đầu vào, cắt ô, fine-tune, nhánh phát hiện P2) giúp được bao nhiêu, đặc biệt với người dưới 16 px?
 - **RQ2, tốc độ trên thiết bị biên:** cấu hình nào đạt tần số xử lý cần thiết (khoảng 2 khung mỗi giây) mà giữ được recall cao nhất?
 - **RQ3, hệ thống:** khi ghép phát hiện qua nhiều khung để xác nhận rồi gửi cảnh báo qua mạng chập chờn, hệ thống báo nhầm bao nhiêu, bỏ sót bao nhiêu, cảnh báo tới trạm sau bao lâu; cách xác nhận nào chịu được sai số GPS và chuyển động của camera?
 
@@ -225,7 +225,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 |---|---|---|---|
 | E2 lượt 1 | Fine-tune YOLO26s ở 1280 trên VisDrone, 60 epoch | Fine-tune trên ảnh UAV giúp bao nhiêu so với mô hình COCO? | **Xong 22/10**: nhóm dưới 8 px trên VisDrone val 0,167 → 0,554, nhưng kém mô hình gốc với người dưới nước (`visdrone_E2.md`, `afo_E1_E2.md`) |
 | E2c | Như trên, thêm AFO (người dưới nước) | Thêm ảnh người dưới nước có giữ được cảnh nước không? | **Xong 23/10**: AFO test 0,103 → 0,568, VisDrone val chỉ giảm 0,011; **mô hình chính** (`E2c.md`). E2d (+ HydroVigilance) đã có cấu hình |
-| E3 | E2c + đầu dò P2 (thêm tầng phát hiện ở bước nhảy 4 thay vì 8) | Người 8 px chiếm 2×2 ô đặc trưng thay vì 1 ô: có tăng recall người rất nhỏ không, đáng với chi phí tính toán không? | **Xong 28/10, kết quả âm**: dưới 8 px chỉ +0,012 (val) và +0,013 (test-dev) AP50, mất ở IoU 0,3; kém hơn ở người to; 115,0 so với 93,9 GFLOPs. Giữ E2c (`E3.md`) |
+| E3 | E2c + nhánh phát hiện P2 (thêm tầng phát hiện ở bước nhảy 4 thay vì 8) | Người 8 px chiếm 2×2 ô đặc trưng thay vì 1 ô: có tăng recall người rất nhỏ không, đáng với chi phí tính toán không? | **Xong 28/10, kết quả âm**: dưới 8 px chỉ +0,012 (val) và +0,013 (test-dev) AP50, mất ở IoU 0,3; kém hơn ở người to; 115,0 so với 93,9 GFLOPs. Giữ E2c (`E3.md`) |
 | E4 | E2c + cắt ô, trên dữ liệu độ phân giải cao | Cắt ô có lợi khi ảnh thật sự lớn không? | Trên SDS 4K: cắt ô ở độ phân giải gốc **kém** toàn ảnh (0,235 so với 0,468) vì E2c yếu với người to; **thu nhỏ theo độ cao** rồi cắt ô cho 0,531 (`scale_by_altitude.md`). Trên tập lũ: có cấu hình `E4tiled_flood.yaml` (cắt ô không thu nhỏ, vì không có độ cao bay), chờ nhãn |
 | E5 | E2c nhưng dùng YOLO11s | Kết quả có phụ thuộc đời mô hình không? | Có cấu hình (`E5_s0.yaml`), chưa huấn luyện |
 | E6 | Thu nhỏ ảnh theo nhiều mức, vẽ recall theo số pixel trên người | Bay cao tối đa bao nhiêu thì còn phát hiện được? Nối thẳng vào khuyến nghị độ cao bay | **Chạy thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt với người trên 45 px; dưới 4 px không mô hình nào thấy. Bản chính thức chờ thầy duyệt (quyết định #1) |
@@ -420,7 +420,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | Có rò rỉ giữa train và test không? | Chia theo video, kiểm tra ảnh gần trùng bằng dHash trước khi khoá | Mục 3.4, T 15.6 |
 | Sao tin được kết quả mô phỏng RQ3? | Pipeline chạy y nguyên mã thật; mô phỏng chỉ thay video và detector; nhiễu GPS theo mô hình chuẩn; kết luận định tính, ghi rõ giới hạn | Mục 3.11 |
 | Không có Jetson thì RQ2 nói được gì? | Thứ hạng tương đối giữa các cấu hình trên cùng GPU, và chặng nào tốn thời gian nhất | Mục 3.12 |
-| Sao không thêm đầu dò P2 cho người nhỏ? | Đã thử (E3): người dưới 8 px chỉ tăng 0,012–0,013 AP50 và mức tăng mất ở IoU 0,3, tức box khít hơn chứ không tìm thêm người; đổi lại kém ở người to, 115,0 so với 93,9 GFLOPs. Thêm dữ liệu tăng nhiều hơn hẳn | `E3.md`, T 3.4 |
+| Sao không thêm nhánh phát hiện P2 cho người nhỏ? | Đã thử (E3): người dưới 8 px chỉ tăng 0,012–0,013 AP50 và mức tăng mất ở IoU 0,3, tức box khít hơn chứ không tìm thêm người; đổi lại kém ở người to, 115,0 so với 93,9 GFLOPs. Thêm dữ liệu tăng nhiều hơn hẳn | `E3.md`, T 3.4 |
 | Vì sao tự viết bộ cắt ô thay vì SAHI? | Chạy theo lô, dùng được TensorRT; đã đối chiếu độ chính xác với SAHI bằng bootstrap cặp | Mục 3.7 |
 
 ---
