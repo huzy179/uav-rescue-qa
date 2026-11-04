@@ -442,7 +442,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`); quét độ cao với recall theo cỡ người (`rq3_altitude.md`) |
 | 12. RQ2 | Mã xong (2/11): xuất TensorRT FP16/INT8, chấm độ chính xác, đo cả pipeline, bảng recall theo FPS; chạy thử phần PyTorch trên máy cá nhân; **chưa chạy trên Kaggle T4**; giả lập thời gian thiết bị biên (`--device-profile`, TECHNICAL 14.6), hồ sơ chưa hiệu chỉnh |
 | Giao diện thử nghiệm | Xong 3/11 (`python -m console`): xem lỗi từng ảnh (bỏ sót, báo nhầm theo nhóm kích thước và thẻ), chạy thử pipeline, trạm mặt đất; dùng cho phân tích lỗi chương 5 và demo |
-| Hiểu dự án | Xong 4/11: tab đầu của `python -m console`: bản đồ dự án, đọc tài liệu có giải thích thuật ngữ khi di chuột (`docs/THUAT_NGU.md`), tìm kiếm, xem mã |
+| Hiểu dự án | Xong 5/11: tab đầu của `python -m console`, nền tối: bản đồ dự án (ví dụ đời thường, kết quả kèm thanh so sánh, 19 câu hỏi tự kiểm tra), đọc tài liệu có giải thích thuật ngữ khi di chuột (`docs/THUAT_NGU.md`), thẻ ghi nhớ, tìm kiếm, xem mã |
 | Demo bảo vệ | Xong 4/11 (`scripts/demo_bao_ve.sh`): phát lại SDS v21 theo thời gian thực với thiết bị giả lập, không cần GPU hay internet; video so hai thiết bị |
 | 13. Luận văn | Đã báo cáo ý tưởng thuật toán với cô 23/10 (slide 22 trang) |
 

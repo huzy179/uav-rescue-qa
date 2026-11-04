@@ -24,6 +24,12 @@ STAGES: list[dict[str, Any]] = [
     {
         "id": "camera", "title": "1. Camera và lấy khung",
         "icon": "📷", "color": "#3772cf", "summary": "Lấy vài khung mỗi giây từ video 4K",
+        "analogy": 'Như người ngồi trên máy bay chụp ảnh liên tục, nhưng mỗi giây chỉ kịp soi kỹ vài tấm.',
+        "quiz": [
+            {"q": 'Ở độ cao 100 m, trên video 4K, một người rộng 0,5 m chiếm khoảng bao nhiêu pixel?', "a": 'Khoảng 12,7 px (25,3 px ở 50 m). Nguồn: TONG_QUAN mục 1.2.', "doc": 'docs/TONG_QUAN.md'},
+            {"q": 'Vì sao không thu ảnh 4K về 640 px như cách dùng YOLO thông thường?', "a": 'Ở 100 m người chỉ còn khoảng 2,1 px, mô hình không còn gì để nhận. Phải giữ độ phân giải: ảnh lớn hoặc cắt ô.', "doc": 'docs/TONG_QUAN.md'},
+            {"q": 'Tần số theo độ cao làm gì?', "a": 'Bay thấp thì vùng chụp nhỏ, người lướt qua nhanh, nên lấy nhiều khung hơn; bay cao lấy ít hơn. Mục tiêu: mỗi người được nhìn đủ số lần mà không tốn khung thừa.', "doc": 'docs/results/rq3_adaptive.md'},
+        ],
         "metrics": [],
         "what": "Camera trên UAV quay video 4K, 30 khung/giây. Máy trên UAV không xử lý kịp mọi khung, nên chỉ lấy vài khung mỗi giây; bay thấp thì lấy nhiều hơn, bay cao lấy ít hơn (tần số theo độ cao).",
         "why": "Người trong ảnh rất nhỏ nên phải giữ ảnh 4K; máy nhỏ chỉ chạy được vài khung mỗi giây. Cần chứng minh vài khung mỗi giây là đủ để không bỏ sót người.",
@@ -38,6 +44,12 @@ STAGES: list[dict[str, Any]] = [
     {
         "id": "detect", "title": "2. Phát hiện người",
         "icon": "🔍", "color": "#00a37f", "summary": "Tìm và vẽ box quanh từng người",
+        "analogy": 'Như soi ảnh bằng kính lúp: chia ảnh lớn thành từng ô nhỏ để không sót người tí hon, và dạy thêm cho "mắt" quen nhìn người từ trên cao.',
+        "quiz": [
+            {"q": 'Mô hình chính hiện nay (E2c) là gì?', "a": 'YOLO26s tinh chỉnh trên VisDrone (ảnh drone đô thị) cộng AFO (người dưới nước).', "doc": 'docs/results/E2c.md'},
+            {"q": 'Vì sao phải thêm AFO sau lần tinh chỉnh đầu?', "a": 'Chỉ học VisDrone thì mô hình kém hơn cả mô hình nền với người dưới nước: AP50 trên AFO test tụt từ 0,147 xuống 0,103. Thêm AFO thì lên 0,568.', "doc": 'docs/results/E2c.md'},
+            {"q": 'Thu nhỏ theo độ cao bay sửa được điểm yếu nào?', "a": 'Mô hình chính giỏi người nhỏ nhưng kém người to (bay thấp). Thu nhỏ khung để người về cỡ mô hình làm tốt: trên SeaDronesSee 4K, AP50 từ 0,235 lên 0,531.', "doc": 'docs/results/scale_by_altitude.md'},
+        ],
         "metrics": [
             {"label": "AP50 trên VisDrone val, mọi cỡ người", "a_label": "mô hình nền", "a": 0.497, "b_label": "tinh chỉnh", "b": 0.758, "max": 1, "doc": "docs/results/visdrone_E2.md"},
             {"label": "AP50 với người dưới 8 px", "a_label": "mô hình nền", "a": 0.167, "b_label": "tinh chỉnh", "b": 0.554, "max": 1, "doc": "docs/results/visdrone_E2.md"},
@@ -59,6 +71,11 @@ STAGES: list[dict[str, Any]] = [
     {
         "id": "georef", "title": "3. Định vị",
         "icon": "📍", "color": "#7c4dcc", "summary": "Đổi pixel trên ảnh thành toạ độ GPS",
+        "analogy": 'Như đọc bản đồ: biết máy bay đang ở đâu, cao bao nhiêu, nhìn về hướng nào thì suy ra một điểm trên ảnh nằm ở đâu ngoài thực địa.',
+        "quiz": [
+            {"q": 'Cần những thông tin gì để đổi pixel thành toạ độ GPS?', "a": 'Vị trí GPS, độ cao, hướng của UAV và góc nhìn của camera (dữ liệu bay).', "doc": 'docs/TECHNICAL.md'},
+            {"q": 'Phép chiếu đang giả định điều gì về camera và mặt đất?', "a": 'Camera nhìn thẳng xuống và mặt nước phẳng. Camera nghiêng hay gió làm rung thì vị trí lệch; đây là một giới hạn đã ghi.', "doc": 'docs/TECHNICAL.md'},
+        ],
         "metrics": [],
         "what": "Đổi vị trí box trên ảnh (pixel) thành toạ độ GPS trên mặt đất, dùng dữ liệu bay: vị trí, độ cao, hướng của UAV và góc nhìn camera.",
         "why": "Đội cứu hộ cần biết người ở đâu ngoài thực địa, không phải ở pixel nào. Toạ độ mặt đất cũng là nền cho bước xác nhận.",
@@ -72,6 +89,12 @@ STAGES: list[dict[str, Any]] = [
     {
         "id": "confirm", "title": "4. Xác nhận",
         "icon": "✅", "color": "#d97706", "summary": "Thấy đủ 3 lần mới tin là người",
+        "analogy": 'Như người gác cổng cẩn thận: thấy cùng một người ở cùng một chỗ đủ 3 lần mới báo động, để không hú còi vì một cái bóng.',
+        "quiz": [
+            {"q": 'Một người phải được thấy mấy lần, trong bao lâu, thì mới gửi cảnh báo?', "a": '3 lần trong 5 giây (cấu hình mặc định configs/edge.yaml).', "doc": 'docs/TECHNICAL.md'},
+            {"q": 'Vì sao ByteTrack (theo dõi thông thường) gãy khi chỉ xử lý 2 khung/giây?', "a": 'Nó ghép box giữa hai khung theo độ chồng lấn trên ảnh. Ở 2 khung/giây box của cùng một người ở hai khung gần như không chồng nhau, nên mỗi khung lại thành một người mới.', "doc": 'docs/results/sds_mot_confirm.md'},
+            {"q": 'Trên video thật SeaDronesSee, hai cách xác nhận được bao nhiêu người?', "a": 'Gom theo toạ độ mặt đất: 12/19 người; ByteTrack: 2/19.', "doc": 'docs/results/sds_mot_confirm.md'},
+        ],
         "metrics": [
             {"label": "Người được xác nhận trên video thật (SeaDronesSee v21, 2 khung/giây)", "a_label": "ByteTrack", "a": 2, "b_label": "theo toạ độ mặt đất", "b": 12, "max": 19, "unit": "/19", "doc": "docs/results/sds_mot_confirm.md"},
         ],
@@ -88,6 +111,11 @@ STAGES: list[dict[str, Any]] = [
     {
         "id": "send", "title": "5. Gửi cảnh báo",
         "icon": "📡", "color": "#d45656", "summary": "Gửi toạ độ trước, ảnh sau, không mất khi mất sóng",
+        "analogy": 'Như nhắn tin ở vùng sóng yếu: soạn sẵn và lưu lại, có sóng thì gửi; lỡ gửi trùng thì bên nhận tự bỏ bản thừa.',
+        "quiz": [
+            {"q": 'Vì sao gửi toạ độ trước, ảnh cắt sau?', "a": 'Gói toạ độ chỉ vài trăm byte nên tới trạm nhanh kể cả khi mạng yếu; ảnh nặng hơn gửi sau.', "doc": 'docs/TECHNICAL.md'},
+            {"q": 'Mất sóng giữa chừng thì cảnh báo có mất không?', "a": 'Không: cảnh báo được lưu vào hàng đợi trên UAV trước khi gửi và gửi lại khi có sóng; trạm bỏ qua bản trùng theo mã cảnh báo.', "doc": 'docs/TECHNICAL.md'},
+        ],
         "metrics": [],
         "what": "Mỗi cảnh báo gồm toạ độ (vài trăm byte, gửi trước) và ảnh cắt nhỏ (gửi sau). Cảnh báo được lưu vào hàng đợi trên UAV trước khi gửi; mất mạng thì gửi lại khi có sóng, trạm bỏ qua bản trùng.",
         "why": "Vùng lũ thường mất sóng; không gửi được video về. Không được mất cảnh báo nào khi mạng chập chờn.",
@@ -101,6 +129,11 @@ STAGES: list[dict[str, Any]] = [
     {
         "id": "ground", "title": "6. Trạm mặt đất và bản đồ",
         "icon": "🗺️", "color": "#0e7490", "summary": "Gộp cảnh báo thành sự cố, hiện trên bản đồ",
+        "analogy": 'Như bảng điều phối của đội cứu hộ: gom các tin báo về cùng một chỗ thành một việc, xếp việc gấp lên đầu.',
+        "quiz": [
+            {"q": 'Sự cố khác cảnh báo thế nào?', "a": 'Một sự cố gộp nhiều cảnh báo gần nhau (về cùng một người); trạm gộp trong bán kính 5 m, rộng hơn khi hai drone khác nhau.', "doc": 'docs/results/alert_memory.md'},
+            {"q": 'Mất mạng thì bản đồ trạm còn hiện không?', "a": 'Còn với vùng đã xem: ô bản đồ đã xem được giữ trên đĩa, thư viện bản đồ đóng gói sẵn.', "doc": 'docs/TECHNICAL.md'},
+        ],
         "metrics": [],
         "what": "Máy của đội cứu hộ nhận cảnh báo, gộp các cảnh báo gần nhau thành một sự cố, xếp ưu tiên và hiện trên bản đồ. Người vận hành gắn thẻ (dưới nước, trên mái) và đóng sự cố.",
         "why": "GPS trôi làm một người sinh nhiều cảnh báo; gộp lại để người vận hành không bị ngợp. Bản đồ phải chạy được khi mất mạng.",
@@ -119,6 +152,11 @@ SIDE_TOPICS: list[dict[str, Any]] = [
     {
         "id": "edge", "title": "Chạy trên thiết bị biên",
         "icon": "⚡", "color": "#b45309", "summary": "Nhanh tới đâu trên máy nhỏ gắn trên drone",
+        "analogy": 'Như thử xe trên đường chạy thử thay vì đường thật: so được xe nào nhanh hơn, còn tốc độ trên đường thật thì phải ước lượng.',
+        "quiz": [
+            {"q": 'Vì sao đo tốc độ trên GPU T4 của Kaggle mà không đo trên Jetson?', "a": 'Không có Jetson. T4 cùng nền NVIDIA và TensorRT nên thứ hạng giữa các cấu hình vẫn đúng; số FPS tuyệt đối thì khác.', "doc": 'docs/TECHNICAL.md'},
+            {"q": 'Thu nhỏ theo độ cao giúp máy yếu thế nào?', "a": 'Khung 4K giảm từ 32 ô xuống 6 ô mỗi khung, nên máy yếu theo kịp nhiều khung hơn (giả lập, ước lượng chưa hiệu chỉnh).', "doc": 'docs/TECHNICAL.md'},
+        ],
         "metrics": [],
         "what": "Đo mô hình chạy nhanh tới đâu khi nén bằng TensorRT (FP16, INT8) trên GPU T4 của Kaggle, và giả lập thời gian của Jetson để xem pipeline theo kịp bao nhiêu khung/giây.",
         "why": "Không có Jetson thật; T4 cùng nền tảng NVIDIA nên thứ hạng giữa các cấu hình vẫn đúng. Đây là câu hỏi 2.",
@@ -133,6 +171,11 @@ SIDE_TOPICS: list[dict[str, Any]] = [
     {
         "id": "data", "title": "Dữ liệu và cách đánh giá",
         "icon": "🗂️", "color": "#475569", "summary": "Huấn luyện, đánh giá và tập ảnh lũ tự gán",
+        "analogy": 'Như đề thi: phải soạn xong và niêm phong trước khi chấm, không được sửa đề sau khi đã thấy điểm.',
+        "quiz": [
+            {"q": 'Tập ảnh lũ tự gán có bao nhiêu khung, mấy cụm khi tính khoảng tin cậy?', "a": '188 khung, 9 cụm (hai video cùng nguồn San Angelo gộp làm một).', "doc": 'docs/results/flood_truoc_khoa.md'},
+            {"q": 'Vì sao lấy mẫu bootstrap theo video thay vì theo ảnh?', "a": 'Các khung cùng một video giống nhau (cùng cảnh, ánh sáng, độ cao), không độc lập; tính theo ảnh cho khoảng tin cậy hẹp giả.', "doc": 'docs/TECHNICAL.md'},
+        ],
         "metrics": [],
         "what": "Huấn luyện trên VisDrone và AFO; đánh giá trên VisDrone, AFO, SeaDronesSee và tập ảnh lũ tự gán nhãn (188 khung, chưa khoá). Kết quả chia theo nhóm cỡ người, có khoảng tin cậy.",
         "why": "Chưa có bộ công khai nào chụp người trong lũ từ UAV có nhãn; tập tự gán là nơi duy nhất trả lời câu hỏi về cảnh lũ thật.",
