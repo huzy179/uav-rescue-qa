@@ -34,14 +34,18 @@ def parse_args() -> argparse.Namespace:
 
 
 def hash_folder(folder: Path) -> dict[str, int]:
-    """dHash của mọi ảnh trong thư mục, khoá là đường dẫn tương đối dạng <thư mục>/<tên>."""
+    """dHash của mọi ảnh trong thư mục, khoá dạng <bộ dữ liệu>/<thư mục>/<tên>.
+
+    Có cả tên bộ dữ liệu (data/processed/<bộ>/images/<thư mục>) vì mọi thư mục huấn luyện đều tên train: khoá chỉ
+    gồm <thư mục>/<tên> thì hai bộ có ảnh trùng tên ghi đè nhau và ảnh bị đè không được kiểm tra.
+    """
     hashes = {}
     for path in image_paths(folder):
         image = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
         if image is None:
             print(f"[cảnh báo] Không đọc được ảnh, bỏ qua: {path}")
             continue
-        hashes[f"{folder.name}/{path.name}"] = dhash(image)
+        hashes[f"{folder.parent.parent.name}/{folder.name}/{path.name}"] = dhash(image)
     return hashes
 
 
