@@ -9,16 +9,26 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Response
+from pydantic import BaseModel
 from fastapi.responses import FileResponse, HTMLResponse
 
 from console.errors import load_datasets, image_errors, list_runs, short_side, summarize
+from console.report import ROOT as REPORTS, build_report
 from console.runs import RunManager, RunRequest, list_sources
 from eval.metrics import SIZE_RANGES
 
 INDEX_HTML = Path(__file__).with_name("index.html")
 
 
-def create_app(ground_url: str | None = None, runs_root: Path | None = None) -> FastAPI:
+class ReportRequest(BaseModel):
+    dataset_name: str
+    run: str
+    config: str
+    iou: float = 0.5
+    conf: float = 0.25
+
+
+def create_app(ground_url: str | None = None, runs_root: Path | None = None, reports_root: Path = REPORTS) -> FastAPI:
     """Tạo ứng dụng; ground_url là trạm mặt đất để nhúng và để lần chạy thử gửi cảnh báo tới (None: không có)."""
     app = FastAPI(title="FloodEye – giao diện thử nghiệm")
     manager = RunManager(runs_root) if runs_root is not None else RunManager()
@@ -86,6 +96,20 @@ def create_app(ground_url: str | None = None, runs_root: Path | None = None) -> 
         path = ds.images / Path(image).name  # chỉ tên file: không cho đi ra ngoài thư mục ảnh
         if not path.is_file():
             raise HTTPException(404, "Không có ảnh")
+        return FileResponse(path)
+
+    @app.post("/api/reports")
+    def make_report(req: ReportRequest) -> dict[str, str]:
+        """Báo cáo phân tích lỗi (console/report.py): bảng theo nhóm kích thước, ảnh cắt các lỗi tiêu biểu."""
+        out = build_report(dataset(req.dataset_name), req.run, req.config, req.iou, req.conf, root=reports_root)
+        return {"url": f"/reports/{out.name}/report.html", "path": str(out / "report.md")}
+
+    @app.get("/reports/{name}/{file:path}")
+    def report_file(name: str, file: str) -> FileResponse:
+        base = (reports_root / Path(name).name).resolve()
+        path = (base / file).resolve()
+        if base not in path.parents or not path.is_file():
+            raise HTTPException(404, "Không có file")
         return FileResponse(path)
 
     # --- Chạy thử ------------------------------------------------------------------------------------------------

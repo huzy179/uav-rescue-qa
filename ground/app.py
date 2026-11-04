@@ -6,15 +6,17 @@ Không import torch, ultralytics hay opencv; chỉ dùng shared/.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import os
 import sqlite3
+import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
 from ground.incidents import MergeRule, choose_incident, merged_position
@@ -190,11 +192,37 @@ def create_app(db_path: Path | str, rule: MergeRule | None = None, priority_rule
             raise HTTPException(404, "Chưa có ảnh cắt")
         return Response(row[0], media_type="image/jpeg")
 
+    @app.get("/api/stream")
+    async def stream(max_events: int | None = None) -> StreamingResponse:
+        """Server-Sent Events: gửi một sự kiện "update" mỗi khi có cảnh báo, ảnh cắt hay thay đổi sự cố mới.
+
+        Trạm hỏi SQLite mỗi 0,5 giây phía máy chủ (một truy vấn nhẹ cho mọi trình duyệt) thay vì mỗi trình duyệt
+        hỏi lại toàn bộ danh sách mỗi 2 giây. max_events để kiểm thử.
+        """
+        async def events() -> Any:
+            last, sent = None, 0
+            while max_events is None or sent < max_events:
+                token = change_token(db_path)
+                if token != last:
+                    last, sent = token, sent + 1
+                    yield f"event: update\ndata: {token}\n\n"
+                await asyncio.sleep(0.5)
+
+        return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
+
     @app.get("/", response_class=HTMLResponse)
     def map_page() -> str:
         return MAP_HTML.read_text(encoding="utf-8")
 
     return app
+
+
+def change_token(db_path: str) -> str:
+    """Chuỗi đổi khi có cảnh báo, ảnh cắt mới hoặc người vận hành cập nhật sự cố."""
+    with sqlite3.connect(db_path) as db:
+        n_alerts, n_crops = db.execute("SELECT (SELECT COUNT(*) FROM alerts), (SELECT COUNT(*) FROM crops)").fetchone()
+        incidents = db.execute("SELECT COUNT(*), TOTAL(n_alerts), GROUP_CONCAT(status || COALESCE(tag, ''), '') FROM incidents").fetchone()
+    return f"{n_alerts}-{n_crops}-{incidents[0]}-{int(incidents[1])}-{zlib.crc32((incidents[2] or '').encode()):x}"
 
 
 def default_app() -> FastAPI:

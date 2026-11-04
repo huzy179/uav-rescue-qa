@@ -24,6 +24,8 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 
 Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ liệu** và **thí nghiệm**; code chỉ làm khi một thí nghiệm cần.
 
+**Cập nhật 4/11 (mã):** xuất báo cáo phân tích lỗi và so hai lần chạy trong giao diện; trạm đẩy cập nhật qua `/api/stream`; mô phỏng độ cao đổi giữa chuyến (`docs/results/rq3_altprofile.md`: 12 lần nhìn, trần 8 khung/giây gần bằng 8 khung/giây cố định, với 137 khung thay vì 480).
+
 **Cập nhật 3/11 (mã):** giao diện thử nghiệm `python -m console`: xem lỗi từng ảnh theo nhóm kích thước và thẻ (khớp `eval_by_size.csv`), chạy thử pipeline có vẽ khung, cảnh báo, thời gian; nhúng trạm mặt đất. Công cụ cho tuần phân tích lỗi 21–27/11.
 
 **Cập nhật 2/11 (mã):**

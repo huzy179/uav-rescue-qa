@@ -82,6 +82,8 @@
       </select>
       <label><input type="checkbox" id="eOnlyErr" checked> chỉ ảnh có lỗi</label>
       <div class="card" id="eTotal"><span class="hint">Chọn tập và lần chạy.</span></div>
+      <button class="primary" id="eReport">Xuất báo cáo lỗi</button>
+      <p class="hint" id="eReportOut"></p>
       <p class="hint">Recall và precision ở đây tính ở đúng ngưỡng conf đang chọn, cùng cách so khớp với eval_by_size; AP chỉ có trong bảng của docs/results.</p>
     </div>
     <div class="list" id="eList"></div>
@@ -273,9 +275,21 @@ document.querySelectorAll(".eShow").forEach(c => c.onchange = draw);
 $("eDataset").onchange = onDataset; $("eRun").onchange = onRun;
 ["eConfig", "eIou", "eConf", "eSize", "eTag"].forEach(id => $(id).onchange = async () => { await loadSummary(); if (current) loadImage(); });
 $("eSort").onchange = renderList; $("eOnlyErr").onchange = renderList;
+$("eReport").onclick = async () => {
+  $("eReport").disabled = true; $("eReportOut").textContent = "Đang tạo báo cáo (cắt ảnh lỗi tiêu biểu)…";
+  try {
+    const body = { dataset_name: $("eDataset").value, run: $("eRun").value, config: $("eConfig").value,
+      iou: Number($("eIou").value), conf: Number($("eConf").value) };
+    const r = await fetch("/api/reports", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || r.status);
+    $("eReportOut").replaceChildren("Đã ghi ", el("code", { textContent: j.path }), " · ", el("a", { href: j.url, target: "_blank", textContent: "mở báo cáo" }));
+  } catch (e) { $("eReportOut").textContent = "Lỗi: " + e.message; }
+  $("eReport").disabled = false;
+};
 
 // ================= Chạy thử =================
-let sources = [], selectedRun = null, pollTimer = null, frameTimer = null;
+let sources = [], selectedRun = null, compareRun = "", pollTimer = null, frameTimer = null, allRuns = [];
 async function loadSources() {
   const s = await get("/api/sources");
   sources = s.sources;
@@ -302,6 +316,7 @@ $("rStart").onclick = async () => {
 };
 async function refreshRuns() {
   const runs = await get("/api/runs");
+  allRuns = runs;
   $("rList").replaceChildren(...runs.map(r => {
     const q = r.request, cls = { running: "b-run", done: "b-tp", error: "b-err" }[r.status];
     const item = el("div", { className: "item" + (r.id === selectedRun ? " on" : "") },
@@ -317,11 +332,19 @@ async function showRun() {
   clearTimeout(pollTimer); clearInterval(frameTimer);
   if (!selectedRun) return;
   const d = await get("/api/runs/" + selectedRun);
+  const c = compareRun && compareRun !== selectedRun ? await get("/api/runs/" + compareRun) : null;
   const view = $("rView");
+  const label = (r) => `${r.id} · ${r.request.label || r.request.model} · ${r.request.mode}${r.request.target_person_px ? " px" + r.request.target_person_px : ""}`;
+  const pick = el("select", {}, el("option", { value: "", textContent: "— không so —" }),
+    ...allRuns.filter(r => r.id !== d.id).map(r => el("option", { value: r.id, textContent: label(r), selected: r.id === compareRun })));
+  pick.onchange = () => { compareRun = pick.value; showRun(); };
+  const otherImg = el("img", { className: "frame" });
   const frameImg = el("img", { className: "frame" });
   const slider = el("input", { type: "range", min: 0, max: Math.max(d.frames.length - 1, 0), value: Math.max(d.frames.length - 1, 0), style: "width:100%" });
   const caption = el("span", { className: "hint" });
-  const setFrame = () => { const f = d.frames[slider.value]; if (f) { frameImg.src = `/api/runs/${d.id}/frame/${f}`; caption.textContent = `Khung ${f} (${Number(slider.value) + 1}/${d.frames.length}) · hộp đỏ: phát hiện, vòng xanh: người đã xác nhận`; } };
+  const setFrame = () => { const f = d.frames[slider.value]; if (f) { frameImg.src = `/api/runs/${d.id}/frame/${f}`; caption.textContent = `Khung ${f} (${Number(slider.value) + 1}/${d.frames.length}) · hộp đỏ: phát hiện, vòng xanh: người đã xác nhận`;
+    // Lần so sánh: cùng số khung nếu có (cùng nguồn), nếu không thì khung gần nhất trước đó.
+    if (c && c.frames.length) { const g = c.frames.filter(x => x <= f).pop() || c.frames[0]; otherImg.src = `/api/runs/${c.id}/frame/${g}`; otherImg.title = `${c.id}, khung ${g}`; } } };
   slider.oninput = setFrame;
   const play = el("button", { textContent: "▶ Phát" });
   play.onclick = () => { if (frameTimer) { clearInterval(frameTimer); frameTimer = null; play.textContent = "▶ Phát"; return; }
@@ -333,9 +356,20 @@ async function showRun() {
   const crops = el("div", { className: "crops" }, ...d.alerts.map(a => el("figure", {},
     el("img", { src: `/api/runs/${d.id}/crop/${encodeURIComponent(a.alert_id)}`, loading: "lazy" }),
     el("figcaption", { textContent: `${a.alert_id} · t=${vn(a.t, 1)} s · conf ${vn(a.confidence, 2)} · ±${vn(a.position_error_m, 1)} m` }))));
+  const metric = (r) => { const tt = r.timing; return [tt ? tt.n_frames : 0, r.n_detections, r.alerts.length, tt ? vn(tt.n_tiles, 1) : "–",
+    tt ? vn(tt.infer_ms_p50, 1) : "–", tt ? vn(tt.total_ms_p95, 1) : "–", tt ? vn(tt.fps_at_p95, 2) : "–"]; };
+  const compareTable = c ? el("table", {},
+    el("tr", {}, ...["", "Khung", "Phát hiện", "Cảnh báo", "Ô/khung", "Suy luận p50 (ms)", "Tổng p95 (ms)", "FPS p95"].map(h => el("th", { textContent: h }))),
+    ...[d, c].map(r => el("tr", {}, el("td", { textContent: label(r) }), ...metric(r).map(v => el("td", { textContent: v }))))) : "";
+  const frames = c ? el("div", { style: "display:flex;gap:8px" },
+      el("div", { style: "flex:1;min-width:0" }, el("div", { className: "hint", textContent: label(d) }), frameImg),
+      el("div", { style: "flex:1;min-width:0" }, el("div", { className: "hint", textContent: label(c) }), otherImg))
+    : frameImg;
   view.replaceChildren(
     el("h3", { textContent: `${d.id} · ${{ running: "đang chạy…", done: "xong", error: "lỗi" }[d.status]}`, style: "margin:0 0 8px" }),
-    d.frames.length ? frameImg : el("div", { className: "empty", textContent: "Chưa có khung nào (mô hình đang nạp?)." }),
+    el("div", { className: "toolbar", style: "padding:4px 0;border:0;background:none" }, "So với lần chạy:", pick),
+    compareTable,
+    d.frames.length ? frames : el("div", { className: "empty", textContent: "Chưa có khung nào (mô hình đang nạp?)." }),
     d.frames.length ? el("div", {}, play, " ", caption, slider) : "",
     el("div", { className: "card" },
       el("div", { className: "stat" }, "Khung đã xử lý", el("b", { textContent: t ? t.n_frames : 0 })),

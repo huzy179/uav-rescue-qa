@@ -37,3 +37,10 @@ def test_bay_zigzag_di_ve_va_chuyen_duong() -> None:
     assert f.local(19.0) == (50.0, 40.0, 180.0)  # đường 2, đi ngược lại
     assert f.at(19.0).yaw_deg == 180.0
     assert f.n_legs(60.0) == 4  # 600 m: 100 + 40 + 100 + 40 + 100 + 40 + 100 = 520 m
+
+
+def test_ho_so_do_cao() -> None:
+    from sim.flight import AltitudeProfile
+
+    p = AltitudeProfile.parse("0:120,20:120,30:40")
+    assert (p(-1), p(10), p(25), p(30), p(99)) == (120, 120, 80, 40, 40)

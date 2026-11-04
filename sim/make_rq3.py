@@ -29,7 +29,7 @@ from edge.detector import person_scale
 from edge.georef import Camera
 from shared.config import parse_args_with_config
 from shared.provenance import write_run_config
-from sim.flight import StraightFlight, ZigzagFlight
+from sim.flight import AltitudeProfile, StraightFlight, ZigzagFlight
 from sim.scenario import (
     GaussMarkovGps, RecallCurve, noisy_telemetry, place_people, simulate_detections, tilted_view, visible_boxes,
 )
@@ -58,6 +58,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--yaw-bias-deg", type=float, default=0.0, help="Sai số cố định của hướng trong telemetry (độ)")
     parser.add_argument("--alt-bias-m", type=float, default=0.0, help="Sai số cố định của độ cao trong telemetry (m)")
     parser.add_argument("--pattern", choices=["straight", "zigzag"], default="straight", help="Đường bay thẳng hoặc quét luống cày")
+    parser.add_argument("--alt-profile", default=None,
+                        help="Độ cao đổi theo thời gian 't:alt,t:alt' (ví dụ 0:120,20:120,30:40); --alt-m vẫn dùng để rải người và chọn khoảng cách đường zig-zag")
     parser.add_argument("--leg-m", type=float, default=200.0, help="Zig-zag: chiều dài mỗi đường bay (m)")
     parser.add_argument("--spacing-m", type=float, default=None, help="Zig-zag: khoảng cách giữa hai đường (m); mặc định bằng bề ngang vùng chụp × 0,8")
     parser.add_argument("--tilt-deg", type=float, default=0.0, help="Camera thật nghiêng về phía trước (độ); pipeline vẫn giả định nhìn thẳng xuống")
@@ -99,12 +101,9 @@ def main() -> None:
     gps = GaussMarkovGps(args.gps_sigma_m, args.gps_tau_s, args.seed + 1)
     rng = random.Random(args.seed + 2)
     recall = RecallCurve.from_csv(args.recall_curve, args.recall_model) if args.recall_curve else args.recall
-    if args.target_person_px is not None:
-        if not isinstance(recall, RecallCurve):
-            raise SystemExit("--target-person-px cần --recall-curve (recall cố định không phụ thuộc cỡ người)")
-        # Cùng công thức với edge/main.py; độ cao trong mô phỏng không đổi nên hệ số thu nhỏ là hằng số.
-        # Pipeline tính hệ số từ độ cao ĐO (có sai số), không phải độ cao thật.
-        recall = recall.scaled(person_scale(0.5 * cam.f_px / (args.alt_m + args.alt_bias_m), args.target_person_px))
+    if args.target_person_px is not None and not isinstance(recall, RecallCurve):
+        raise SystemExit("--target-person-px cần --recall-curve (recall cố định không phụ thuộc cỡ người)")
+    profile = AltitudeProfile.parse(args.alt_profile) if args.alt_profile else None
 
     n_frames = int(args.duration_s * args.fps)
     black = np.zeros((cam.height, cam.width, 3), dtype=np.uint8)
@@ -119,11 +118,17 @@ def main() -> None:
         for frame_id in range(n_frames):
             t = frame_id / args.fps
             true_tel = flight.at(t)
+            if profile is not None:
+                true_tel = true_tel.model_copy(update={"alt_agl_m": profile(t)})
             seen = noisy_telemetry(true_tel, gps, args.yaw_bias_deg, args.alt_bias_m)
+            frame_recall = recall
+            if args.target_person_px is not None and isinstance(recall, RecallCurve):
+                # Cùng công thức với edge/main.py, theo độ cao ĐO của khung này (có sai số), không phải độ cao thật.
+                frame_recall = recall.scaled(person_scale(0.5 * cam.f_px / seen.alt_agl_m, args.target_person_px))
             tel_writer.writerow([t, f"{seen.lat:.9f}", f"{seen.lon:.9f}", seen.alt_agl_m, seen.yaw_deg])
             boxes = visible_boxes(people, tilted_view(true_tel, args.tilt_deg), cam, t)
             frames_truth.append({"frame_id": frame_id, "t": t, "visible": [{"person_id": pid, "box_px": box} for pid, box in boxes]})
-            for det in simulate_detections(frame_id, t, boxes, cam, recall, args.fp_per_frame, rng):
+            for det in simulate_detections(frame_id, t, boxes, cam, frame_recall, args.fp_per_frame, rng):
                 det_file.write(det.model_dump_json() + "\n")
             video.write(black)
     video.release()

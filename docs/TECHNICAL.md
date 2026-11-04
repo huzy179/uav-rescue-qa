@@ -413,7 +413,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 
 **Huấn luyện (`training/`):** `train.py`, notebook Kaggle mỏng (13).
 
-**Giao diện thử nghiệm (`console/`, `python -m console`):** `errors.py` (so khớp từng ảnh ở một ngưỡng conf như `eval/metrics.match_image`, kể cả ưu tiên nhãn trong nhóm kích thước, nên recall, precision khớp `eval_by_size.csv`; dùng lại `_short_side` làm tròn 0,01 px, nếu không người rộng đúng 8 px rơi nhầm sang nhóm dưới 8 px), `runs.py` (chạy `edge/main.py --save-frames` thành tiến trình con, chỉ với nguồn liệt kê trong `configs/console.yaml`), `app.py` (FastAPI), `index.html`. Bật kèm trạm mặt đất. Tập lũ chỉ hiện khi có `MANIFEST.sha256`; video tập lũ không nằm trong danh sách nguồn chạy thử, để không xem dự đoán khi đang gán nhãn.
+**Giao diện thử nghiệm (`console/`, `python -m console`):** `errors.py` (so khớp từng ảnh ở một ngưỡng conf như `eval/metrics.match_image`, kể cả ưu tiên nhãn trong nhóm kích thước, nên recall, precision khớp `eval_by_size.csv`; dùng lại `_short_side` làm tròn 0,01 px, nếu không người rộng đúng 8 px rơi nhầm sang nhóm dưới 8 px), `runs.py` (chạy `edge/main.py --save-frames` thành tiến trình con, chỉ với nguồn liệt kê trong `configs/console.yaml`), `report.py` (báo cáo phân tích lỗi: bảng theo nhóm kích thước và ảnh cắt các ca bỏ sót to nhất mỗi nhóm, báo nhầm conf cao nhất, chọn tự động để không "chọn ảnh đẹp"; ghi `report.md` và `report.html` vào `runs/console/reports/`), `app.py` (FastAPI), `index.html` (tab Chạy thử so hai lần chạy cạnh nhau). Bật kèm trạm mặt đất. Tập lũ chỉ hiện khi có `MANIFEST.sha256`; video tập lũ không nằm trong danh sách nguồn chạy thử, để không xem dự đoán khi đang gán nhãn.
 
 **Kiểm thử (`tests/`):** chạy không cần mô hình, GPU hay `data/`; mỗi khối thuần có test (georef đi–về, outbox khi mất mạng, AP tính tay, bootstrap…).
 
@@ -842,7 +842,7 @@ Thời gian xử lý thật (cho RQ2 và cho demo) đo riêng bằng `perf_count
 
 ### 11.3. `flight.py`, `scenario.py`: chuyến bay và kịch bản giả lập [Đã có một phần]
 
-**[Đã có]** `sim/flight.py` (`StraightFlight`), `sim/scenario.py`, `sim/make_rq3.py`, `sim/sweep_rq3.py`: bay thẳng; người đứng yên hoặc trôi; nhiễu GPS Gauss–Markov; lệch hướng cố định (`--yaw-bias-deg`); camera nghiêng về phía trước (`--tilt-deg`, xấp xỉ bằng dời tâm vùng chụp h·tanθ, bỏ méo phối cảnh); phát hiện giả theo recall cố định hoặc theo cỡ người (`RecallCurve`, đọc `recall_by_pixels.csv` của E6, `--recall-curve --recall-model`; cỡ người tính từ độ cao như mục 2.3) và báo nhầm Poisson; kết quả quét độ cao ở `results/rq3_altitude.md`. Thêm 2/11: `--target-person-px` (recall lấy ở cỡ người sau khi pipeline thu nhỏ khung, `RecallCurve.scaled`, hệ số tính từ độ cao đo được), sai số độ cao cố định (`--alt-bias-m`), bay quét luống cày (`ZigzagFlight`, `--pattern zigzag --leg-m --spacing-m`; mặc định hai đường kề chồng 20% bề ngang vùng chụp, người rải đều trên vùng quét; quay đầu tức thời), và `frames_processed` trong chỉ số để so chi phí. **[Thiết kế]** nhiễu độ cao thay đổi theo thời gian; mất gói theo cụm, độ trễ mạng.
+**[Đã có]** `sim/flight.py` (`StraightFlight`), `sim/scenario.py`, `sim/make_rq3.py`, `sim/sweep_rq3.py`: bay thẳng; người đứng yên hoặc trôi; nhiễu GPS Gauss–Markov; lệch hướng cố định (`--yaw-bias-deg`); camera nghiêng về phía trước (`--tilt-deg`, xấp xỉ bằng dời tâm vùng chụp h·tanθ, bỏ méo phối cảnh); phát hiện giả theo recall cố định hoặc theo cỡ người (`RecallCurve`, đọc `recall_by_pixels.csv` của E6, `--recall-curve --recall-model`; cỡ người tính từ độ cao như mục 2.3) và báo nhầm Poisson; kết quả quét độ cao ở `results/rq3_altitude.md`. Thêm 2/11: `--target-person-px` (recall lấy ở cỡ người sau khi pipeline thu nhỏ khung, `RecallCurve.scaled`, hệ số tính từ độ cao đo được), sai số độ cao cố định (`--alt-bias-m`), độ cao đổi giữa chuyến (`--alt-profile 't:alt,...'`, `AltitudeProfile`; `results/rq3_altprofile.md`), bay quét luống cày (`ZigzagFlight`, `--pattern zigzag --leg-m --spacing-m`; mặc định hai đường kề chồng 20% bề ngang vùng chụp, người rải đều trên vùng quét; quay đầu tức thời), và `frames_processed` trong chỉ số để so chi phí. **[Thiết kế]** nhiễu độ cao thay đổi theo thời gian; mất gói theo cụm, độ trễ mạng.
 
 **Luồng một kịch bản RQ3 hoàn toàn giả lập:**
 
@@ -873,7 +873,7 @@ Hai cách dùng:
 
 ## 12. Trạm mặt đất
 
-**[Đã có]** `ground/app.py` và `ground/map.html`: API mục 12.1 trừ `/api/stream` (trang bản đồ hỏi lại mỗi 2 giây), bảng `alerts`, `crops`, `incidents` và `GET /api/incidents`; bản đồ hiện sự cố thay cho từng cảnh báo, màu theo ưu tiên (12.4). Tối giản: FastAPI + SQLite + một trang Leaflet.
+**[Đã có]** `ground/app.py` và `ground/map.html`: API mục 12.1, bảng `alerts`, `crops`, `incidents` và `GET /api/incidents`; bản đồ hiện sự cố thay cho từng cảnh báo, màu theo ưu tiên (12.4). Tối giản: FastAPI + SQLite + một trang Leaflet.
 
 ### 12.1. API
 
@@ -883,7 +883,7 @@ Hai cách dùng:
 | `POST` | `/api/alerts/{alert_id}/crop` | Nhận ảnh cắt |
 | `GET` | `/api/alerts?since=…` | Danh sách cảnh báo (cho bản đồ) |
 | `GET` | `/api/alerts/{alert_id}/crop` | Ảnh cắt |
-| `GET` | `/api/stream` | Server-Sent Events: đẩy cảnh báo mới tới trình duyệt ngay khi tới |
+| `GET` | `/api/stream` | Server-Sent Events: đẩy cảnh báo mới tới trình duyệt ngay khi tới. **[Đã có]** máy chủ kiểm SQLite mỗi 0,5 s, gửi sự kiện `update` khi có cảnh báo, ảnh cắt hay sự cố đổi; bản đồ làm mới khi nhận, mất kết nối thì quay về hỏi lại mỗi 2 giây |
 | `GET` | `/` | Trang bản đồ |
 
 ### 12.2. Lưu trữ

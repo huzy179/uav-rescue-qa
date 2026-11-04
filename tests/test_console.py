@@ -56,7 +56,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     from console import errors
 
     monkeypatch.setattr(errors.load_datasets, "__defaults__", (config,))
-    return TestClient(create_app(None, tmp_path / "console_runs"))
+    return TestClient(create_app(None, tmp_path / "console_runs", tmp_path / "reports"))
 
 
 def test_api_xem_loi(client: TestClient) -> None:
@@ -79,3 +79,11 @@ def test_chi_chay_nguon_trong_danh_sach(tmp_path: Path) -> None:
     assert "--target-person-px" in cmd and "--save-frames" in cmd and "--alt-m" in cmd
     with pytest.raises(ValueError):
         build_command(RunRequest(source="/etc/passwd"), tmp_path, sources, None)
+
+
+def test_xuat_bao_cao(client: TestClient, tmp_path: Path) -> None:
+    r = client.post("/api/reports", json={"dataset_name": "t", "run": "R1", "config": "full imgsz=640"})
+    assert r.status_code == 200
+    html = client.get(r.json()["url"]).text
+    assert "Bỏ sót tiêu biểu" in html and "crops/fn_" in html
+    assert client.get("/reports/x/../../console.yaml").status_code == 404

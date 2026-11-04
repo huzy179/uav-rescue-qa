@@ -100,9 +100,13 @@
       }
     } catch (e) { console.error(e); }
   }
-  // shortcut: hỏi lại mỗi 2 giây thay cho Server-Sent Events; đổi sang SSE nếu cần độ trễ hiển thị thấp hơn.
+  // Trạm đẩy sự kiện "update" khi có thay đổi (/api/stream); mất kết nối thì quay về hỏi lại mỗi 2 giây.
   refresh();
-  setInterval(refresh, 2000);
+  let poll = null;
+  const source = new EventSource("/api/stream");
+  source.addEventListener("update", refresh);
+  source.onerror = () => { if (!poll) poll = setInterval(refresh, 2000); };
+  source.onopen = () => { if (poll) { clearInterval(poll); poll = null; } };
 </script>
 </body>
 </html>

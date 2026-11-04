@@ -29,8 +29,8 @@ data/, runs/        dữ liệu và kết quả chạy (không đưa lên git)
 .venv/bin/python -m console
 ```
 
-- **Xem lỗi**: chọn tập (VisDrone, AFO, SDS; tập lũ chỉ hiện sau khi khoá), lần chạy, IoU, ngưỡng conf, nhóm kích thước, thẻ ảnh. Danh sách ảnh xếp theo số người bị bỏ sót hoặc số báo nhầm; ảnh vẽ người được thấy (xanh), bị bỏ sót (đỏ, có vòng to để thấy người vài pixel), báo nhầm (cam), vùng bỏ qua (xám); lăn chuột để phóng, bấm một lỗi để phóng tới. Recall, precision khớp đúng `eval_by_size.csv` ở cùng ngưỡng.
-- **Chạy thử**: chọn video demo hoặc đoạn SeaDronesSee có telemetry thật, trọng số, cắt ô hay toàn ảnh, thu nhỏ theo độ cao, chiến lược xác nhận, số lần nhìn mỗi người; xem từng khung đã vẽ, cảnh báo kèm ảnh cắt, thời gian từng chặng, lệnh tương đương. Kết quả ở `runs/console/<mã>/`. Video của tập test lũ cố ý không có trong danh sách nguồn.
+- **Xem lỗi**: chọn tập (VisDrone, AFO, SDS; tập lũ chỉ hiện sau khi khoá), lần chạy, IoU, ngưỡng conf, nhóm kích thước, thẻ ảnh. Danh sách ảnh xếp theo số người bị bỏ sót hoặc số báo nhầm; ảnh vẽ người được thấy (xanh), bị bỏ sót (đỏ, có vòng to để thấy người vài pixel), báo nhầm (cam), vùng bỏ qua (xám); lăn chuột để phóng, bấm một lỗi để phóng tới. Recall, precision khớp đúng `eval_by_size.csv` ở cùng ngưỡng. Nút **Xuất báo cáo lỗi** ghi bảng theo nhóm kích thước và ảnh cắt các lỗi tiêu biểu vào `runs/console/reports/` (Markdown cho luận văn, HTML để xem).
+- **Chạy thử**: chọn video demo hoặc đoạn SeaDronesSee có telemetry thật, trọng số, cắt ô hay toàn ảnh, thu nhỏ theo độ cao, chiến lược xác nhận, số lần nhìn mỗi người; xem từng khung đã vẽ, cảnh báo kèm ảnh cắt, thời gian từng chặng, lệnh tương đương; chọn "So với lần chạy" để xem hai lần chạy cạnh nhau. Kết quả ở `runs/console/<mã>/`. Video của tập test lũ cố ý không có trong danh sách nguồn.
 - **Trạm mặt đất**: bản đồ sự cố.
 
 Danh sách tập và nguồn ở `configs/console.yaml`.
@@ -259,7 +259,7 @@ python scripts/run_rq2.py --config configs/experiments/rq2_t4.yaml --only pt_til
 
 Tần số xử lý theo độ cao: `python -m edge.main ... --min-views 6 --fps 8` xử lý dày khi bay thấp, thưa khi bay cao, để mỗi người được thấy khoảng 6 lần. Sai số vị trí trong cảnh báo tính theo vị trí trong ảnh và độ cao (`--gps-sigma-m`, `--alt-sigma-m`, `--yaw-sigma-deg`, `--tilt-sigma-deg`); `--position-error-m` ép một hằng số.
 
-Mô phỏng thêm: `python -m sim.make_rq3 ... --pattern zigzag --leg-m 200` (bay quét luống cày), `--alt-bias-m 2` (độ cao đo lệch), `--target-person-px 10` (detector giả lấy recall ở cỡ người sau khi thu nhỏ). Quét so sánh tần số cố định và theo độ cao: `python -m sim.sweep_rq3 --config configs/experiments/rq3_adaptive.yaml --jobs 8`.
+Mô phỏng thêm: `python -m sim.make_rq3 ... --pattern zigzag --leg-m 200` (bay quét luống cày), `--alt-bias-m 2` (độ cao đo lệch), `--alt-profile 0:120,25:120,35:40` (độ cao đổi giữa chuyến), `--target-person-px 10` (detector giả lấy recall ở cỡ người sau khi thu nhỏ). Quét so sánh tần số cố định và theo độ cao: `python -m sim.sweep_rq3 --config configs/experiments/rq3_adaptive.yaml --jobs 8`.
 
 Nhãn tập lũ từ CVAT: `python tools/convert_cvat.py --xml task1.zip task2.zip … --images data/raw/flood/frames --dst data/processed/flood --split test` (nhận nhiều file xuất "CVAT for images 1.1", .zip hoặc .xml). Cả bước chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu: `scripts/eval_flood.sh <thư mục chứa các file xuất>`.
 

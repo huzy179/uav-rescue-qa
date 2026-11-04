@@ -1,0 +1,24 @@
+# RQ3 mô phỏng: độ cao đổi giữa chuyến (bay dò 120 m trong 25 s, hạ xuống 40 m trong 10 s, giữ 40 m tới hết 60 s), so
+# với giữ nguyên 120 m hoặc 40 m. Pipeline cố định 2 khung/giây, hoặc đổi tần số theo độ cao (12 lần nhìn mỗi người,
+# trần 8); có hoặc không thu nhỏ khung về 10 px. Recall theo cỡ người của E2c (E6 thử). Kịch bản như rq3_adaptive.yaml.
+output: runs/rq3/altprofile
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  lateral_m: 15
+  gps_sigma_m: 0.5
+  fp_per_frame: 0.5
+  fps: 8
+  alt_m: 120
+  recall_curve: runs/e6_sds/eval/recall_by_pixels.csv
+  recall_model: E2c
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+  confirm: geo
+grid:
+  scenario.alt_profile: ["0:120", "0:40", "0:120,25:120,35:40,60:40"]
+  scenario.target_person_px: [null, 10]
+  pipeline.fps: [2, 8]
+  pipeline.min_views: [null, 12]

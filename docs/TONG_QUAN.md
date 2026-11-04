@@ -315,7 +315,7 @@ Giới hạn phải nói rõ: đây là mô phỏng, không phải bay thật.
 
 **Recall theo cỡ người (27/10, mô phỏng).** Detector giả giờ lấy recall theo số pixel trên người từ E6 thử thay cho 0,7 cố định, nên quét được độ cao bay. Tỉ lệ bỏ sót với geo, N = 3 (`runs/rq3/altitude/summary.csv`): E2c 0,567 ở 30 m, 0,033 ở 50 m, 0,000 từ 80 tới 200 m; E1 từ 0,533 tới 0,967 ở mọi độ cao. Bay thấp lại tệ vì người ở ít khung và lại "to", đúng chỗ E2c yếu (`rq3_altitude.md`).
 
-**Tần số xử lý theo độ cao (2/11, mô phỏng).** Thay 2 khung/giây cố định bằng tần số để mỗi người được nhìn khoảng 12 lần (trần 8 khung/giây): không kém cố định ở độ cao nào, ở 30 m bỏ sót 0,033 thay vì 0,567, từ 80 m trở lên chạy ít khung hơn (`rq3_adaptive.md`). Nhìn 6 lần là quá ít với recall mỗi khung khoảng 0,5.
+**Tần số xử lý theo độ cao (2/11, mô phỏng).** Thay 2 khung/giây cố định bằng tần số để mỗi người được nhìn khoảng 12 lần (trần 8 khung/giây): không kém cố định ở độ cao nào, ở 30 m bỏ sót 0,033 thay vì 0,567, từ 80 m trở lên chạy ít khung hơn (`rq3_adaptive.md`). Nhìn 6 lần là quá ít với recall mỗi khung khoảng 0,5. Khi độ cao đổi giữa chuyến (120 m rồi hạ 40 m), cách này bỏ sót 0,033 với 137 khung, gần bằng xử lý cố định 8 khung/giây (0 với 480 khung) (`rq3_altprofile.md`).
 
 **Trạng thái.** Công cụ xong; còn chạy đủ lưới tham số (vận tốc, FPS, N, nhiễu hướng, nghiêng camera, mạng), dự kiến 14–20/11. **Ở đâu:** `sim/`, `eval/rq3_metrics.py`, cấu hình `configs/experiments/rq3_*.yaml`.
 

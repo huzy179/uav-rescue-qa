@@ -61,3 +61,33 @@ class ZigzagFlight:
         east = forward * math.sin(yaw) + right * math.cos(yaw)
         lat, lon = offset_gps(self.lat0, self.lon0, north, east)
         return Telemetry(t=t, lat=lat, lon=lon, alt_agl_m=self.alt_agl_m, yaw_deg=(self.yaw_deg + heading) % 360.0)
+
+
+class AltitudeProfile:
+    """Độ cao thay đổi theo thời gian, nội suy tuyến tính giữa các điểm (t giây, độ cao m); ngoài khoảng giữ điểm đầu, cuối.
+
+    Ví dụ "0:120,20:120,30:40,60:40": bay dò ở 120 m 20 giây, hạ xuống 40 m trong 10 giây, giữ 40 m. Dùng cho tình huống
+    tần số xử lý và thu nhỏ khung theo độ cao có ý nghĩa nhất: độ cao đổi giữa chuyến (TECHNICAL mục 11.3).
+    """
+
+    def __init__(self, points: list[tuple[float, float]]) -> None:
+        if not points or any(alt <= 0 for _, alt in points):
+            raise ValueError("Cần ít nhất một điểm, độ cao dương")
+        points = sorted(points)
+        self.t, self.alt = [p[0] for p in points], [p[1] for p in points]
+
+    @classmethod
+    def parse(cls, text: str) -> AltitudeProfile:
+        """Đọc chuỗi "t:alt,t:alt,..."."""
+        try:
+            return cls([(float(t), float(a)) for t, a in (item.split(":") for item in text.split(","))])
+        except ValueError as error:
+            raise ValueError(f"Hồ sơ độ cao phải dạng 't:alt,t:alt', nhận được {text!r}") from error
+
+    def __call__(self, t: float) -> float:
+        if t <= self.t[0]:
+            return self.alt[0]
+        for (t0, a0), (t1, a1) in zip(zip(self.t, self.alt), zip(self.t[1:], self.alt[1:])):
+            if t <= t1:
+                return a0 + (a1 - a0) * (t - t0) / (t1 - t0) if t1 > t0 else a1
+        return self.alt[-1]

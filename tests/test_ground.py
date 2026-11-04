@@ -103,3 +103,15 @@ def test_ban_kinh_rong_hon_khi_khac_drone() -> None:
     # Drone khác: căn(3² + 4²) = 5 m chưa đủ; hệ số 1,2 thì 6 m, gộp.
     assert choose_incident(far, 105.8, 3.0, 0.0, incidents, rule, "uav2") is None
     assert choose_incident(far, 105.8, 3.0, 0.0, incidents, MergeRule(radius_m=5.0, cross_uav_error_weight=1.2), "uav2") == 1
+
+
+def test_stream_bao_khi_co_thay_doi(tmp_path: Path) -> None:
+    from ground.app import change_token
+
+    client = TestClient(create_app(tmp_path / "g.sqlite"))
+    before = change_token(str(tmp_path / "g.sqlite"))
+    post(client, "uav1-1", "uav1", 21.0, 105.8)
+    assert change_token(str(tmp_path / "g.sqlite")) != before
+    with client.stream("GET", "/api/stream", params={"max_events": 1}) as r:
+        body = "".join(r.iter_text())
+    assert body.startswith("event: update\ndata: ")
