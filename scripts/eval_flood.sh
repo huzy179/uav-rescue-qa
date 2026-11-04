@@ -21,7 +21,10 @@ else
 fi
 D=data/processed/flood
 PY=.venv/bin/python
-CLUSTER='^(.+)_\d+$'   # tên ảnh <video>_<khung>.jpg của tools/extract_frames.py
+# Tên ảnh <video>_<khung>.jpg của tools/extract_frames.py; mỗi video một cụm. Riêng texas và sanangelo cùng là cảnh quay
+# của cảnh sát San Angelo, cùng trận lũ 4/7/2025 (LABELING mục 6), nên gộp một cụm: tiền tố tuỳ chọn nuốt mã video,
+# cả hai cho mã cụm rỗng. tests/test_eval_flood.py kiểm tra regex này.
+CLUSTER='^(?:sanangelo-police|texas-xBvDRr6vy-k)?(.*?)_\d+$'
 
 $PY tools/convert_cvat.py --xml "${XMLS[@]}" --images data/raw/flood/frames --dst "$D" --split test
 cat "$D/stats_test.json"

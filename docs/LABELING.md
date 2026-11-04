@@ -1,6 +1,6 @@
 # Hướng dẫn gán nhãn tập test lũ
 
-Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 của [TECHNICAL.md](TECHNICAL.md)): 212 khung đã trích và lọc tay từ 10 video, khoá **11/11/2026** (lùi từ 4/11, quyết định #10 của ROADMAP). Tập nhỏ nên mỗi nhãn sai đều kéo lệch kết quả; ưu tiên nhất quán hơn tốc độ. Gặp trường hợp hướng dẫn này chưa nói tới thì dừng, quyết một lần, ghi thêm vào mục 6, rồi mới gán tiếp.
+Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 của [TECHNICAL.md](TECHNICAL.md)): 188 khung đã trích và lọc tay từ 10 video (9 nguồn: texas và sanangelo cùng một nguồn, mục 6), khoá **11/11/2026** (lùi từ 4/11, quyết định #10 của ROADMAP). Tập nhỏ nên mỗi nhãn sai đều kéo lệch kết quả; ưu tiên nhất quán hơn tốc độ. Gặp trường hợp hướng dẫn này chưa nói tới thì dừng, quyết một lần, ghi thêm vào mục 6, rồi mới gán tiếp.
 
 ## 1. Chọn video và khung
 
@@ -84,7 +84,9 @@ Ghi vào đây mỗi trường hợp mới gặp và cách đã xử lý, kèm n
 
 | Ngày | Trường hợp | Quyết định |
 |---|---|---|
-| 4/11 | 4 video dưới 1080p: thainguyen, duvall (854x480), sanangelo, texas (1280x720); 98/212 khung | Giữ, không tải lại; gán trên ảnh đúng độ phân giải đã trích, không phóng to. Bỏ chúng thì chỉ còn 114 khung, dưới mức tối thiểu 150. Ghi vào phần giới hạn: người ở các video này ít pixel hơn so với cùng độ cao ở 1080p |
+| 4/11 | 4 video dưới 1080p: thainguyen, duvall (854x480), sanangelo, texas (1280x720); 74/188 khung (sau khi gộp San Angelo) | Giữ, không tải lại; gán trên ảnh đúng độ phân giải đã trích, không phóng to. Bỏ chúng thì chỉ còn 114 khung, dưới mức tối thiểu 150. Ghi vào phần giới hạn: người ở các video này ít pixel hơn so với cùng độ cao ở 1080p |
+| 4/11 | texas-xBvDRr6vy-k và sanangelo-police cùng là cảnh quay của cảnh sát San Angelo, cùng trận lũ 4/7/2025 (cùng logo trên mọi khung, cùng chú thích "Ft Worth FD"): 54 khung từ một nguồn, vượt giới hạn 30 | Gộp thành một nguồn: giữ 15 khung mỗi video, rải đều theo thời gian (`np.linspace` trên thứ tự khung, không xét nội dung), bỏ 24 khung vào `frames_loai/` (`ly_do.csv`); khi bootstrap theo video hai video là một cụm (regex `CLUSTER` trong `scripts/eval_flood.sh`). Tập còn 188 khung. Gói CVAT 03 và 05 đóng lại; gói cũ ở `floodeye_cvat/cu_truoc_4-11/` |
+| 4/11 | washington-D4xd0xNP9Gg: giao diện camera "KING COUNTY SHERIFF", tốc độ 40 hải lý/giờ, độ cao 632 ft, nhiều khả năng quay từ trực thăng; cùng trận lũ Duvall 11/12/2025 với video duvall (drone) | Giữ 30 khung, một cụm riêng (khác máy quay, khác thời điểm với duvall). Ghi vào phần giới hạn: nguồn là máy bay có người lái, góc nhìn chếch tương tự UAV |
 
 ## 7. Kiểm tra chất lượng
 
@@ -116,14 +118,14 @@ Giữ lại thư mục `exports/` và commit dòng mã băm của `MANIFEST.sha2
 
 ## 9. Mốc
 
-Lịch gốc (50 khung ngày 16/10, 200 khung ngày 30/10) đã trễ; lịch lại ngày 31/10 (212 khung, khoá 4/11) cũng trễ: tới 4/11 chưa gán khung nào. Lịch lại ngày 4/11, khoá 11/11 (quyết định #10). Gán 6 video 1080p trước (114 khung), rồi 4 video độ phân giải thấp (mục 6).
+Lịch gốc (50 khung ngày 16/10, 200 khung ngày 30/10) đã trễ; lịch lại ngày 31/10 (212 khung, khoá 4/11) cũng trễ: tới 4/11 chưa gán khung nào. Lịch lại ngày 4/11, khoá 11/11 (quyết định #10). Gán 6 video 1080p trước (114 khung), rồi 4 video độ phân giải thấp (74 khung, mục 6). Ngày 4/11 gộp hai video San Angelo, tập còn 188 khung (mục 6).
 
 | Hạn | Số khung cộng dồn |
 |---|---|
 | 5/11 | 50 (đo tốc độ gán, chỉnh các mốc dưới) |
 | 6/11 | 100 |
 | 7/11 | 150 |
-| 8/11 | 212 |
+| 8/11 | 188 |
 | 9/11 | Gán lại 20 khung trong 50 khung đầu để kiểm tra nhất quán (mục 7) |
 | 10/11 | Rà toàn bộ theo mục 7 |
 | 11/11 | Chuyển nhãn, `check_leakage`, khoá (mục 8) |

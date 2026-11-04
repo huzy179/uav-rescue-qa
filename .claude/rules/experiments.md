@@ -19,7 +19,7 @@ Kế hoạch thí nghiệm ở mục 4 của `docs/ROADMAP.md`; cách đo ở m�
 - Nhóm kích thước theo cạnh ngắn của nhãn: `<8`, `8-16`, `16-32`, `>32` px.
 - Dự đoán rơi vào vùng bỏ qua không bị tính là sai (`--ignore`).
 - Thí nghiệm có huấn luyện chạy 3 seed cho cấu hình cuối.
-- Khoảng tin cậy bootstrap 1.000 lần; tập có nhiều khung cùng video thì lấy mẫu theo video (`--cluster-pattern`: SeaDronesSee `'^(v\d+)_'`, tập lũ `'^(.+)_\d+$'`).
+- Khoảng tin cậy bootstrap 1.000 lần; tập có nhiều khung cùng video thì lấy mẫu theo video (`--cluster-pattern`: SeaDronesSee `'^(v\d+)_'`, tập lũ: biến `CLUSTER` trong `scripts/eval_flood.sh`, mỗi video một cụm trừ hai video San Angelo gộp một cụm).
 - So hai mô hình bằng bootstrap cặp (`eval/compare_runs.py`) ở cả IoU 0,5 và 0,3; hai khoảng tin cậy riêng chồng nhau không có nghĩa là như nhau.
 
 Đổi bất kỳ quy ước nào ở trên thì mọi bảng cũ không còn so sánh được: hỏi trước, và nếu đổi thì chạy lại các thí nghiệm đã có.

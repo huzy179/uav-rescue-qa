@@ -26,7 +26,8 @@ Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ 
 
 **Cập nhật 4/11 (kế hoạch):** tới hạn khoá 4/11 tập test lũ **vẫn chưa gán khung nào**. Chốt bốn quyết định:
 - **#10:** lùi khoá tới **11/11**, hạn cuối theo mục 1.5. RQ1 trên tập lũ chuyển sang 11–13/11; báo cáo 6/11 chỉ báo tiến độ gán nhãn.
-- **#15:** giữ 4 video dưới 1080p (thainguyen, duvall 480p; sanangelo, texas 720p; 98 khung), ghi ngoại lệ vào LABELING mục 6. Bỏ chúng thì chỉ còn 114 khung, dưới mức tối thiểu 150.
+- **#15:** giữ 4 video dưới 1080p (thainguyen, duvall 480p; sanangelo, texas 720p; 74 khung sau khi gộp San Angelo), ghi ngoại lệ vào LABELING mục 6. Bỏ chúng thì chỉ còn 114 khung, dưới mức tối thiểu 150.
+- **Rà nguồn (4/11):** texas và sanangelo cùng là cảnh quay của cảnh sát San Angelo, cùng trận lũ: gộp thành một nguồn, giữ 30 khung, một cụm khi bootstrap; tập còn **188 khung**. washington nhiều khả năng quay từ trực thăng: giữ, ghi giới hạn (LABELING mục 6). Kiểm tra trùng ảnh trước khoá với cả 5 thư mục train (kể cả C2A): không có cặp nào (`docs/results/flood_truoc_khoa.md`).
 - **#7:** khoảng tin cậy trên tập lũ lấy mẫu theo video (cluster bootstrap); `scripts/eval_flood.sh` đã dùng `--cluster-pattern`.
 - **#14:** giờ GPU trống dùng cho **E2e** = E2c + C2A train (`E2e_s0.yaml`), vì E2c yếu với người to.
 
@@ -67,7 +68,7 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 |---|---|---|---|---|---|---|
 | 21–23/10 | Gom video lũ, ghi `sources.csv`; dựng dự án CVAT theo LABELING.md; gán thử | E2 lượt 1 xong → `eval_by_size` trên VisDrone val, `compare_runs` với E1 | Push, xem CI chạy | Chương 2 | 30–50 | 23/10: bảng VisDrone (E0, E1, E4, cắt ô riêng); E2 nếu kịp; demo pipeline + trạm mặt đất (telemetry giả lập); RQ3 chạy thử; hỏi thầy quyết định #1, #7, #10 |
 | 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` (thực tế: FinlandProper tạm bỏ) | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle (thực tế: E2c = VisDrone + AFO, xong 23/10; E3 xong 28/10) | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
-| 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E2e (E2c + C2A) trên Kaggle; RQ2 trên T4 nếu kịp | | Chương 4 | 212; khoá lùi tới 11/11 (#10) | 6/11: tiến độ gán nhãn, lý do lùi khoá |
+| 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E2e (E2c + C2A) trên Kaggle; RQ2 trên T4 nếu kịp | | Chương 4 | 188; khoá lùi tới 11/11 (#10) | 6/11: tiến độ gán nhãn, lý do lùi khoá |
 | 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, có và không thu nhỏ theo độ cao) trên tập lũ; E5 (YOLO11s); E6 nếu thầy duyệt; recall theo loại nhiễu; **RQ2 bắt đầu 9/11**: xuất TensorRT FP16/INT8 trên T4, đo từng chặng | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~ (đã có) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
 | 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
 | 21–27/11 | | Phân tích lỗi; demo trên video lũ thật | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo trạm mặt đất |
@@ -346,7 +347,7 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 | 9 | RQ3: ByteTrack giữ ngưỡng tạo track 0,25 như bài gốc, hay hạ về bằng conf detector để cùng đầu vào với `geo`? (TECHNICAL 9.2) | Học viên | Trước RQ3 (14/11) |
 | 10 | ~~Tới 4/11 chưa đủ 200 khung đã rà: khoá với số đang có (tối thiểu 150) hay lùi khoá tới 11/11?~~ → chốt 4/11: **lùi khoá tới 11/11** (mục 1.5); báo thầy 6/11 | Thầy | Xong |
 | 11 | So E2 với E0/E1 trên VisDrone test-dev thay vì val? E2 chọn `best.pt` theo val nên val thiên vị E2 (TECHNICAL 13.5). Đã chạy cả hai tập cho E1, E2: mức tăng giữ nguyên trên test-dev (`docs/results/visdrone_E2.md`); cần thầy chọn tập nào là bảng chính | Học viên, hỏi thầy | 23/10 |
-| 12 | Dùng video lũ có bản quyền (YouTube, báo chí) cho tập test, chỉ công bố nhãn và nguồn, không phát hành lại ảnh: có được chấp nhận? C2A không ghi giấy phép trên GitHub: dùng để huấn luyện có ổn? | Thầy | 23/10 |
+| 12 | Dùng video lũ có bản quyền (YouTube, báo chí) cho tập test, chỉ công bố nhãn và nguồn, không phát hành lại ảnh: có được chấp nhận? C2A không ghi giấy phép trên GitHub (bản Kaggle ghi MIT, `flood_truoc_khoa.md`): dùng để huấn luyện có ổn? | Thầy | 23/10 |
 | 13 | Đưa "thu nhỏ khung theo độ cao" (`scale_by_altitude.md`) thành một đóng góp của khối phát hiện, đánh giá trên tập lũ cạnh E4 (cắt ô cố định)? Chọn mục tiêu px trên dữ liệu ngoài tập test lũ | Học viên, hỏi thầy | Trước khi chạy RQ1 trên tập lũ |
 | 14 | ~~Tuần 31/10–6/11 dư khoảng 10 giờ GPU vì E3 xong sớm: seed thứ hai của E2c, E2d, hay E2c + C2A?~~ → chốt 4/11: **E2e = E2c + C2A** (`E2e_s0.yaml`), vì E2c yếu với người to (`e6_sds_pilot.md`) | Học viên | Xong |
-| 15 | ~~4/10 video lũ dưới 1080p: tải lại hay giữ?~~ → chốt 4/11: **giữ** (98 khung; bỏ thì còn 114, dưới mức 150), ngoại lệ ghi ở LABELING mục 6 và phần giới hạn của luận văn | Học viên | Xong |
+| 15 | ~~4/10 video lũ dưới 1080p: tải lại hay giữ?~~ → chốt 4/11: **giữ** (74 khung sau khi gộp San Angelo; bỏ thì còn 114, dưới mức 150), ngoại lệ ghi ở LABELING mục 6 và phần giới hạn của luận văn | Học viên | Xong |

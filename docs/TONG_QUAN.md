@@ -159,7 +159,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | Chỉ dùng bộ có sẵn (AFO, SeaDronesSee) làm tập test | Đó là người bơi ngoài biển, không phải cảnh lũ (mái nhà, nước đục, rác); vẫn dùng làm tập đánh giá phụ cho người dưới nước |
 | Tự bay UAV quay | Không có thiết bị, không có lũ đúng lúc |
 
-**Trạng thái.** **Chưa bắt đầu gán. Đây là rủi ro lớn nhất của đồ án** (ROADMAP 1.1). Đã trích và lọc tay 212 khung từ 10 video, đóng gói sẵn 10 task CVAT; công cụ chuyển nhãn và chấm (`scripts/eval_flood.sh`) đã sẵn sàng. 4 trong 10 video dưới 1080p (hai video 480p, hai video 720p), trái với LABELING mục 1: cần quyết giữ hay tải lại **trước khi** gán các video đó. Phương án dự phòng nếu không kịp: khoá với tối thiểu 150 khung, hoặc lùi khoá tối đa tới 11/11 (quyết định #10, hỏi thầy).
+**Trạng thái.** **Chưa bắt đầu gán. Đây là rủi ro lớn nhất của đồ án** (ROADMAP 1.1). Đã trích và lọc tay 212 khung từ 10 video, đóng gói sẵn 10 task CVAT; 4/11 gộp hai video cùng nguồn San Angelo, còn 188 khung; công cụ chuyển nhãn và chấm (`scripts/eval_flood.sh`) đã sẵn sàng. 4 trong 10 video dưới 1080p (hai video 480p, hai video 720p), trái với LABELING mục 1: cần quyết giữ hay tải lại **trước khi** gán các video đó. Phương án dự phòng nếu không kịp: khoá với tối thiểu 150 khung, hoặc lùi khoá tối đa tới 11/11 (quyết định #10, hỏi thầy).
 
 **Ở đâu:** `docs/LABELING.md`, `tools/extract_frames.py` (logic ở `eval/frames.py`), `tools/convert_cvat.py`, `tools/check_leakage.py`; dữ liệu ở `data/raw/flood/`, `data/processed/flood/`.
 
@@ -432,7 +432,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 1. Hình học camera | Xong |
 | 2. Mô hình nền | Xong |
 | 3. Dữ liệu công khai | VisDrone, AFO, C2A, HydroVigilance, SeaDronesSee-MOT đã tải và chuyển; FinlandProper tạm bỏ (162 GB, máy chủ không cho tải từng phần) |
-| 4. Tập test lũ | **Chưa gán; khoá lùi tới 11/11** (quyết định #10, chốt 4/11); giữ 4 video dưới 1080p (#15); khoảng tin cậy theo video (#7). 212 khung từ 10 video đã trích, lọc tay, đóng gói zip cho CVAT (`Downloads/floodeye_cvat`); lịch gán ở LABELING mục 9. Gán xong thì `scripts/eval_flood.sh <thư mục file xuất>` chạy trọn: chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu (`eval/recall_by_tag.py`) |
+| 4. Tập test lũ | **Chưa gán; khoá lùi tới 11/11** (quyết định #10, chốt 4/11); giữ 4 video dưới 1080p (#15); khoảng tin cậy theo video (#7); 4/11 gộp hai video cùng nguồn San Angelo (còn 188 khung, 9 nguồn); kiểm tra trùng với 5 thư mục train (kể cả C2A) không thấy cặp nào (`flood_truoc_khoa.md`). Ban đầu 212 khung từ 10 video đã trích, lọc tay, đóng gói zip cho CVAT (`Downloads/floodeye_cvat`); lịch gán ở LABELING mục 9. Gán xong thì `scripts/eval_flood.sh <thư mục file xuất>` chạy trọn: chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu (`eval/recall_by_tag.py`) |
 | 5. Cách đo | Xong; thêm chấm khối xác nhận theo track trên video thật (`eval/track_confirm_eval.py`) |
 | 6. E0, E1, E4 | Xong |
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |
