@@ -43,7 +43,7 @@ Khi lũ lớn, người mắc kẹt trên mái nhà, bám vào vật nổi hoặ
 1. Đánh giá phát hiện người **theo nhóm kích thước** (dưới 8, 8–16, 16–32, trên 32 px), có khoảng tin cậy, trên một **tập test lũ tự gán nhãn** (hiện chưa có bộ dữ liệu công khai nào chụp người trong lũ từ UAV có nhãn sẵn).
 2. Một pipeline hoàn chỉnh từ video tới cảnh báo trên bản đồ, mã nguồn mở, kiểm thử được.
 3. Kết quả về **xác nhận nhiều khung ở tần số khung thấp**: chỉ ra vì sao tracking thông dụng (ByteTrack) gãy khi UAV bay nhanh và xử lý ít khung, và cách gom theo toạ độ mặt đất khắc phục (mục 3.9).
-4. *(Đang cân nhắc, quyết định #13.)* **Chọn thang ảnh theo độ cao bay**: dùng telemetry ước lượng người sẽ to bao nhiêu pixel rồi thu nhỏ khung trước khi phát hiện, để mô hình fine-tune luôn nhận người ở cỡ nó mạnh nhất. Mới thử trên SeaDronesSee (`scale_by_altitude.md`); cần kiểm chứng trên tập lũ.
+4. *(Quyết định #13, chốt 4/11.)* **Chọn thang ảnh theo độ cao bay**: dùng telemetry ước lượng người sẽ to bao nhiêu pixel rồi thu nhỏ khung trước khi phát hiện, để mô hình fine-tune luôn nhận người ở cỡ nó mạnh nhất. Đánh giá trên SeaDronesSee (`scale_by_altitude.md`) và trong mô phỏng RQ3; không đánh giá được trên tập lũ vì video lũ không có độ cao bay.
 
 ---
 
@@ -226,7 +226,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | E2 lượt 1 | Fine-tune YOLO26s ở 1280 trên VisDrone, 60 epoch | Fine-tune trên ảnh UAV giúp bao nhiêu so với mô hình COCO? | **Xong 22/10**: nhóm dưới 8 px trên VisDrone val 0,167 → 0,554, nhưng kém mô hình gốc với người dưới nước (`visdrone_E2.md`, `afo_E1_E2.md`) |
 | E2c | Như trên, thêm AFO (người dưới nước) | Thêm ảnh người dưới nước có giữ được cảnh nước không? | **Xong 23/10**: AFO test 0,103 → 0,568, VisDrone val chỉ giảm 0,011; **mô hình chính** (`E2c.md`). E2d (+ HydroVigilance) đã có cấu hình |
 | E3 | E2c + đầu dò P2 (thêm tầng phát hiện ở bước nhảy 4 thay vì 8) | Người 8 px chiếm 2×2 ô đặc trưng thay vì 1 ô: có tăng recall người rất nhỏ không, đáng với chi phí tính toán không? | **Xong 28/10, kết quả âm**: dưới 8 px chỉ +0,012 (val) và +0,013 (test-dev) AP50, mất ở IoU 0,3; kém hơn ở người to; 115,0 so với 93,9 GFLOPs. Giữ E2c (`E3.md`) |
-| E4 | E2c + cắt ô, trên dữ liệu độ phân giải cao | Cắt ô có lợi khi ảnh thật sự lớn không? | Trên SDS 4K: cắt ô ở độ phân giải gốc **kém** toàn ảnh (0,235 so với 0,468) vì E2c yếu với người to; **thu nhỏ theo độ cao** rồi cắt ô cho 0,531 (`scale_by_altitude.md`). Trên tập lũ: có cấu hình `E4tiled_flood.yaml`, chờ nhãn |
+| E4 | E2c + cắt ô, trên dữ liệu độ phân giải cao | Cắt ô có lợi khi ảnh thật sự lớn không? | Trên SDS 4K: cắt ô ở độ phân giải gốc **kém** toàn ảnh (0,235 so với 0,468) vì E2c yếu với người to; **thu nhỏ theo độ cao** rồi cắt ô cho 0,531 (`scale_by_altitude.md`). Trên tập lũ: có cấu hình `E4tiled_flood.yaml` (cắt ô không thu nhỏ, vì không có độ cao bay), chờ nhãn |
 | E5 | E2c nhưng dùng YOLO11s | Kết quả có phụ thuộc đời mô hình không? | Có cấu hình (`E5_s0.yaml`), chưa huấn luyện |
 | E6 | Thu nhỏ ảnh theo nhiều mức, vẽ recall theo số pixel trên người | Bay cao tối đa bao nhiêu thì còn phát hiện được? Nối thẳng vào khuyến nghị độ cao bay | **Chạy thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt với người trên 45 px; dưới 4 px không mô hình nào thấy. Bản chính thức chờ thầy duyệt (quyết định #1) |
 

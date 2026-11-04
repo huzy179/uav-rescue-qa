@@ -47,6 +47,7 @@ Số đọc từ `runs/sds_det/compare_<A>_<B>/compare.csv`.
 ## Đề xuất
 
 - Bật `--target-person-px` cho pipeline khi dùng mô hình fine-tune; giá trị chọn trên tập lũ khi có nhãn (thử 10 và 20), **không chọn trên tập test lũ đã khoá** mà trên phần val hoặc dữ liệu khác.
+  - *Cập nhật 4/11 (quyết định #13):* không làm được trên tập lũ. 188 khung lũ lấy từ video YouTube, không có độ cao bay, và tập lũ không có phần val. Thu nhỏ theo độ cao chỉ đánh giá trên SDS và trong mô phỏng RQ3; tập lũ chạy E4 cắt ô không thu nhỏ.
 - Nếu tập lũ cũng cho kết quả như vậy, đây là một đóng góp thuật toán rõ ràng cho khối phát hiện: chọn thang xử lý theo GSD thay vì cố định, kết nối khối phát hiện với telemetry.
 
 ## Giới hạn
