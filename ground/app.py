@@ -1,6 +1,8 @@
 """Trạm mặt đất: nhận cảnh báo, bỏ trùng theo alert_id, gộp thành sự cố, hiển thị trên bản đồ (TECHNICAL mục 12).
 
 Chạy: FLOODEYE_GROUND_DB=runs/ground.sqlite .venv/bin/python -m uvicorn --factory ground.app:default_app --port 8000
+Bản đồ không cần internet: Leaflet đóng gói trong ground/static/, ô bản đồ đi qua /tiles và được giữ lại trong
+FLOODEYE_TILE_CACHE (mặc định runs/ground/tiles) sau lần xem đầu, nên vùng đã xem khi diễn tập vẫn hiện khi mất mạng.
 Không import torch, ultralytics hay opencv; chỉ dùng shared/.
 """
 
@@ -10,13 +12,16 @@ import asyncio
 import base64
 import os
 import sqlite3
+import urllib.request
 import zlib
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict
 
 from ground.incidents import MergeRule, choose_incident, merged_position
@@ -24,6 +29,24 @@ from ground.priority import STATUSES, TAGS, PriorityRule, rank
 from shared.schema import Alert, AlertCrop
 
 MAP_HTML = Path(__file__).with_name("map.html")
+STATIC_DIR = Path(__file__).with_name("static")
+# Ô ảnh vệ tinh và bản đồ đường của Esri (không cần khoá; tile.openstreetmap.org không trả lời từ mạng của dự án).
+TILE_SOURCES = {
+    "satellite": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    "streets": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+}
+
+
+def fetch_url(url: str) -> bytes:
+    """Tải một ô bản đồ; hết 3 giây thì coi như mất mạng."""
+    request = urllib.request.Request(url, headers={"User-Agent": "FloodEye-ground/0.1"})
+    with urllib.request.urlopen(request, timeout=3) as response:
+        return response.read()
+
+
+def image_media_type(data: bytes) -> str:
+    """Kiểu ảnh theo mấy byte đầu (Esri trả JPEG hoặc PNG tuỳ ô)."""
+    return "image/png" if data.startswith(b"\x89PNG") else "image/jpeg"
 
 
 class IncidentUpdate(BaseModel):
@@ -36,8 +59,11 @@ class IncidentUpdate(BaseModel):
     clear_tag: bool = False
 
 
-def create_app(db_path: Path | str, rule: MergeRule | None = None, priority_rule: PriorityRule | None = None) -> FastAPI:
-    """Tạo ứng dụng với một file SQLite; tách hàm để kiểm thử dùng file tạm."""
+def create_app(
+    db_path: Path | str, rule: MergeRule | None = None, priority_rule: PriorityRule | None = None,
+    tile_cache: Path | str = "runs/ground/tiles", fetch: Callable[[str], bytes] = fetch_url,
+) -> FastAPI:
+    """Tạo ứng dụng với một file SQLite; tách hàm để kiểm thử dùng file tạm (và hàm tải ô giả)."""
     rule = rule or MergeRule()
     priority_rule = priority_rule or PriorityRule()
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
@@ -65,6 +91,8 @@ def create_app(db_path: Path | str, rule: MergeRule | None = None, priority_rule
         db.execute("CREATE TABLE IF NOT EXISTS crops (alert_id TEXT PRIMARY KEY, jpeg BLOB NOT NULL, received_at TEXT NOT NULL)")
 
     app = FastAPI(title="FloodEye – trạm mặt đất")
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    tile_cache = Path(tile_cache)
 
     def now_iso() -> str:
         # Trạm mặt đất không thuộc pipeline mô phỏng nên dùng đồng hồ thật để ghi lúc nhận.
@@ -210,6 +238,26 @@ def create_app(db_path: Path | str, rule: MergeRule | None = None, priority_rule
 
         return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
+    @app.get("/tiles/{layer}/{z}/{x}/{y}")
+    def tile(layer: str, z: int, x: int, y: int) -> Response:
+        """Ô bản đồ: đọc từ bộ nhớ đệm trên đĩa; chưa có thì tải về rồi giữ lại. Mất mạng và chưa có thì 404.
+
+        Chỉ giữ ô đã được xem (như bộ nhớ đệm của trình duyệt, nhưng còn sau khi tắt máy), không tải trước cả vùng:
+        điều khoản của Esri hạn chế tải hàng loạt để dùng ngoại tuyến.
+        """
+        if layer not in TILE_SOURCES or not (0 <= z <= 20 and 0 <= x < 2**z and 0 <= y < 2**z):
+            raise HTTPException(404, "Ô bản đồ không hợp lệ")
+        path = tile_cache / layer / str(z) / str(x) / f"{y}.img"
+        if not path.exists():
+            try:
+                data = fetch(TILE_SOURCES[layer].format(z=z, x=x, y=y))
+            except OSError:
+                raise HTTPException(404, "Mất mạng và chưa có ô này trong bộ nhớ đệm") from None
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        data = path.read_bytes()
+        return Response(data, media_type=image_media_type(data), headers={"Cache-Control": "max-age=86400"})
+
     @app.get("/", response_class=HTMLResponse)
     def map_page() -> str:
         return MAP_HTML.read_text(encoding="utf-8")
@@ -227,4 +275,7 @@ def change_token(db_path: str) -> str:
 
 def default_app() -> FastAPI:
     """Factory cho uvicorn; file SQLite lấy từ biến môi trường FLOODEYE_GROUND_DB."""
-    return create_app(os.environ.get("FLOODEYE_GROUND_DB", "runs/ground.sqlite"))
+    return create_app(
+        os.environ.get("FLOODEYE_GROUND_DB", "runs/ground.sqlite"),
+        tile_cache=os.environ.get("FLOODEYE_TILE_CACHE", "runs/ground/tiles"),
+    )

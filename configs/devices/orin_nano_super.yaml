@@ -1,0 +1,9 @@
+# Hồ sơ thời gian thiết bị cho edge/device_sim.py: ước lượng, không phải số đo (TECHNICAL mục 14.6).
+name: Jetson Orin Nano Super (uoc luong)
+calibrated: false
+source: >-
+  Ultralytics, bảng YOLO26 (docs.ultralytics.com/models/yolo26, xem 4/11/2026): YOLO26s 640 trên T4 TensorRT10 2,5 ms/ảnh, lô 1, không gồm tiền và hậu xử lý; trang không ghi độ chính xác số. Nhân tỉ lệ thiết bị/T4 = 4.57 / 1,7 = 2.688: TensorRT FP16 của YOLO26 (bảng không ghi tên mô hình, cỡ file 5,3 MB nên nhiều khả năng là YOLO26n) trên thiết bị này (docs.ultralytics.com/guides/nvidia-jetson) chia cho YOLO26n trên T4 (1,7 ms). Giả định tỉ lệ của bản n áp được cho bản s. full_ms = 4 × tile_ms (lượt 1280 có số pixel gấp 4 ô 640). overhead_ms = 0 vì chưa đo: đọc khung, cắt ô, gộp box chưa được tính, nên độ trễ ở đây thấp hơn thật. Thay bằng hồi quy trên timings.jsonl của RQ2 (tools/fit_device_profile.py).
+power_mode: MAXN (giả định, trang nguồn không ghi)
+overhead_ms: 0.0
+tile_ms: 6.72
+full_ms: 26.88

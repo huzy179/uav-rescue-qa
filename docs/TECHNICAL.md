@@ -911,7 +911,7 @@ Hai drone có thể cảnh báo cùng một người. Khi một cảnh báo mớ
 
 ### 12.5. Bản đồ
 
-Leaflet hiển thị incident theo màu ưu tiên, bấm để xem ảnh cắt và lịch sử; bảng bên cạnh hiện FPS, băng thông, số cảnh báo đang chờ của mỗi drone. Ô bản đồ (ảnh vệ tinh và bản đồ đường của Esri; máy chủ ô của OpenStreetMap không trả lời từ mạng của dự án, CARTO đòi khoá API) cần internet; trong ngữ cảnh lũ mất mạng thì cần ô bản đồ ngoại tuyến (tải trước cho khu vực, phục vụ từ chính trạm). Đây là giới hạn cần ghi nếu không làm.
+Leaflet hiển thị incident theo màu ưu tiên, bấm để xem ảnh cắt và lịch sử; bảng bên cạnh hiện FPS, băng thông, số cảnh báo đang chờ của mỗi drone. Ô bản đồ (ảnh vệ tinh và bản đồ đường của Esri; máy chủ ô của OpenStreetMap không trả lời từ mạng của dự án, CARTO đòi khoá API) đi qua `/tiles/<lớp>/<z>/<x>/<y>` của chính trạm. **[Đã có]** Ô đã xem được giữ trên đĩa (`FLOODEYE_TILE_CACHE`, mặc định `runs/ground/tiles`), nên vùng đã xem khi diễn tập vẫn hiện khi mất mạng; ô chưa xem thì hiện nền lưới, điểm sự cố vẫn đọc được. Leaflet 1.9.4 đóng gói trong `ground/static/leaflet/` (giấy phép BSD-2), trang bản đồ không tải gì từ internet. Không tải trước cả vùng: điều khoản của Esri hạn chế tải hàng loạt để dùng ngoại tuyến; triển khai thật cần nguồn ô có giấy phép dùng ngoại tuyến (ví dụ tự dựng từ OpenStreetMap).
 
 ---
 
@@ -1085,7 +1085,7 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 
 ### 14.4. Khi không có Jetson
 
-Đo trên T4 bằng TensorRT, báo cáo **thứ hạng tương đối** giữa các cấu hình (cấu hình nào nhanh hơn bao nhiêu lần), không quy đổi thẳng ra FPS trên Jetson. Có thể tham khảo số liệu công bố (ví dụ bài đo YOLO trên Orin Nano Super mà đề cương đã dẫn) để ước lượng bậc độ lớn, ghi rõ là ước lượng.
+Đo trên T4 bằng TensorRT, báo cáo **thứ hạng tương đối** giữa các cấu hình (cấu hình nào nhanh hơn bao nhiêu lần), không quy đổi thẳng ra FPS trên Jetson. Có thể tham khảo số liệu công bố (ví dụ bài đo YOLO trên Orin Nano Super mà đề cương đã dẫn) để ước lượng bậc độ lớn, ghi rõ là ước lượng. Cách làm cụ thể: giả lập thời gian thiết bị ở mục 14.6.
 
 ---
 
@@ -1099,6 +1099,26 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 4. **Ghép**: `eval/rq2_tradeoff.py` ghi `rq2.csv` (AP50, recall, recall người dưới 8 px ở IoU 0,3, thời gian p50/p95, FPS theo p95) và `rq2_<tập>.png` (recall theo FPS, đường dọc ở 2 FPS).
 
 Chạy thử 2/11 trên RTX 5060 (máy cá nhân, chỉ các biến thể PyTorch, 12 khung) để kiểm tra luồng: AP50 trên SDS trùng các lần chạy trước (`scale_by_altitude.md`). Lần thử cho thấy bước thu nhỏ khung 4K bằng `cv2.INTER_AREA` tốn đáng kể trên CPU so với suy luận; số đo chính thức chờ T4.
+
+### 14.6. Giả lập thời gian thiết bị biên [Đã có]
+
+Không có Jetson nên không đo được; cũng không có công cụ nào giả lập được tốc độ Jetson (QEMU không có GPU; nn-Meter cần đo trên chính thiết bị trước). Cách làm ở đây: pipeline chạy thật trên máy này, nhưng **đồng hồ mô phỏng** coi mỗi khung tốn thời gian của thiết bị đích (`edge/device_sim.py`, `--device-profile`):
+
+```
+độ_trễ_ms = overhead_ms + số_ô × tile_ms + số_lượt_toàn_ảnh × full_ms
+```
+
+- Số ô tính từ kích thước khung, hệ số thu nhỏ và cách cắt ô của detector (`inference_counts`), nên chế độ phát lại (`--replay`, không chạy mô hình) cũng dùng được. Khung 1080p có 8 ô; 4K có 32 ô; thu nhỏ theo độ cao làm giảm số ô, nên **thu nhỏ theo độ cao cũng là cách để thiết bị yếu theo kịp**.
+- Thiết bị bận từ t tới t + độ trễ; khung tới trong lúc bận bị bỏ, như trên máy thật. Xác nhận vẫn tính theo thời điểm chụp t (telemetry của khung đó), nhưng cảnh báo vào hàng đợi gửi lúc xử lý xong, nên độ trễ cảnh báo gồm cả thời gian xử lý. Không có `--device-profile` thì như cũ (xử lý coi là tức thời), các kết quả RQ3 đã có không đổi.
+- `timings.jsonl` ghi thêm `sim_n_tiles`, `sim_latency_ms`, `t_done`; `run_config.json` ghi cả nội dung hồ sơ.
+
+**Hồ sơ thiết bị** (`configs/devices/*.yaml`, đọc bằng Pydantic): T4, Orin Nano Super, Orin NX 16GB, AGX Orin 64GB. Bản hiện tại (4/11, `calibrated: false`) lấy từ bảng của Ultralytics: YOLO26s 640 trên T4 TensorRT10 2,5 ms; tỉ lệ thiết bị/T4 từ cùng một bảng YOLO26 TensorRT FP16 (Orin Nano Super 4,57, Orin NX 4,13, AGX Orin 2,62, T4 1,7 ms), tức 2,688, 2,429, 1,541. Ba giả định, ghi trong từng file: bảng Jetson nhiều khả năng là YOLO26n nhưng tỉ lệ được áp cho bản s; trang không ghi độ chính xác số của cột T4; `overhead_ms = 0` vì chưa đo, nên độ trễ đang thấp hơn thật.
+
+**Hiệu chỉnh** sau khi chạy RQ2 trên T4: `tools/fit_device_profile.py` lấy trung vị thời gian suy luận mỗi ô, mỗi lượt toàn ảnh và phần không phải suy luận từ `runs/rq2/speed/<biến thể>/timings.jsonl`, nhân tỉ lệ trên (phần CPU nhân `--cpu-ratio`), ghi hồ sơ với `calibrated: true`. Chỉ phần T4 là số đo.
+
+**Không mô phỏng được:** giảm xung khi nóng, chế độ công suất thấp (hồ sơ giả định MAXN), tranh chấp bộ nhớ dùng chung giữa CPU và GPU, thời gian đọc và giải mã khung từ camera. Số sinh ra từ đây là **ước lượng**, báo ở bảng riêng, không ghi như số đo trên thiết bị biên (CLAUDE.md).
+
+**Dùng cho:** (1) chương 5, nối RQ2 với RQ3: với độ trễ ước lượng của từng thiết bị, pipeline đạt bao nhiêu khung/giây, bỏ bao nhiêu khung, recall và độ trễ cảnh báo ra sao (`sim/sweep_rq3.py` nhận `pipeline.device_profile` như mọi tham số khác); (2) demo bảo vệ (`scripts/demo_bao_ve.sh`, README).
 
 ## 15. Phương pháp thí nghiệm
 

@@ -69,6 +69,16 @@ Có file `.SRT` mới thì kiểm tra trước bộ đọc có hiểu định d�
 
 Demo hai drone: `scripts/demo_multi.sh` (đoạn SeaDronesSee có telemetry thật; drone thứ hai phát lại cùng đoạn với GPS dời thêm vài mét). Trạm gộp cảnh báo của hai drone thành một sự cố và xếp sự cố theo ưu tiên; bấm một chấm trên bản đồ để gắn thẻ "dưới nước", "trên mái", hoặc đóng sự cố ("đã cứu", "báo nhầm"). API: `PATCH /api/incidents/<id>` với `{"tag": "water"}` hay `{"status": "resolved"}`.
 
+**Demo bảo vệ** (`scripts/demo_bao_ve.sh`): phát lại một chuyến bay có telemetry thật theo thời gian thực, với thời gian xử lý của một thiết bị biên giả lập (TECHNICAL mục 14.6). Lúc trình bày không cần GPU hay internet:
+
+```bash
+scripts/demo_bao_ve.sh chuan-bi sds_v21_goc                     # một lần, cần GPU: phát hiện cho mọi khung (khoảng 7 phút)
+scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super 20 30   # mở http://localhost:8000, Enter để bay; mất sóng giây 20–30
+scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super   # video hai thiết bị cạnh nhau, cho slide
+```
+
+Kịch bản trong `configs/demo/` (`sds_v21_goc`, `sds_v21_px10` có thu nhỏ theo độ cao), thiết bị trong `configs/devices/` (ước lượng, chưa hiệu chỉnh cho tới khi chạy RQ2: `tools/fit_device_profile.py`). Video có ghi tên thiết bị, khung/giây đạt được, độ trễ mỗi khung và banner khi mất sóng. Bản đồ chạy không cần internet: Leaflet đóng gói sẵn, ô bản đồ đã xem khi diễn tập được giữ ở `runs/ground/tiles`; diễn tập ít nhất một lần khi có mạng để giữ ô của vùng bay.
+
 Mỗi lần chạy ghi vào `--output`: `detections.jsonl`, `confirmations.jsonl`, `alerts.jsonl`, `alerts_sent.jsonl` (từng lần gửi, kể cả thất bại), `timings.jsonl` (ms từng chặng), `outbox.sqlite`, `run_config.json`.
 
 ## Cài đặt

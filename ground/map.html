@@ -4,12 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FloodEye – trạm mặt đất</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="/static/leaflet/leaflet.css">
+<script src="/static/leaflet/leaflet.js"></script>
 <style>
   html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
   #wrap { display: flex; height: 100%; }
-  #map { flex: 1; }
+  /* Nền lưới khi ô bản đồ chưa có (mất mạng, vùng chưa xem): điểm sự cố vẫn đọc được. */
+  #map { flex: 1; background: #dfe6ea repeating-linear-gradient(0deg, transparent 0 63px, #c5ced4 63px 64px),
+         repeating-linear-gradient(90deg, transparent 0 63px, #c5ced4 63px 64px); }
   #side { width: 320px; overflow-y: auto; border-left: 1px solid #ccc; padding: 8px; box-sizing: border-box; }
   #side h1 { font-size: 16px; margin: 4px 0 8px; }
   .item { padding: 6px 4px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
@@ -27,14 +29,13 @@
   <div id="side"><h1>Sự cố theo ưu tiên (<span id="count">0</span>) · cảnh báo (<span id="nalerts">0</span>)</h1><div id="list"></div></div>
 </div>
 <script>
-  // Ô bản đồ cần internet; khi mất mạng thật cần ô bản đồ ngoại tuyến (TECHNICAL mục 12.5).
-  // Không dùng tile.openstreetmap.org (từ mạng của dự án không trả lời, 22/10/2026: bản đồ chỉ còn nền trắng)
-  // và CARTO (đòi khoá API). Esri hai lớp đều tải được không cần khoá.
+  // Ô bản đồ đi qua /tiles của trạm (ground/app.py): ô đã xem được giữ trên đĩa nên vẫn hiện khi mất mạng
+  // (TECHNICAL mục 12.5). Nguồn là Esri; tile.openstreetmap.org không trả lời từ mạng của dự án, CARTO đòi khoá API.
   // maxNativeZoom: phóng quá mức ảnh có thật thì phóng to ô cuối cùng thay vì hiện ô trắng.
   const map = L.map("map", { maxZoom: 20 }).setView([21.0285, 105.8542], 15);
-  const satellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  const satellite = L.tileLayer("/tiles/satellite/{z}/{x}/{y}",
     { maxZoom: 20, maxNativeZoom: 19, attribution: "Ảnh vệ tinh © Esri, Maxar, Earthstar Geographics" }).addTo(map);
-  const streets = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+  const streets = L.tileLayer("/tiles/streets/{z}/{x}/{y}",
     { maxZoom: 20, maxNativeZoom: 19, attribution: "Bản đồ © Esri" });
   L.control.layers({ "Ảnh vệ tinh": satellite, "Bản đồ đường": streets }).addTo(map);
   const markers = {};

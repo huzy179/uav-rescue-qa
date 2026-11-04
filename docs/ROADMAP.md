@@ -34,6 +34,8 @@ Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ 
 
 Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặc một thí nghiệm cần.
 
+**Cập nhật 4/11 (giả lập thiết bị, demo bảo vệ):** pipeline giả lập thời gian xử lý của thiết bị biên (`--device-profile`, `edge/device_sim.py`, TECHNICAL 14.6): bỏ khung tới trong lúc bận, cảnh báo gửi lúc xử lý xong. Hồ sơ T4, Orin Nano Super, Orin NX, AGX Orin trong `configs/devices/` lấy từ bảng YOLO26 của Ultralytics, **chưa hiệu chỉnh**; sau khi chạy RQ2 trên T4 thì hiệu chỉnh bằng `tools/fit_device_profile.py`. Demo bảo vệ một lệnh (`scripts/demo_bao_ve.sh`): phát lại SDS v21 (telemetry thật) theo thời gian thực, không cần GPU; bản đồ trạm chạy không cần internet (Leaflet đóng gói, ô bản đồ đã xem được giữ lại); banner mất sóng; video so hai thiết bị (`scripts/ghep_video.py`).
+
 **Cập nhật 4/11 (mã):** xuất báo cáo phân tích lỗi và so hai lần chạy trong giao diện; trạm đẩy cập nhật qua `/api/stream`; mô phỏng độ cao đổi giữa chuyến (`docs/results/rq3_altprofile.md`: 12 lần nhìn, trần 8 khung/giây gần bằng 8 khung/giây cố định, với 137 khung thay vì 480).
 
 **Cập nhật 3/11 (mã):** giao diện thử nghiệm `python -m console`: xem lỗi từng ảnh theo nhóm kích thước và thẻ (khớp `eval_by_size.csv`), chạy thử pipeline có vẽ khung, cảnh báo, thời gian; nhúng trạm mặt đất. Công cụ cho tuần phân tích lỗi 21–27/11.
@@ -72,7 +74,7 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 | 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E2e (E2c + C2A) trên Kaggle; RQ2 trên T4 nếu kịp | | Chương 4 | 188; khoá lùi tới 11/11 (#10) | 6/11: tiến độ gán nhãn, lý do lùi khoá |
 | 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, không thu nhỏ: tập lũ không có độ cao bay, quyết định #13) trên tập lũ; E5 (YOLO11s); E6 nếu thầy duyệt; recall theo loại nhiễu; **RQ2 bắt đầu 9/11**: xuất TensorRT FP16/INT8 trên T4, đo từng chặng | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~ (đã có) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
 | 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
-| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo trạm mặt đất |
+| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; hiệu chỉnh hồ sơ thiết bị từ RQ2 (`tools/fit_device_profile.py`), RQ3 với `device_profile` | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
 | 28/11–4/12 | | | **Đóng băng mã 28/11** | Bản thảo đầy đủ | | 4/12: bản thảo |
 | 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng | | 11/12: bản hoàn chỉnh |
 

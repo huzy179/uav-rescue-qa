@@ -1,0 +1,20 @@
+# Demo bảo vệ: chuỗi SeaDronesSee-MOT val-m100-DJI_0001-v21 (4K, 30 khung/giây, telemetry thật từ metadata drone,
+# hồ Constance, 40 m, drone gần như đứng yên), mô hình E2c, cố định 8 khung/giây: mức trần của rq3_adaptive.md, cần khi bay
+# thấp. Không dùng --min-views: drone đứng yên thì tần số theo độ cao xuống mức sàn 0,5 khung/giây, thiết bị nào cũng thừa sức.
+# Không phải tập test lũ. Chạy bằng scripts/demo_bao_ve.sh.
+source: data/processed/sds_mot/val-m100-DJI_0001-v21/frames
+source_fps: 30
+telemetry: data/processed/sds_mot/val-m100-DJI_0001-v21/telemetry.csv
+model: runs/train/E2c_s0/weights/best.pt
+mode: tiled
+tile: 640
+overlap: 0.2
+conf: 0.1
+fps: 8.0
+fov_deg: 82.0
+fov_type: diagonal
+confirm: geo
+radius_m: 3.0
+n_confirm: 3
+window_s: 5.0
+expire_s: 6.0

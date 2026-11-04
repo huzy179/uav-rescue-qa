@@ -115,3 +115,31 @@ def test_stream_bao_khi_co_thay_doi(tmp_path: Path) -> None:
     with client.stream("GET", "/api/stream", params={"max_events": 1}) as r:
         body = "".join(r.iter_text())
     assert body.startswith("event: update\ndata: ")
+
+
+def test_tile_cached_after_first_view_and_served_offline(tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    def online(url: str) -> bytes:
+        calls.append(url)
+        return b"\x89PNG fake"
+
+    client = TestClient(create_app(tmp_path / "g.sqlite", tile_cache=tmp_path / "tiles", fetch=online))
+    first = client.get("/tiles/satellite/15/26000/14000")
+    assert first.status_code == 200 and first.headers["content-type"] == "image/png"
+    assert calls == ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/14000/26000"]
+
+    def offline(url: str) -> bytes:
+        raise OSError("mất mạng")
+
+    client = TestClient(create_app(tmp_path / "g.sqlite", tile_cache=tmp_path / "tiles", fetch=offline))
+    assert client.get("/tiles/satellite/15/26000/14000").content == b"\x89PNG fake"
+    assert client.get("/tiles/satellite/15/26000/14001").status_code == 404
+    assert client.get("/tiles/khac/15/26000/14000").status_code == 404
+    assert client.get("/tiles/satellite/2/9/0").status_code == 404
+
+
+def test_map_page_works_without_internet(tmp_path: Path) -> None:
+    client = TestClient(create_app(tmp_path / "g.sqlite"))
+    assert "https://" not in client.get("/").text
+    assert client.get("/static/leaflet/leaflet.js").status_code == 200

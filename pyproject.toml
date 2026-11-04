@@ -37,7 +37,7 @@ dev = [
 include = ["shared*", "edge*", "ground*", "sim*", "eval*", "console*"]
 
 [tool.setuptools.package-data]
-ground = ["*.html"]
+ground = ["*.html", "static/leaflet/*", "static/leaflet/images/*"]
 console = ["*.html"]
 
 [tool.pytest.ini_options]

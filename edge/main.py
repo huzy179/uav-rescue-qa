@@ -20,9 +20,11 @@ import numpy as np
 from edge.alerts import FakeTransport, HttpTransport, Outbox, Transport, crop_jpeg_base64, make_alert
 from edge.confirm import Confirmer, GeoConfirmer, TrackConfirmer
 from edge.detector import ByteTracker, Detector, ReplayDetector, YoloDetector, person_scale
+from edge.device_sim import BusyDevice, inference_counts, load_profile
 from edge.georef import (
     Camera, ErrorModel, expected_person_px, frame_motion, gps_to_pixel, ground_distance_m, locate, position_error_m,
 )
+from edge.pacing import RealtimePacer
 from edge.sampler import iter_timed_frames, views_fps
 from edge.telemetry import SampledTelemetry, TelemetrySource
 from eval.draw import draw_boxes
@@ -43,7 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--source-fps", type=float, default=None, help="FPS của chuỗi khung (bắt buộc khi nguồn là thư mục)")
     parser.add_argument("--fps", type=float, default=2.0, help="Số khung xử lý mỗi giây; với --min-views là mức trần")
     parser.add_argument("--min-views", type=float, default=None,
-                        help="Đổi tần số theo độ cao và vận tốc để mỗi người được thấy khoảng số lần này (giữa --fps-min và --fps); không đặt thì cố định --fps")
+                        help="Đổi tần số theo độ cao và vận tốc để mỗi người được thấy khoảng số lần này (giữa --fps-min và --fps); không đặt hoặc 0 thì cố định --fps")
     parser.add_argument("--fps-min", type=float, default=0.5, help="Tần số xử lý tối thiểu khi dùng --min-views")
     parser.add_argument("--max-frames", type=int, default=None, help="Giới hạn số khung xử lý")
     parser.add_argument("--model", default="yolo26s.pt", help="Trọng số .pt, .onnx hoặc .engine")
@@ -89,6 +91,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0, help="Seed cho giả lập mạng và nhiễu thời gian chờ gửi lại")
     parser.add_argument("--output", type=Path, default=Path("runs/edge/demo"), help="Thư mục log")
     parser.add_argument("--save-video", action="store_true", help="Ghi annotated.mp4: box đỏ là phát hiện, vòng xanh là người đã xác nhận")
+    parser.add_argument("--device-profile", type=Path, default=None,
+                        help="Giả lập thời gian xử lý của thiết bị biên (configs/devices/*.yaml): bỏ khung tới trong lúc bận, cảnh báo gửi lúc xử lý xong (edge/device_sim.py)")
+    parser.add_argument("--realtime", action="store_true", help="Demo: giữ nhịp thời gian thực để cảnh báo hiện trên trạm mặt đất đúng lúc (không đổi kết quả)")
+    parser.add_argument("--realtime-speed", type=float, default=1.0, help="Với --realtime: tốc độ phát (2 = nhanh gấp đôi)")
+    parser.add_argument("--show", action="store_true", help="Demo: mở cửa sổ phát video đã vẽ trong lúc chạy (dùng cùng --realtime)")
     parser.add_argument("--save-frames", action="store_true", help="Ghi từng khung đã xử lý (vẽ như --save-video) thành frames/<frame_id>.jpg, cạnh dài tối đa 1920 px; giao diện console đọc")
     return parser
 
@@ -119,12 +126,15 @@ def save_frame(image: Any, path: Path, max_side: int = 1920) -> None:
 
 def annotate(
     frame: Any, boxes: list[Any], confs: list[float], confirmed: list[Confirmation], tel: Any, cam: Camera, synthetic: bool,
-    tracks: list[tuple[Any, int]] | None = None,
+    tracks: list[tuple[Any, int]] | None = None, t_now: float | None = None, recent_s: float | None = None,
 ) -> Any:
     """Vẽ phát hiện của khung và vị trí các người đã xác nhận chiếu lại vào khung hiện tại.
 
     Với chiến lược bytetrack, `tracks` là (box, track_id) của khung: vẽ khung màu theo track kèm số ID thay cho khung đỏ.
+    recent_s: chỉ vẽ vòng của xác nhận trong số giây gần nhất. Vòng chiếu từ GPS của xác nhận cũ lệch dần khi GPS của
+    drone trôi (docs/results/sds_mot_confirm.md), nằm trên chỗ trống và trông như báo nhầm; trạm mặt đất vẫn giữ đủ.
     """
+    k = max(1.0, frame.shape[1] / 1920)  # khung 4K thu nhỏ khi chiếu: nét và chữ to theo
     if tracks is not None:
         # Track đã xác nhận (cluster_id của TrackConfirmer là track_id): khung đậm, nhãn "#id". Không vẽ vòng chiếu từ GPS:
         # với telemetry giả lập, vòng đó không trùng người và che mất khung.
@@ -137,17 +147,36 @@ def annotate(
             label = f"#{track_id}" if done else str(track_id)
             cv2.putText(canvas, label, (x1, max(12, y1 - 3)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1, cv2.LINE_AA)
         if synthetic:
-            cv2.putText(canvas, SYNTHETIC_NOTE, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(canvas, SYNTHETIC_NOTE, (10, int(30 * k)), cv2.FONT_HERSHEY_SIMPLEX, 0.8 * k, (0, 255, 255), int(2 * k), cv2.LINE_AA)
         return canvas
     canvas = draw_boxes(frame, boxes, confs)
     if synthetic:
         # Ghi thẳng lên video để không ai lấy nhầm video demo làm bằng chứng định vị.
-        cv2.putText(canvas, SYNTHETIC_NOTE, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
+        cv2.putText(canvas, SYNTHETIC_NOTE, (10, int(30 * k)), cv2.FONT_HERSHEY_SIMPLEX, 0.8 * k, (0, 255, 255), int(2 * k), cv2.LINE_AA)
     for c in confirmed:
+        if recent_s is not None and t_now is not None and t_now - c.t > recent_s:
+            continue
         u, v = gps_to_pixel(c.lat, c.lon, tel, cam)
         if 0 <= u < cam.width and 0 <= v < cam.height:
-            cv2.circle(canvas, (int(u), int(v)), 20, CONFIRMED_COLOR_BGR, 2, cv2.LINE_AA)
-            cv2.putText(canvas, f"#{c.cluster_id}", (int(u) + 22, int(v)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, CONFIRMED_COLOR_BGR, 2)
+            cv2.circle(canvas, (int(u), int(v)), int(20 * k), CONFIRMED_COLOR_BGR, int(2 * k), cv2.LINE_AA)
+            cv2.putText(canvas, f"#{c.cluster_id}", (int(u + 22 * k), int(v)), cv2.FONT_HERSHEY_SIMPLEX, 0.8 * k,
+                        CONFIRMED_COLOR_BGR, int(2 * k))
+    return canvas
+
+
+def draw_status(canvas: Any, lines: list[str], banner: str | None = None) -> Any:
+    """Ghi các dòng trạng thái (thiết bị giả lập, FPS, độ trễ) ở góc dưới trái; banner đỏ ở giữa trên (mất sóng)."""
+    height, k = canvas.shape[0], max(1.0, canvas.shape[1] / 1920)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    for i, line in enumerate(reversed(lines)):
+        y = int(height - 15 * k - 36 * k * i)
+        cv2.putText(canvas, line, (int(10 * k), y), font, 0.9 * k, (0, 0, 0), int(6 * k), cv2.LINE_AA)
+        cv2.putText(canvas, line, (int(10 * k), y), font, 0.9 * k, (255, 255, 255), int(2 * k), cv2.LINE_AA)
+    if banner:
+        (w, h), _ = cv2.getTextSize(banner, font, 1.2 * k, int(3 * k))
+        x, top = (canvas.shape[1] - w) // 2, int(50 * k)
+        cv2.rectangle(canvas, (x - int(12 * k), top), (x + w + int(12 * k), top + h + int(24 * k)), (0, 0, 200), -1)
+        cv2.putText(canvas, banner, (x, top + h + int(10 * k)), font, 1.2 * k, (255, 255, 255), int(3 * k), cv2.LINE_AA)
     return canvas
 
 
@@ -186,10 +215,16 @@ def main() -> None:
         (args.output / f"outbox.sqlite{suffix}").unlink(missing_ok=True)
     outbox = Outbox(args.output / "outbox.sqlite", transport, seed=args.seed)
     model_name = Path(args.replay or args.model).name
-    run_args = {**vars(args), "telemetry_source": "synthetic StraightFlight" if synthetic else str(args.telemetry)}
+    device = BusyDevice(load_profile(args.device_profile)) if args.device_profile else None
+    pacer = RealtimePacer(args.realtime_speed) if args.realtime else None
+    outages = [tuple(o) for o in args.net_outage or []]
+    run_args = {**vars(args), "telemetry_source": "synthetic StraightFlight" if synthetic else str(args.telemetry),
+                "device_profile_data": device.profile.model_dump() if device else None}
     write_run_config(args.output, "edge/main.py", None if args.replay else args.model, getattr(detector, "device", None), run_args)
     if synthetic:
         print("[cảnh báo] Telemetry giả lập: toạ độ GPS và vòng xác nhận trên video chỉ để minh hoạ, không phải vị trí thật.")
+    if device and not device.profile.calibrated:
+        print(f"[cảnh báo] Hồ sơ thiết bị {args.device_profile} chưa hiệu chỉnh: độ trễ là ước lượng, không phải số đo.")
 
     next_t, fps_now = 0.0, args.fps
     error_model = ErrorModel(args.gps_sigma_m, args.alt_sigma_m, args.yaw_sigma_deg, args.tilt_sigma_deg)
@@ -197,7 +232,42 @@ def main() -> None:
     confirmer: Confirmer | None = None
     video: cv2.VideoWriter | None = None
     confirmed: list[Confirmation] = []
+    last_dets: list[Any] = []
     n_frames, t = 0, 0.0
+
+    def status(t_now: float) -> tuple[list[str], str | None]:
+        """Dòng trạng thái và banner vẽ lên video demo."""
+        lines = []
+        if device:
+            lines.append(f"Thiet bi gia lap: {device.profile.name}")
+            lines.append(f"{device.achieved_fps(t_now):.1f} khung/s, tre {device.last_latency_ms:.0f} ms/khung, bo {device.n_skipped} khung")
+        banner = "MAT SONG - canh bao cho gui bu" if any(a <= t_now < b for a, b in outages) else None
+        return lines, banner
+
+    def skip_frame(frame: Any, frame_id: Any, t_now: float, tel: Any) -> None:
+        """Khung không chạy detector (tần số theo độ cao, thiết bị bận): video demo vẫn ghi để phát đúng nhịp."""
+        assert cam is not None
+        if args.save_video or args.save_frames or args.show:
+            write_frame(annotate(frame, [d.box_px for d in last_dets], [d.conf for d in last_dets], confirmed, tel, cam,
+                                 synthetic, None, t_now, args.expire_s), frame_id, t_now)
+        if pacer:
+            pacer.wait_until(t_now)
+
+    def write_frame(drawn: Any, frame_id: Any, t_now: float) -> None:
+        nonlocal video
+        assert cam is not None
+        drawn = draw_status(drawn, *status(t_now))
+        if args.show:
+            scale = min(1.0, 1280 / drawn.shape[1])
+            cv2.imshow("FloodEye - UAV", cv2.resize(drawn, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA))
+            cv2.waitKey(1)
+        if args.save_video:
+            if video is None:
+                path = str(args.output / "annotated.mp4")
+                video = cv2.VideoWriter(path, cv2.VideoWriter.fourcc(*"mp4v"), args.fps, (cam.width, cam.height))
+            video.write(drawn)
+        if args.save_frames:
+            save_frame(drawn, args.output / "frames" / f"{frame_id:06d}.jpg")
     with (
         (args.output / "detections.jsonl").open("w", encoding="utf-8") as det_log,
         (args.output / "confirmations.jsonl").open("w", encoding="utf-8") as conf_log,
@@ -210,9 +280,10 @@ def main() -> None:
                 cam = Camera.from_fov(args.fov_deg, args.fov_type, frame.shape[1], frame.shape[0])
                 confirmer = build_confirmer(args, telemetry, cam)
             tel = telemetry.at(t)
-            if args.min_views is not None:
+            if args.min_views:  # 0 để tắt từ dòng lệnh khi file cấu hình đã đặt
                 # Bỏ khung tới hạn kế tiếp; hạn tính lại mỗi khung xử lý theo độ cao và vận tốc hiện tại.
                 if t + 1e-9 < next_t:
+                    skip_frame(frame, frame_id, t, tel)
                     continue
                 prev = telemetry.at(max(t - 1.0, 0.0))
                 speed = ground_distance_m(prev.lat, prev.lon, tel.lat, tel.lon) / max(min(t, 1.0), 1e-9) if t > 0 else 0.0
@@ -227,7 +298,18 @@ def main() -> None:
                 confirmer.window_s = max(args.window_s, in_frame_s)
                 confirmer.expire_s = max(args.expire_s, confirmer.window_s + 1.0 / fps_now)
             scale = person_scale(expected_person_px(tel, cam, args.person_m), args.target_person_px)
+            if device and not device.ready(t):
+                # Thiết bị còn bận với khung trước: khung này bị bỏ, video demo vẽ kết quả gần nhất.
+                skip_frame(frame, frame_id, t, tel)
+                continue
+            if pacer:
+                pacer.wait_until(t)
             dets, timings = detector.detect(frame, frame_id, t, scale)
+            t_done = t
+            if device:
+                n_tiles, n_full = inference_counts(frame.shape[1], frame.shape[0], scale, args.mode, args.tile, args.overlap)
+                t_done = device.run(t, n_tiles, n_full)
+                timings.update({"sim_n_tiles": n_tiles, "sim_latency_ms": device.last_latency_ms, "t_done": t_done})
             start = time.perf_counter()
             dets = [locate(d, tel, cam) for d in dets]
             timings["georef_ms"] = (time.perf_counter() - start) * 1000.0
@@ -235,6 +317,9 @@ def main() -> None:
             start = time.perf_counter()
             new_confirmed = confirmer.update(dets, t)
             timings["confirm_ms"] = (time.perf_counter() - start) * 1000.0
+            last_dets = dets
+            if pacer:
+                pacer.wait_until(t_done)
 
             for d in dets:
                 write_jsonl(det_log, d.model_dump())
@@ -245,34 +330,34 @@ def main() -> None:
                     x1, _, x2, y2 = c.box_px
                     error_m = position_error_m((x1 + x2) / 2.0, y2, tel, cam, error_model)
                 alert = make_alert(c, args.uav_id, len(confirmed) + 1, tel, round(error_m, 2), model_name)
-                outbox.enqueue(alert, AlertCrop(alert_id=alert.alert_id, jpeg_base64=crop_jpeg_base64(frame, c.box_px)), t)
+                # Có thiết bị giả lập thì quyết định chỉ có khi xử lý xong (t_done); không có thì coi xử lý tức thời.
+                outbox.enqueue(alert, AlertCrop(alert_id=alert.alert_id, jpeg_base64=crop_jpeg_base64(frame, c.box_px)), t_done)
                 write_jsonl(alert_log, alert.model_dump())
                 confirmed.append(c)
-            for record in outbox.pump(t):
+            for record in outbox.pump(t_done):
                 write_jsonl(sent_log, record)
             write_jsonl(time_log, {"frame_id": frame_id, "t": t, "n_dets": len(dets), **timings})
             n_frames += 1
 
-            if args.save_video or args.save_frames:
+            if args.save_video or args.save_frames or args.show:
                 tracks = getattr(confirmer, "last_assignments", None)
-                drawn = annotate(frame, [d.box_px for d in dets], [d.conf for d in dets], confirmed, tel, cam, synthetic, tracks)
-                if args.save_video:
-                    if video is None:
-                        path = str(args.output / "annotated.mp4")
-                        video = cv2.VideoWriter(path, cv2.VideoWriter.fourcc(*"mp4v"), args.fps, (cam.width, cam.height))
-                    video.write(drawn)
-                if args.save_frames:
-                    save_frame(drawn, args.output / "frames" / f"{frame_id:06d}.jpg")
+                drawn = annotate(frame, [d.box_px for d in dets], [d.conf for d in dets], confirmed, tel, cam, synthetic, tracks,
+                                 t, args.expire_s)
+                write_frame(drawn, frame_id, t)
         # Hết video: tiếp tục gửi bù mỗi giây, như UAV vẫn bay tiếp và giữ kết nối.
         for k in range(1, int(args.drain_s) + 1):
             if outbox.pending() == 0:
                 break
+            if pacer:
+                pacer.wait_until(t + k)
             for record in outbox.pump(t + k):
                 write_jsonl(sent_log, record)
     if video is not None:
         video.release()
     pending = outbox.pending()
     outbox.close()
+    if device:
+        print(f"Thiết bị giả lập {device.profile.name}: bỏ {device.n_skipped} khung vì bận, {device.achieved_fps(t):.2f} khung/giây.")
     print(f"Đã xử lý {n_frames} khung, xác nhận {len(confirmed)} người, còn {pending} thông điệp chưa gửi được. Log tại: {args.output}")
 
 
