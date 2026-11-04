@@ -87,3 +87,34 @@ def test_xuat_bao_cao(client: TestClient, tmp_path: Path) -> None:
     html = client.get(r.json()["url"]).text
     assert "Bỏ sót tiêu biểu" in html and "crops/fn_" in html
     assert client.get("/reports/x/../../console.yaml").status_code == 404
+
+
+def test_hieu_du_an_ban_do_tai_lieu_thuat_ngu() -> None:
+    import os
+
+    from console.learn import load_glossary, project_map
+
+    client = TestClient(create_app(None))
+    data = client.get("/api/learn/map").json()
+    assert len(data["stages"]) == 6
+    for stage in data["stages"] + data["side"]:
+        # Bản đồ không được trỏ tới file đã đổi tên hay xoá.
+        assert all(os.path.isfile(f) for f in stage["files"]), stage["id"]
+        assert all(os.path.isfile(r["doc"]) for r in stage["results"] + stage["docs"]), stage["id"]
+    docs = client.get("/api/learn/docs").json()
+    assert docs[0]["path"] == "docs/TONG_QUAN.md" and any(d["path"].startswith("docs/results/") for d in docs)
+    assert client.get("/api/learn/doc", params={"path": "docs/THUAT_NGU.md"}).status_code == 200
+    assert client.get("/api/learn/doc", params={"path": "CLAUDE.md"}).status_code == 404
+    glossary = {e["term"]: e for e in load_glossary()}
+    assert "fine-tune" in glossary["tinh chỉnh"]["aliases"] and "khung bao" in glossary["box (khung bao)"]["aliases"]
+    assert project_map()["stages"][1]["id"] == "detect"
+
+
+def test_hieu_du_an_chi_doc_ma_nguon_va_anh_tai_lieu() -> None:
+    client = TestClient(create_app(None))
+    assert client.get("/api/learn/source", params={"path": "edge/confirm.py"}).status_code == 200
+    for bad in ("data/raw/flood/sources.csv", "../.bashrc", "edge/../../etc/passwd", ".venv/pyvenv.cfg", "runs/x.py"):
+        assert client.get("/api/learn/source", params={"path": bad}).status_code == 404, bad
+    assert client.get("/api/learn/asset", params={"path": "docs/results/visdrone_E0_E1_E4.png"}).status_code == 200
+    assert client.get("/api/learn/asset", params={"path": "edge/main.py"}).status_code == 404
+    assert client.get("/static/learn.js").status_code == 200 and client.get("/static/x.js").status_code == 404

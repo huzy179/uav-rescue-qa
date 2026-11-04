@@ -1,0 +1,72 @@
+/* Tab "Hiểu dự án" (console/learn.js). Dùng biến màu của index.html. */
+#page-learn { flex-direction: column; }
+.lnav { display: flex; gap: 6px; align-items: center; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.lnav button { border: 1px solid var(--line); background: #fff; border-radius: 14px; padding: 4px 12px; font: inherit; cursor: pointer; }
+.lnav button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.lnav input { margin-left: auto; width: 280px; }
+.lbody { flex: 1; min-height: 0; display: flex; }
+.lview { display: none; flex: 1; min-height: 0; }
+.lview.on { display: flex; }
+
+/* Bản đồ */
+#lMap { flex-direction: column; overflow-y: auto; padding: 16px 20px; }
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; }
+.stage { width: 170px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; }
+.stage:hover { border-color: var(--accent); }
+.stage.on { border-color: var(--accent); background: #e9f2fb; }
+.stage b { display: block; margin-bottom: 4px; }
+.stage small { color: var(--muted); }
+.arrow { align-self: center; padding: 0 6px; color: var(--muted); font-size: 20px; }
+.sidebox { display: flex; gap: 12px; margin-top: 14px; }
+.sidebox .stage { width: auto; flex: 1; border-style: dashed; }
+.mapnote { color: var(--muted); margin: 0 0 12px; }
+.detail { margin-top: 16px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; max-width: 1100px; }
+.detail h3 { margin: 0 0 6px; }
+.detail h4 { margin: 12px 0 4px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.detail ul { margin: 4px 0; padding-left: 20px; }
+.rq { display: inline-block; padding: 1px 8px; border-radius: 10px; background: #eef3f8; color: var(--accent); font-size: 12px; }
+.lk { color: var(--accent); cursor: pointer; text-decoration: none; }
+.lk:hover { text-decoration: underline; }
+code.lk { background: #eef3f8; }
+
+/* Đọc tài liệu */
+.dlist { width: 250px; flex: none; overflow-y: auto; background: var(--panel); border-right: 1px solid var(--line); padding: 8px 0; }
+.dlist h5 { margin: 10px 12px 4px; color: var(--muted); font-size: 11px; text-transform: uppercase; }
+.dlist div { padding: 4px 12px; cursor: pointer; font-size: 13px; }
+.dlist div:hover { background: #f1f4f8; }
+.dlist div.on { background: #e3eefa; font-weight: 600; }
+.doc { flex: 1; overflow-y: auto; padding: 16px 28px 60px; background: #fff; }
+.doc .md { max-width: 900px; line-height: 1.6; font-size: 15px; }
+.toc { width: 230px; flex: none; overflow-y: auto; padding: 12px; border-left: 1px solid var(--line); background: var(--panel); font-size: 12px; }
+.toc div { padding: 2px 0; cursor: pointer; color: var(--accent); }
+.toc .h3 { padding-left: 12px; color: var(--muted); }
+.md h1 { font-size: 24px; } .md h2 { font-size: 20px; margin-top: 28px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.md h3 { font-size: 17px; margin-top: 20px; } .md h4 { font-size: 15px; }
+.md table { margin: 10px 0; font-size: 13px; }
+.md th, .md td { text-align: left; vertical-align: top; border: 1px solid #e3e6ea; padding: 5px 8px; font-variant-numeric: normal; }
+.md th { background: #f4f6f8; }
+.md code { background: #f1f3f6; padding: 1px 4px; border-radius: 3px; font-size: 13px; }
+.md pre code { background: none; padding: 0; }
+.md blockquote { margin: 10px 0; padding: 4px 14px; border-left: 4px solid #c8d6e5; color: #44505f; background: #f7f9fb; }
+.md img { max-width: 100%; }
+.md mark { background: #fff3a8; }
+.srcview { flex: 1; overflow: auto; padding: 12px 20px; background: #fff; }
+.srcview pre { font-size: 12.5px; line-height: 1.45; }
+
+/* Thuật ngữ */
+.term { border-bottom: 1px dashed var(--accent); cursor: help; }
+.term:hover { background: #e9f2fb; }
+#lTip { position: fixed; z-index: 50; max-width: 380px; padding: 8px 10px; background: #1f2a37; color: #fff; border-radius: 6px; font-size: 13px; line-height: 1.45; pointer-events: none; display: none; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+#lTip i { color: #aac4e0; font-style: normal; }
+#lGloss { flex-direction: column; overflow-y: auto; padding: 12px 20px; }
+#lGloss table { max-width: 1200px; }
+#lGloss td, #lGloss th { text-align: left; vertical-align: top; }
+#lGloss tr.hit td { background: #fff8d6; }
+.panel { position: fixed; right: 16px; bottom: 16px; width: 420px; max-height: 60vh; overflow-y: auto; z-index: 40; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.15); display: none; font-size: 13px; }
+.panel h3 { margin: 0 0 4px; font-size: 16px; }
+.panel .x { float: right; cursor: pointer; color: var(--muted); }
+
+/* Tìm kiếm */
+#lSearch { flex-direction: column; overflow-y: auto; padding: 12px 20px; }
+.hit { padding: 6px 0; border-bottom: 1px solid #eef0f3; cursor: pointer; }
+.hit small { color: var(--muted); }

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FloodEye – thử nghiệm</title>
+<link rel="stylesheet" href="/static/learn.css">
 <style>
   :root { --bg: #f6f7f9; --panel: #fff; --line: #dde1e6; --text: #1d2430; --muted: #687385; --accent: #1f6fb2;
           --tp: #2ca02c; --fn: #d62728; --fp: #ff8c00; --ign: #8a8a8a; }
@@ -55,13 +56,17 @@
 <body>
 <header>
   <h1>FloodEye · thử nghiệm</h1>
-  <button class="tab on" data-page="errors">Xem lỗi</button>
+  <button class="tab on" data-page="learn">Hiểu dự án</button>
+  <button class="tab" data-page="errors">Xem lỗi</button>
   <button class="tab" data-page="run">Chạy thử</button>
   <button class="tab" data-page="ground">Trạm mặt đất</button>
 </header>
 <main>
+  <!-- ======================= Hiểu dự án (console/learn.js) ======================= -->
+  <section class="page on" id="page-learn"></section>
+
   <!-- ======================= Xem lỗi ======================= -->
-  <section class="page on" id="page-errors">
+  <section class="page" id="page-errors">
     <div class="side">
       <label>Tập dữ liệu</label><select id="eDataset"></select>
       <label>Lần chạy</label><select id="eRun"></select>
@@ -392,5 +397,6 @@ async function showRun() {
   await Promise.all([loadDatasets(), loadSources()]);
 })();
 </script>
+<script src="/static/learn.js"></script>
 </body>
 </html>

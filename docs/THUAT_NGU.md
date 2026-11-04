@@ -17,7 +17,7 @@ Ai làm thị giác máy tính hay UAV cũng hiểu; vẫn giải thích một l
 | Dùng trong tài liệu | Tiếng Anh | Nghĩa |
 |---|---|---|
 | câu hỏi nghiên cứu | research question (RQ) | Câu hỏi luận văn trả lời bằng thí nghiệm |
-| tinh chỉnh | fine-tuning | Huấn luyện thêm một mô hình đã học sẵn trên dữ liệu của mình |
+| tinh chỉnh | fine-tuning, fine-tune | Huấn luyện thêm một mô hình đã học sẵn trên dữ liệu của mình |
 | mô hình nền | base model, pretrained model | Mô hình đã học sẵn trên COCO, chưa tinh chỉnh (YOLO26s) |
 | box (khung bao) | bounding box | Hình chữ nhật bao quanh một đối tượng |
 | conf (điểm tin cậy) | confidence score | Điểm mô hình gán cho mỗi box, từ 0 tới 1 |
@@ -37,7 +37,7 @@ Ai làm thị giác máy tính hay UAV cũng hiểu; vẫn giải thích một l
 | telemetry (dữ liệu bay) | telemetry | Vị trí GPS, độ cao, hướng của UAV theo thời gian |
 | GSD | ground sampling distance | Số mét mặt đất ứng với một pixel; bay càng cao GSD càng lớn |
 | AGL | above ground level | Độ cao so với mặt đất (mặt nước) ngay bên dưới |
-| góc nhìn chéo, ngang, dọc | DFOV, HFOV, VFOV | Góc nhìn của camera theo đường chéo, chiều ngang, chiều dọc ảnh |
+| góc nhìn chéo, góc nhìn ngang, góc nhìn dọc | DFOV, HFOV, VFOV | Góc nhìn của camera theo đường chéo, chiều ngang, chiều dọc ảnh |
 | nhìn thẳng xuống | nadir | Camera hướng thẳng đứng xuống đất |
 | TensorRT | TensorRT | Công cụ của NVIDIA biên dịch mô hình để chạy nhanh trên GPU NVIDIA |
 | FP16, INT8 | half precision, 8-bit integer | Tính bằng số thực 16 bit, số nguyên 8 bit thay cho 32 bit: nhanh hơn, có thể kém chính xác hơn |

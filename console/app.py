@@ -13,11 +13,13 @@ from pydantic import BaseModel
 from fastapi.responses import FileResponse, HTMLResponse
 
 from console.errors import load_datasets, image_errors, list_runs, short_side, summarize
+from console.learn import asset_path, list_docs, load_glossary, project_map, read_doc, read_source
 from console.report import ROOT as REPORTS, build_report
 from console.runs import RunManager, RunRequest, list_sources
 from eval.metrics import SIZE_RANGES
 
 INDEX_HTML = Path(__file__).with_name("index.html")
+STATIC = {"learn.js": "text/javascript", "learn.css": "text/css"}
 
 
 class ReportRequest(BaseModel):
@@ -43,9 +45,51 @@ def create_app(ground_url: str | None = None, runs_root: Path | None = None, rep
     def index() -> str:
         return INDEX_HTML.read_text(encoding="utf-8")
 
+    @app.get("/static/{name}")
+    def static_file(name: str) -> Response:
+        if name not in STATIC:
+            raise HTTPException(404, "Không có file")
+        return Response(Path(__file__).with_name(name).read_text(encoding="utf-8"), media_type=STATIC[name])
+
     @app.get("/api/info")
     def info() -> dict[str, Any]:
         return {"ground_url": ground_url, "size_bins": list(SIZE_RANGES)}
+
+    # --- Hiểu dự án ----------------------------------------------------------------------------------------------
+
+    @app.get("/api/learn/map")
+    def learn_map() -> dict[str, Any]:
+        return project_map()
+
+    @app.get("/api/learn/glossary")
+    def learn_glossary() -> list[dict[str, Any]]:
+        """Đọc lại docs/THUAT_NGU.md mỗi lần, nên sửa bảng là trang thấy ngay."""
+        return load_glossary()
+
+    @app.get("/api/learn/docs")
+    def learn_docs() -> list[dict[str, str]]:
+        return list_docs()
+
+    @app.get("/api/learn/doc")
+    def learn_doc(path: str) -> Response:
+        try:
+            return Response(read_doc(path), media_type="text/plain; charset=utf-8")
+        except ValueError as error:
+            raise HTTPException(404, str(error)) from error
+
+    @app.get("/api/learn/asset")
+    def learn_asset(path: str) -> FileResponse:
+        try:
+            return FileResponse(asset_path(path))
+        except ValueError as error:
+            raise HTTPException(404, str(error)) from error
+
+    @app.get("/api/learn/source")
+    def learn_source(path: str) -> Response:
+        try:
+            return Response(read_source(path), media_type="text/plain; charset=utf-8")
+        except ValueError as error:
+            raise HTTPException(404, str(error)) from error
 
     # --- Xem lỗi -------------------------------------------------------------------------------------------------
 
