@@ -1,0 +1,8 @@
+# E2e trên tập test lũ tự gán nhãn (khoá 11/11/2026): như E2c_flood.yaml, khác trọng số.
+source: data/processed/flood/images/test
+model: runs/train/E2e_s0/weights/best.pt
+imgsz: [1280]
+conf: 0.001
+max_det: 1000
+no_images: true
+output: runs/flood/E2e

@@ -1,4 +1,4 @@
-# E1 trên tập test lũ tự gán nhãn (khoá 4/11/2026): như E1_afo.yaml, khác tập ảnh.
+# E1 trên tập test lũ tự gán nhãn (khoá 11/11/2026): như E1_afo.yaml, khác tập ảnh.
 source: data/processed/flood/images/test
 model: yolo26s.pt
 imgsz: [1280]

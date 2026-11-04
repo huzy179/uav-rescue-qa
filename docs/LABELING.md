@@ -1,10 +1,10 @@
 # Hướng dẫn gán nhãn tập test lũ
 
-Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 của [TECHNICAL.md](TECHNICAL.md)): 212 khung đã trích và lọc tay từ 10 video, khoá khoảng 4/11/2026 (tối thiểu 150 khung đã rà nếu không kịp, quyết định #10 của ROADMAP). Tập nhỏ nên mỗi nhãn sai đều kéo lệch kết quả; ưu tiên nhất quán hơn tốc độ. Gặp trường hợp hướng dẫn này chưa nói tới thì dừng, quyết một lần, ghi thêm vào mục 6, rồi mới gán tiếp.
+Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 của [TECHNICAL.md](TECHNICAL.md)): 212 khung đã trích và lọc tay từ 10 video, khoá **11/11/2026** (lùi từ 4/11, quyết định #10 của ROADMAP). Tập nhỏ nên mỗi nhãn sai đều kéo lệch kết quả; ưu tiên nhất quán hơn tốc độ. Gặp trường hợp hướng dẫn này chưa nói tới thì dừng, quyết một lần, ghi thêm vào mục 6, rồi mới gán tiếp.
 
 ## 1. Chọn video và khung
 
-- **Nguồn:** video UAV quay cảnh ngập lụt có người, nhìn từ trên xuống hoặc chếch. Độ phân giải từ 1080p trở lên. Hiện 4/10 video dưới mức này (quyết định #15 của ROADMAP): tải lại hay giữ phải quyết **trước khi** gán video đó, vì box gắn với độ phân giải của ảnh. Lấy từ nhiều địa điểm và nhiều trận lũ khác nhau; không quá 30 khung từ một video.
+- **Nguồn:** video UAV quay cảnh ngập lụt có người, nhìn từ trên xuống hoặc chếch. Độ phân giải từ 1080p trở lên. Ngoại lệ: 4/10 video dưới mức này được giữ (quyết định #15 của ROADMAP, mục 6). Lấy từ nhiều địa điểm và nhiều trận lũ khác nhau; không quá 30 khung từ một video.
 - **Ghi nguồn:** mỗi video một dòng trong `data/raw/flood/sources.csv` gồm `video_id, url, ngày tải, độ phân giải, giấy phép hoặc ghi chú bản quyền`. Ảnh không phân phối lại; luận văn chỉ công bố nhãn và nguồn.
 - **Lấy khung:** các khung cùng một video cách nhau ít nhất 2 giây và phải khác nhau rõ về khung cảnh. Khung liền nhau gần như giống hệt, không thêm thông tin mà làm khoảng tin cậy hẹp giả.
 - **Giữ cả khung không có người** (nước, rác trôi, mái nhà): khoảng 10–20% tập, để đo báo động giả.
@@ -84,7 +84,7 @@ Ghi vào đây mỗi trường hợp mới gặp và cách đã xử lý, kèm n
 
 | Ngày | Trường hợp | Quyết định |
 |---|---|---|
-| | | |
+| 4/11 | 4 video dưới 1080p: thainguyen, duvall (854x480), sanangelo, texas (1280x720); 98/212 khung | Giữ, không tải lại; gán trên ảnh đúng độ phân giải đã trích, không phóng to. Bỏ chúng thì chỉ còn 114 khung, dưới mức tối thiểu 150. Ghi vào phần giới hạn: người ở các video này ít pixel hơn so với cùng độ cao ở 1080p |
 
 ## 7. Kiểm tra chất lượng
 
@@ -103,7 +103,7 @@ Thứ tự, **trước khi chạy bất kỳ mô hình nào trên tập này**:
 .venv/bin/python tools/convert_cvat.py --xml exports/*.zip --images data/raw/flood/frames --dst data/processed/flood --split test
 # 2. Kiểm tra rò rỉ với mọi tập huấn luyện (thoát mã 1 nếu có)
 .venv/bin/python tools/check_leakage.py --train data/processed/visdrone/images/train data/processed/afo/images/train \
-    data/processed/hydrovigilance/images/train data/processed/hydrovigilance/images/val \
+    data/processed/hydrovigilance/images/train data/processed/hydrovigilance/images/val data/processed/c2a/images/train \
     --eval data/processed/flood/images/test --output runs/leakage/flood_test
 # 3. Khoá: mã băm ảnh, nhãn, vùng bỏ qua, thuộc tính và thẻ
 (cd data/processed/flood && find -L images/test labels/test ignore/test boxes_test.csv tags_test.csv -type f | sort \
@@ -116,11 +116,14 @@ Giữ lại thư mục `exports/` và commit dòng mã băm của `MANIFEST.sha2
 
 ## 9. Mốc
 
-Lịch gốc (50 khung ngày 16/10, 200 khung ngày 30/10) đã trễ; ngày 31/10 chưa gán khung nào. Lịch lại:
+Lịch gốc (50 khung ngày 16/10, 200 khung ngày 30/10) đã trễ; lịch lại ngày 31/10 (212 khung, khoá 4/11) cũng trễ: tới 4/11 chưa gán khung nào. Lịch lại ngày 4/11, khoá 11/11 (quyết định #10). Gán 6 video 1080p trước (114 khung), rồi 4 video độ phân giải thấp (mục 6).
 
 | Hạn | Số khung cộng dồn |
 |---|---|
-| 1/11 | 50 (đo tốc độ gán, chỉnh các mốc dưới) |
-| 2/11 | 110 |
-| 3/11 | 170; gán lại 20 khung để kiểm tra nhất quán |
-| 4/11 | 212, rà, khoá (tối thiểu 150 nếu không kịp) |
+| 5/11 | 50 (đo tốc độ gán, chỉnh các mốc dưới) |
+| 6/11 | 100 |
+| 7/11 | 150 |
+| 8/11 | 212 |
+| 9/11 | Gán lại 20 khung trong 50 khung đầu để kiểm tra nhất quán (mục 7) |
+| 10/11 | Rà toàn bộ theo mục 7 |
+| 11/11 | Chuyển nhãn, `check_leakage`, khoá (mục 8) |

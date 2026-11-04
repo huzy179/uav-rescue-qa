@@ -137,7 +137,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 
 ### 3.4. Bước 4: Tập test lũ tự gán nhãn
 
-**Làm gì.** Gom video UAV quay cảnh lũ có người, trích 200–300 khung, gán nhãn người bằng CVAT theo một hướng dẫn cố định, rồi **khoá** tập (khoảng 4/11) bằng mã băm: sau khi khoá không sửa nhãn, không thêm bớt khung.
+**Làm gì.** Gom video UAV quay cảnh lũ có người, trích 200–300 khung, gán nhãn người bằng CVAT theo một hướng dẫn cố định, rồi **khoá** tập (11/11, lùi từ 4/11) bằng mã băm: sau khi khoá không sửa nhãn, không thêm bớt khung.
 
 **Vì sao.** Đây là **tập quan trọng nhất**: là nơi duy nhất trả lời câu hỏi "trong cảnh lũ thật, mô hình làm được gì". VisDrone là đô thị khô; C2A là ảnh ghép. Khoá tập trước khi chạy thí nghiệm để không ai (kể cả người làm) vô tình chỉnh tập test cho kết quả đẹp.
 
@@ -425,18 +425,18 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 
 ---
 
-## 8. Trạng thái tổng hợp (28/10/2026)
+## 8. Trạng thái tổng hợp (4/11/2026)
 
 | Bước | Trạng thái |
 |---|---|
 | 1. Hình học camera | Xong |
 | 2. Mô hình nền | Xong |
 | 3. Dữ liệu công khai | VisDrone, AFO, C2A, HydroVigilance, SeaDronesSee-MOT đã tải và chuyển; FinlandProper tạm bỏ (162 GB, máy chủ không cho tải từng phần) |
-| 4. Tập test lũ | **Chưa gán**; 212 khung từ 10 video đã trích, lọc tay, đóng gói zip cho CVAT (`Downloads/floodeye_cvat`). Gán xong thì `scripts/eval_flood.sh <thư mục file xuất>` chạy trọn: chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu (`eval/recall_by_tag.py`) |
+| 4. Tập test lũ | **Chưa gán; khoá lùi tới 11/11** (quyết định #10, chốt 4/11); giữ 4 video dưới 1080p (#15); khoảng tin cậy theo video (#7). 212 khung từ 10 video đã trích, lọc tay, đóng gói zip cho CVAT (`Downloads/floodeye_cvat`); lịch gán ở LABELING mục 9. Gán xong thì `scripts/eval_flood.sh <thư mục file xuất>` chạy trọn: chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu (`eval/recall_by_tag.py`) |
 | 5. Cách đo | Xong; thêm chấm khối xác nhận theo track trên video thật (`eval/track_confirm_eval.py`) |
 | 6. E0, E1, E4 | Xong |
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |
-| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; **E3 (P2) xong 28/10**: người dưới 8 px chỉ +0,012–0,013 AP50, kém hơn ở người to, không đáng chi phí; giữ E2c (`E3.md`); E2d (+ HydroVigilance) có cấu hình; **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
+| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; **E3 (P2) xong 28/10**: người dưới 8 px chỉ +0,012–0,013 AP50, kém hơn ở người to, không đáng chi phí; giữ E2c (`E3.md`); E2d (+ HydroVigilance) có cấu hình; **E2e (E2c + C2A) có cấu hình, chạy trên Kaggle tuần 4/11** (quyết định #14); **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
 | 9. Pipeline UAV | Xong; demo trực tiếp `scripts/live_demo.py` |
 | 10. Trạm mặt đất | Xong; bản đồ Esri (ô OpenStreetMap không tải được); gộp cảnh báo thành sự cố, bán kính 5 m (`alert_memory.md`), rộng hơn khi hai drone khác nhau; xếp ưu tiên có lý do, người vận hành gắn thẻ và đóng sự cố; demo hai drone |
 | 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`); quét độ cao với recall theo cỡ người (`rq3_altitude.md`) |

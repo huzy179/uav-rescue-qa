@@ -1,0 +1,14 @@
+# E2 lượt 4, seed 0: như E2c (VisDrone + AFO) thêm C2A train (quyết định #14 của ROADMAP, chốt 4/11).
+# E2c yếu với người to (docs/results/e6_sds_pilot.md); ảnh C2A nhỏ, phóng khoảng 3 lần ở 1280 nên người nghiêng về
+# cỡ trên 16 px, bù phần VisDrone thiếu (TECHNICAL mục 13.4). best.pt vẫn chọn theo val của VisDrone và AFO như E2c,
+# để hai lần chạy so được với nhau; C2A val không dùng. Số epoch thật đặt từ notebook sau lần chạy thử.
+train: [data/processed/visdrone/images/train, data/processed/afo/images/train, data/processed/c2a/images/train]
+val: [data/processed/visdrone/images/val, data/processed/afo/images/val]
+model: yolo26s.pt
+imgsz: 1280
+epochs: 100
+patience: 20
+batch: 8
+seed: 0
+scale: 0.5
+output: runs/train/E2e_s0
