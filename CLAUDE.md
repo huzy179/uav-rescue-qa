@@ -8,6 +8,7 @@
 - [docs/TONG_QUAN.md](docs/TONG_QUAN.md): toàn bộ dự án theo từng bước và lý do; mục 8 là bảng trạng thái hiện tại.
 - [docs/THUAT_TOAN.md](docs/THUAT_TOAN.md): thuật toán trên UAV từng bước, kèm ví dụ tính tay.
 - [docs/TECHNICAL.md](docs/TECHNICAL.md): giải thích kỹ thuật. Mỗi mục gắn nhãn `[Đã có]` hoặc `[Thiết kế]`; khi cài xong một phần thì đổi nhãn của mục đó.
+- [docs/DEMO_BAO_VE.md](docs/DEMO_BAO_VE.md): kịch bản demo bảo vệ, chuẩn bị, câu hỏi dễ gặp.
 - [README.md](README.md): cài đặt, dữ liệu, lệnh chạy, định dạng file kết quả.
 - [docs/LABELING.md](docs/LABELING.md): gán nhãn và khoá tập test lũ. [docs/results/](docs/results/): mỗi kết quả đã đo một file.
 
