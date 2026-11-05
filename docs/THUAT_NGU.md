@@ -84,6 +84,8 @@ Chỉ dự án này dùng. Trong luận văn, bảng kết quả ghi tên mô t�
 | RQ1 | Phát hiện người nhỏ chính xác tới đâu, kỹ thuật nào giúp được bao nhiêu |
 | RQ2 | Chạy trên thiết bị biên nhanh tới đâu, đánh đổi bao nhiêu độ chính xác |
 | RQ3 | Xác nhận và gửi cảnh báo: báo nhầm, bỏ sót, độ trễ ra sao; cách xác nhận nào chịu được sai số GPS và chuyển động camera |
+| RQ1a…RQ3e | Câu hỏi con của từng câu hỏi, đo được bằng một phép đo cụ thể (TONG_QUAN mục 1.3; đề xuất 6/11, chờ cô) |
+| luận điểm xuyên suốt | Dữ liệu bay của drone giúp cả ba khâu: phát hiện (RQ1d), tốc độ (RQ2c), xác nhận (RQ3b) |
 
 ### Thí nghiệm của câu hỏi 1
 

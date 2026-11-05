@@ -30,20 +30,58 @@ Khi lũ lớn, người mắc kẹt trên mái nhà, bám vào vật nổi hoặ
 | **Thiết bị biên yếu** | Máy nhúng công suất dưới 25 W | Chỉ xử lý được vài khung mỗi giây; cần chứng minh vài khung mỗi giây là đủ (mục 3.1) |
 | **Mạng chập chờn** | Vùng lũ thường mất sóng di động | Không gửi video về được; chỉ gửi gói cảnh báo nhỏ, phải lưu lại và gửi bù khi có sóng |
 
-### 1.3. Ba câu hỏi nghiên cứu
+### 1.3. Ba câu hỏi nghiên cứu và các câu hỏi con
 
-> Ghi chú: đây là tóm tắt từ kế hoạch thí nghiệm; khi trình bày, dùng đúng câu chữ trong đề cương đã nộp.
+> Ba câu hỏi chính theo đề cương đã nộp; khi trình bày, dùng đúng câu chữ trong đề cương. Các câu hỏi con và luận điểm xuyên suốt là **đề xuất ngày 6/11, chờ cô đồng ý** (quyết định #16 của ROADMAP): đề cương không đổi, chỉ làm rõ mỗi câu được trả lời bằng phép đo nào. Giao diện `python -m console` (tab Hiểu dự án, mục Câu hỏi) đọc thẳng các bảng dưới đây; sửa bảng là giao diện đổi theo. Cột "Trạng thái" bắt đầu bằng "Có", "Có công cụ" hoặc "Chờ".
 
-- **RQ1, độ chính xác:** phát hiện người nhỏ trong ảnh UAV vùng lũ chính xác tới mức nào, và những kỹ thuật nào (độ phân giải đầu vào, cắt ô, fine-tune, nhánh phát hiện P2) giúp được bao nhiêu, đặc biệt với người dưới 16 px?
-- **RQ2, tốc độ trên thiết bị biên:** cấu hình nào đạt tần số xử lý cần thiết (khoảng 2 khung mỗi giây) mà giữ được recall cao nhất?
-- **RQ3, hệ thống:** khi ghép phát hiện qua nhiều khung để xác nhận rồi gửi cảnh báo qua mạng chập chờn, hệ thống báo nhầm bao nhiêu, bỏ sót bao nhiêu, cảnh báo tới trạm sau bao lâu; cách xác nhận nào chịu được sai số GPS và chuyển động của camera?
+#### RQ1. Nhìn thấy người nhỏ trong cảnh lũ không? (độ chính xác)
+
+Phát hiện người nhỏ trong ảnh UAV vùng lũ chính xác tới mức nào, và những kỹ thuật nào (độ phân giải đầu vào, cắt ô, tinh chỉnh, nhánh phát hiện P2, thu nhỏ theo độ cao bay) giúp được bao nhiêu, đặc biệt với người dưới 16 px?
+
+| Mã | Câu hỏi con | Trả lời bằng | Khâu | Trạng thái | Nguồn |
+|---|---|---|---|---|---|
+| RQ1a | Người nhỏ tới đâu thì bị bỏ sót? | Recall theo nhóm kích thước; khảo sát recall theo số pixel trên người (E6) | Phát hiện người | Có trên VisDrone và SeaDronesSee (E6 thử); tập lũ chờ khoá | `visdrone_E2.md`, `e6_sds_pilot.md` |
+| RQ1b | Dữ liệu huấn luyện nào giúp: ảnh drone đô thị, người dưới nước, ảnh thảm hoạ ghép người? | So E2, E2c, E2e trên cùng các tập | Phát hiện người | Có (E2, E2c); E2e chờ phiên 2 | `visdrone_E2.md`, `E2c.md`, `E2e.md` |
+| RQ1c | Cắt ô và nhánh phát hiện P2 giúp người nhỏ bao nhiêu? | Có và không cắt ô (E4); có và không nhánh P2 (E3) | Phát hiện người | Có | `visdrone_baseline.md`, `visdrone_tiled_vs_sahi.md`, `E3.md` |
+| RQ1d | Thu nhỏ theo độ cao bay giúp bao nhiêu? | Cắt ô có và không thu nhỏ trên SeaDronesSee 4K (có độ cao thật) | Phát hiện người | Có, sơ bộ (một seed, một tập) | `scale_by_altitude.md` |
+| RQ1e | Nhiễu riêng của cảnh lũ (loá, vật trôi, nhoè, thời tiết) làm mô hình kém đi bao nhiêu? | Recall theo thẻ ảnh trên tập lũ | Phát hiện người | Chờ tập lũ | `LABELING.md` |
+| RQ1f | Mô hình học trên ảnh đô thị khô và biển dùng được cho cảnh lũ tới đâu? | So kết quả cùng mô hình trên VisDrone, SeaDronesSee và tập lũ | Dữ liệu và cách đánh giá | Chờ tập lũ | `sds_det.md`, `flood_truoc_khoa.md` |
+
+#### RQ2. Máy nhỏ trên drone chạy kịp không? (tốc độ trên thiết bị biên)
+
+Cấu hình nào đạt tần số xử lý cần thiết (khoảng 2 khung mỗi giây) mà giữ được recall cao nhất?
+
+| Mã | Câu hỏi con | Trả lời bằng | Khâu | Trạng thái | Nguồn |
+|---|---|---|---|---|---|
+| RQ2a | Nén mô hình (FP16, INT8) nhanh thêm bao nhiêu và mất bao nhiêu độ chính xác, nhất là với người nhỏ? | Đo trên Kaggle T4 (TensorRT) | Chạy trên thiết bị biên | Chờ chạy | `TECHNICAL.md` |
+| RQ2b | Cấu hình nào tốt nhất, tức không cấu hình nào khác vừa nhanh hơn vừa chính xác hơn? | Bảng recall theo FPS của RQ2 | Chạy trên thiết bị biên | Chờ chạy | `TECHNICAL.md` |
+| RQ2c | Thiết bị yếu (Orin Nano) theo kịp tần số cần thiết không; thu nhỏ theo độ cao giúp bao nhiêu? | Giả lập thời gian thiết bị, hiệu chỉnh từ số đo T4 (ước lượng) | Chạy trên thiết bị biên | Có công cụ, chờ hiệu chỉnh từ RQ2 | `TECHNICAL.md`, `DEMO_BAO_VE.md` |
+
+#### RQ3. Hệ thống báo đúng về trạm không? (hệ thống)
+
+Khi ghép phát hiện qua nhiều khung để xác nhận rồi gửi cảnh báo qua mạng chập chờn, hệ thống báo nhầm bao nhiêu, bỏ sót bao nhiêu, cảnh báo tới trạm sau bao lâu; cách xác nhận nào chịu được sai số GPS và chuyển động của camera?
+
+| Mã | Câu hỏi con | Trả lời bằng | Khâu | Trạng thái | Nguồn |
+|---|---|---|---|---|---|
+| RQ3a | Bao nhiêu khung mỗi giây là đủ, và thay đổi theo độ cao, vận tốc ra sao? | Mô phỏng tần số theo độ cao | Camera và lấy khung | Có, mô phỏng | `rq3_adaptive.md`, `rq3_altitude.md`, `rq3_altprofile.md` |
+| RQ3b | Gom theo toạ độ mặt đất hay theo dõi trên ảnh (ByteTrack) tốt hơn khi xử lý ít khung? | Video thật SeaDronesSee có telemetry | Xác nhận | Có, sơ bộ (ba đoạn video) | `sds_mot_confirm.md`, `rq3_cmc_cause.md` |
+| RQ3c | Sai số GPS và độ cao làm vị trí cảnh báo lệch bao nhiêu? | Mô hình lan truyền sai số, mô phỏng | Định vị | Có công cụ, chưa có bảng tổng hợp | `TECHNICAL.md` |
+| RQ3d | Mất sóng làm cảnh báo tới trễ bao lâu, có mất cảnh báo nào không? | Giả lập mạng (mất gói, mất sóng) | Gửi cảnh báo | Có công cụ, chưa có bảng tổng hợp | `TECHNICAL.md` |
+| RQ3e | Gộp cảnh báo thành sự cố bớt được bao nhiêu cảnh báo lặp? | Gộp theo bán kính ở trạm mặt đất | Trạm mặt đất và bản đồ | Có | `alert_memory.md` |
+
+#### Luận điểm xuyên suốt
+
+**Dữ liệu bay sẵn có của drone (độ cao, GPS, hướng) giúp ở cả ba khâu**: chọn cỡ ảnh khi phát hiện (RQ1d), giảm khối lượng tính để máy yếu theo kịp (RQ2c), và xác nhận người khi chỉ xử lý vài khung mỗi giây (RQ3b). Đây không phải câu hỏi thứ tư mà là sợi chỉ nối ba câu hỏi; mỗi phần của luận điểm được trả lời bằng câu hỏi con ghi trong ngoặc.
 
 ### 1.4. Đóng góp dự kiến
 
-1. Đánh giá phát hiện người **theo nhóm kích thước** (dưới 8, 8–16, 16–32, trên 32 px), có khoảng tin cậy, trên một **tập test lũ tự gán nhãn** (hiện chưa có bộ dữ liệu công khai nào chụp người trong lũ từ UAV có nhãn sẵn).
-2. Một pipeline hoàn chỉnh từ video tới cảnh báo trên bản đồ, mã nguồn mở, kiểm thử được.
-3. Kết quả về **xác nhận nhiều khung ở tần số khung thấp**: chỉ ra vì sao tracking thông dụng (ByteTrack) gãy khi UAV bay nhanh và xử lý ít khung, và cách gom theo toạ độ mặt đất khắc phục (mục 3.9).
-4. *(Quyết định #13, chốt 4/11.)* **Chọn thang ảnh theo độ cao bay**: dùng telemetry ước lượng người sẽ to bao nhiêu pixel rồi thu nhỏ khung trước khi phát hiện, để mô hình fine-tune luôn nhận người ở cỡ nó mạnh nhất. Đánh giá trên SeaDronesSee (`scale_by_altitude.md`) và trong mô phỏng RQ3; không đánh giá được trên tập lũ vì video lũ không có độ cao bay.
+*(Đề xuất 6/11, quyết định #16, chờ cô; bản bốn đóng góp trước đó xem lịch sử git của file này.)*
+
+1. **Tập đánh giá ảnh lũ từ UAV và cách đánh giá theo cỡ người**: 188 khung tự gán nhãn từ 9 nguồn (`flood_truoc_khoa.md`), kết quả chia theo nhóm kích thước (dưới 8, 8–16, 16–32, trên 32 px), khoảng tin cậy lấy mẫu theo video. Chưa có bộ công khai nào chụp người trong lũ từ UAV có nhãn sẵn; tập nhỏ là giới hạn phải ghi rõ.
+2. **Thu nhỏ theo độ cao bay**: dùng độ cao ước lượng người sẽ to bao nhiêu pixel rồi thu nhỏ khung trước khi phát hiện, vừa đưa người về cỡ mô hình làm tốt (RQ1d), vừa giảm số ô cần chạy trên máy yếu (RQ2c). Đánh giá trên SeaDronesSee và mô phỏng; không đánh giá được trên tập lũ vì video lũ không có độ cao bay (quyết định #13).
+3. **Xác nhận theo toạ độ mặt đất khi xử lý ít khung**: chỉ ra vì sao theo dõi thông dụng (ByteTrack) gãy khi UAV xử lý ít khung mỗi giây, và cách gom theo toạ độ mặt đất khắc phục (RQ3b, mục 3.9).
+
+**Hiện thực hoá** (sản phẩm kỹ thuật, không tính là đóng góp khoa học): hệ thống hoàn chỉnh từ video tới cảnh báo trên bản đồ, mã nguồn mở có kiểm thử; giả lập thời gian thiết bị biên; demo bảo vệ chạy không cần GPU và Internet.
 
 ---
 
@@ -442,7 +480,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`); quét độ cao với recall theo cỡ người (`rq3_altitude.md`) |
 | 12. RQ2 | Mã xong (2/11): xuất TensorRT FP16/INT8, chấm độ chính xác, đo cả pipeline, bảng recall theo FPS; chạy thử phần PyTorch trên máy cá nhân; **chưa chạy trên Kaggle T4**; giả lập thời gian thiết bị biên (`--device-profile`, TECHNICAL 14.6), hồ sơ chưa hiệu chỉnh |
 | Giao diện thử nghiệm | Xong 3/11 (`python -m console`): xem lỗi từng ảnh (bỏ sót, báo nhầm theo nhóm kích thước và thẻ), chạy thử pipeline, trạm mặt đất; dùng cho phân tích lỗi chương 5 và demo |
-| Hiểu dự án | Xong 5/11: tab đầu của `python -m console`, nền tối: bản đồ dự án (ví dụ đời thường, kết quả kèm thanh so sánh, 19 câu hỏi tự kiểm tra), đọc tài liệu có giải thích thuật ngữ khi di chuột (`docs/THUAT_NGU.md`), thẻ ghi nhớ, tìm kiếm, xem mã |
+| Hiểu dự án | Xong 5/11: tab đầu của `python -m console`, nền tối: bản đồ dự án (ví dụ đời thường, kết quả kèm thanh so sánh, 19 câu hỏi tự kiểm tra), đọc tài liệu có giải thích thuật ngữ khi di chuột (`docs/THUAT_NGU.md`), câu hỏi nghiên cứu và câu hỏi con kèm trạng thái (mục 1.3), thẻ ghi nhớ, tìm kiếm, xem mã |
 | Demo bảo vệ | Xong 4/11 (`scripts/demo_bao_ve.sh`): phát lại SDS v21 theo thời gian thực với thiết bị giả lập, không cần GPU hay internet; video so hai thiết bị |
 | 13. Luận văn | Đã báo cáo ý tưởng thuật toán với cô 23/10 (slide 22 trang) |
 

@@ -351,7 +351,8 @@ function renderMap(keepDetail) {
       el("div", {},
         el("h2", { textContent: "FloodEye: từ camera trên drone tới đội cứu hộ" }),
         el("p", { textContent: "Đồ án trả lời ba câu hỏi theo đường đi của dữ liệu. Bấm một câu hỏi để thấy khâu nào trả lời nó; bấm một khâu để xem nó làm gì, vì sao, kết quả đã có, file chứa nó và tự kiểm tra." }),
-        el("div", { className: "rqchips" }, ...RQS.map(([k, v]) => el("button", { className: "rqchip" + (rqFilter === k ? " on" : ""), textContent: `${k}: ${v}`, onclick: () => { rqFilter = rqFilter === k ? null : k; renderMap(true); } })))),
+        el("div", { className: "rqchips" }, ...RQS.map(([k, v]) => el("button", { className: "rqchip" + (rqFilter === k ? " on" : ""), textContent: `${k}: ${v}`, onclick: () => { rqFilter = rqFilter === k ? null : k; renderMap(true); } })),
+          el("button", { className: "rqchip more", onclick: async () => { showView("lQuest"); await renderQuestions(rqFilter ? "RQ" + rqFilter.slice(-1) : null); } }, "Xem các câu hỏi con →"))),
       ring()),
     el("div", { className: "mapwrap" },
       el("div", { className: "sectionlabel", textContent: "Đường đi của dữ liệu" }),
@@ -496,6 +497,52 @@ async function search(q) {
       el("small", { textContent: `${h.d.title} › ${h.heading}` }), show(h.line))));
 }
 
+// ---------------- Câu hỏi nghiên cứu (TONG_QUAN mục 1.3) ----------------
+const RQ_COLORS = { RQ1: "var(--blue)", RQ2: "var(--amber)", RQ3: "var(--violet)" };
+const STATUS = { done: "Đã có câu trả lời", tool: "Có công cụ, chưa có bảng", wait: "Đang chờ" };
+function goStage(name) {
+  const s = allStages.find(x => x.title.replace(/^\d+\.\s*/, "") === name);
+  if (!s) return;
+  showView("lMap"); showStage(s);
+}
+async function renderQuestions(focus) {
+  const data = await getJson("/api/learn/questions");
+  const count = (kind) => data.questions.reduce((n, q) => n + q.subs.filter(s => s.kind === kind).length, 0);
+  const total = data.questions.reduce((n, q) => n + q.subs.length, 0);
+  const card = (q) => {
+    const done = q.subs.filter(s => s.kind === "done").length;
+    return el("section", { className: "rqcard", id: "rq-" + q.id, style: { "--c": RQ_COLORS[q.id] || "var(--blue)" } },
+      el("div", { className: "rqhead" },
+        el("span", { className: "rqid noterm", textContent: q.id }),
+        el("div", {}, el("h3", { textContent: q.title.replace(/^RQ\d\.\s*/, "") }),
+          el("p", { className: "official" }, el("span", { className: "tag", textContent: "Theo đề cương" }), q.text)),
+        el("div", { className: "rqprog" },
+          el("div", { className: "num", textContent: `${done}/${q.subs.length}` }), el("div", { className: "lbl", textContent: "câu hỏi con đã có câu trả lời" }),
+          el("div", { className: "track" }, el("div", { className: "fill", style: { width: (100 * done / q.subs.length) + "%" } })))),
+      el("div", { className: "subs" }, ...q.subs.map(s => el("div", { className: "sub " + s.kind },
+        el("span", { className: "sid", textContent: s.id }),
+        el("div", { className: "sbody" },
+          el("div", { className: "sq", textContent: s.question }),
+          el("div", { className: "show" }, el("b", { textContent: "Trả lời bằng: " }), s.how),
+          el("div", { className: "smeta noterm" },
+            el("button", { className: "stagechip", title: "Mở khâu này trên bản đồ", onclick: () => goStage(s.stage) }, icon("map"), s.stage),
+            ...s.sources.map(src => src.doc ? el("a", { className: "lk", textContent: src.name, dataset: { doc: src.doc } }) : el("span", { textContent: src.name })))),
+        el("span", { className: "pill noterm " + s.kind, title: STATUS[s.kind] }, s.status)))));
+  };
+  $("lQuest").replaceChildren(
+    el("div", { className: "qhero" },
+      el("div", {}, el("h2", { textContent: "Ba câu hỏi nghiên cứu và các câu hỏi con" }),
+        el("p", { textContent: "Ba câu hỏi chính theo đề cương. Mỗi câu chia thành các câu hỏi con đo được, ghi rõ trả lời bằng phép đo nào, thuộc khâu nào trên bản đồ, đã có kết quả chưa. Đọc từ TONG_QUAN mục 1.3 (đề xuất 6/11, chờ cô)." })),
+      el("div", { className: "qstat" },
+        ...Object.entries(STATUS).map(([k, v]) => el("div", { className: "qs " + k }, el("b", { textContent: count(k) }), el("span", { textContent: v }))),
+        el("div", { className: "qs" }, el("b", { textContent: total }), el("span", { textContent: "câu hỏi con" })))),
+    el("div", { className: "qwrap" },
+      el("div", { className: "thesis" }, icon("bulb"), el("div", {}, el("div", { className: "tt", textContent: "Luận điểm xuyên suốt" }), el("p", { innerHTML: inline(data.thesis, "docs/x.md") }))),
+      ...data.questions.map(card)));
+  markTerms($("lQuest"));
+  if (focus) $("rq-" + focus)?.scrollIntoView({ block: "start" });
+}
+
 function showView(id) {
   document.querySelectorAll(".lview").forEach(v => v.classList.toggle("on", v.id === id));
   document.querySelectorAll(".lnav .nb[data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === id));
@@ -520,6 +567,7 @@ async function init() {
       navBtn("lMap", "map", "Bản đồ dự án", () => { showView("lMap"); }),
       navBtn("lRead", "book", "Đọc tài liệu", () => { if (!currentDoc) openDoc(docs[0].path); else showView("lRead"); }),
       navBtn("lGloss", "gloss", "Thuật ngữ", async () => { await loadGlossary(); renderGlossary($("lFilter").value); showView("lGloss"); }),
+      navBtn("lQuest", "quiz", "Câu hỏi", () => { showView("lQuest"); renderQuestions(); }),
       navBtn("lCards", "cards", "Thẻ ghi nhớ", () => { renderCards(); showView("lCards"); }),
       el("div", { className: "search" }, icon("search"),
         el("input", { id: "lFilter", type: "search", placeholder: "Tìm trong mọi tài liệu, Enter", ariaLabel: "Tìm trong mọi tài liệu",
@@ -539,6 +587,7 @@ async function init() {
           el("button", { className: "totop", id: "lTop", title: "Lên đầu trang", ariaLabel: "Lên đầu trang", onclick: () => ($("lDoc").scrollTop = 0) }, icon("up"))),
         el("div", { className: "toc", id: "lToc" })),
       el("div", { className: "lview", id: "lGloss" }),
+      el("div", { className: "lview", id: "lQuest" }),
       el("div", { className: "lview", id: "lCards" }),
       el("div", { className: "lview", id: "lSearch" }),
       el("div", { className: "lview", id: "lSrc" })),

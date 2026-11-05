@@ -118,3 +118,17 @@ def test_hieu_du_an_chi_doc_ma_nguon_va_anh_tai_lieu() -> None:
     assert client.get("/api/learn/asset", params={"path": "docs/results/visdrone_E0_E1_E4.png"}).status_code == 200
     assert client.get("/api/learn/asset", params={"path": "edge/main.py"}).status_code == 404
     assert client.get("/static/learn.js").status_code == 200 and client.get("/static/x.js").status_code == 404
+
+
+def test_cau_hoi_nghien_cuu_doc_tu_tong_quan() -> None:
+    from console.learn import SIDE_TOPICS, STAGES, research_questions
+
+    data = TestClient(create_app(None)).get("/api/learn/questions").json()
+    assert [q["id"] for q in data["questions"]] == ["RQ1", "RQ2", "RQ3"] and "Dữ liệu bay" in data["thesis"]
+    stages = {s["title"].split(". ", 1)[-1] for s in STAGES + SIDE_TOPICS}
+    for q in research_questions()["questions"]:
+        assert q["text"] and q["subs"], q["id"]
+        for sub in q["subs"]:
+            # Mỗi câu hỏi con trỏ tới một khâu có trên bản đồ và tới file nguồn có thật.
+            assert sub["id"].startswith(q["id"]) and sub["stage"] in stages, sub["id"]
+            assert sub["kind"] in {"done", "tool", "wait"} and all(s["doc"] for s in sub["sources"]), sub["id"]

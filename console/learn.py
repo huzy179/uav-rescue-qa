@@ -12,6 +12,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 GLOSSARY = ROOT / "docs" / "THUAT_NGU.md"
+OVERVIEW = ROOT / "docs" / "TONG_QUAN.md"
 # Thứ tự hiện trong danh sách tài liệu: đọc từ tổng quan tới chi tiết.
 DOC_ORDER = [
     "docs/TONG_QUAN.md", "docs/THUAT_TOAN.md", "docs/THUAT_NGU.md", "docs/ROADMAP.md", "docs/TECHNICAL.md",
@@ -200,6 +201,63 @@ def project_map() -> dict[str, Any]:
         }
 
     return {"stages": [out(s) for s in STAGES], "side": [out(s) for s in SIDE_TOPICS]}
+
+
+def _source_path(name: str) -> str | None:
+    """Tên file nhắc trong bảng (`E2c.md`) thành đường dẫn tài liệu: docs/results/ trước, rồi docs/."""
+    for base in ("docs/results", "docs"):
+        if (ROOT / base / name).is_file():
+            return f"{base}/{name}"
+    return None
+
+
+def _status_kind(status: str) -> str:
+    """Loại trạng thái để tô màu: đã có, có công cụ nhưng chưa có bảng, đang chờ."""
+    if status.startswith("Có công cụ"):
+        return "tool"
+    return "done" if status.startswith("Có") else "wait"
+
+
+def research_questions(path: Path = OVERVIEW) -> dict[str, Any]:
+    """Ba câu hỏi nghiên cứu, câu hỏi con và luận điểm xuyên suốt, đọc từ mục 1.3 của TONG_QUAN.md.
+
+    Mỗi câu hỏi là một tiêu đề "#### RQn. …", đoạn ngay sau là câu chữ theo đề cương, rồi bảng câu hỏi con với các cột
+    Mã, Câu hỏi con, Trả lời bằng, Khâu, Trạng thái, Nguồn. Mục "#### Luận điểm xuyên suốt" là một đoạn văn.
+    """
+    text = path.read_text(encoding="utf-8")
+    start, end = text.index("### 1.3."), text.index("### 1.4.")
+    questions: list[dict[str, Any]] = []
+    thesis, current, header, in_thesis = "", None, None, False
+    for line in text[start:end].splitlines():
+        if line.startswith("#### "):
+            title = line[5:].strip()
+            in_thesis = title.startswith("Luận điểm")
+            current = None if in_thesis else {"id": title.split(".")[0], "title": title, "text": "", "subs": []}
+            if current:
+                questions.append(current)
+            header = None
+            continue
+        if in_thesis and line.strip():
+            thesis += (" " if thesis else "") + line.strip()
+            continue
+        if current is None:
+            continue
+        if line.startswith("|"):
+            cells = _cells(line)
+            if header is None:
+                header = [c.lower() for c in cells]
+            elif not set(line.replace("|", "").strip()) <= {"-", " "}:
+                row = dict(zip(header, cells))
+                sources = [n for n in re.findall(r"`([^`]+)`", row.get("nguồn", ""))]
+                current["subs"].append({
+                    "id": row.get("mã", ""), "question": row.get("câu hỏi con", ""), "how": row.get("trả lời bằng", ""),
+                    "stage": row.get("khâu", ""), "status": row.get("trạng thái", ""),
+                    "kind": _status_kind(row.get("trạng thái", "")),
+                    "sources": [{"name": n, "doc": _source_path(n)} for n in sources],
+                })
+        elif line.strip() and not current["subs"] and header is None:
+            current["text"] += (" " if current["text"] else "") + line.strip()
+    return {"questions": questions, "thesis": thesis}
 
 
 def list_docs() -> list[dict[str, str]]:

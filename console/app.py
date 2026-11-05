@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from fastapi.responses import FileResponse, HTMLResponse
 
 from console.errors import load_datasets, image_errors, list_runs, short_side, summarize
-from console.learn import asset_path, list_docs, load_glossary, project_map, read_doc, read_source
+from console.learn import asset_path, list_docs, load_glossary, project_map, read_doc, read_source, research_questions
 from console.report import ROOT as REPORTS, build_report
 from console.runs import RunManager, RunRequest, list_sources
 from eval.metrics import SIZE_RANGES
@@ -60,6 +60,11 @@ def create_app(ground_url: str | None = None, runs_root: Path | None = None, rep
     @app.get("/api/learn/map")
     def learn_map() -> dict[str, Any]:
         return project_map()
+
+    @app.get("/api/learn/questions")
+    def learn_questions() -> dict[str, Any]:
+        """Câu hỏi nghiên cứu và câu hỏi con, đọc lại TONG_QUAN.md mục 1.3 mỗi lần."""
+        return research_questions()
 
     @app.get("/api/learn/glossary")
     def learn_glossary() -> list[dict[str, Any]]:

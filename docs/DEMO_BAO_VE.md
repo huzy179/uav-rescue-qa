@@ -35,6 +35,7 @@ Mục tiêu: hội đồng thấy bài toán khó ở đâu, hệ thống chạy
 | Câu hỏi | Trả lời ngắn | Tài liệu |
 |---|---|---|
 | Không có Jetson thì sao nói là thiết bị biên? | Đo tương đối trên T4 (RQ2); thời gian Jetson ước lượng từ cùng một bảng benchmark công bố, ghi rõ giả định và đặt ở bảng riêng | TECHNICAL 14.4, 14.6 |
+| Ba câu hỏi nghiên cứu có ít không? | Ba câu là mức thường gặp ở luận văn thạc sĩ; mỗi câu chia thành các câu hỏi con đo được (14 câu), nối bằng luận điểm dữ liệu bay giúp cả ba khâu | TONG_QUAN 1.3 |
 | Tập test lũ 188 khung có đủ không? | Khoảng tin cậy bootstrap theo video, 9 cụm; khoảng rộng, đã ghi là giới hạn | `docs/results/flood_truoc_khoa.md`, TECHNICAL 15.3 |
 | Telemetry trong demo là thật hay giả? | Thật (metadata drone SeaDronesSee); video lũ YouTube không có telemetry, nên thu nhỏ theo độ cao chỉ đánh giá trên SDS | ROADMAP quyết định #13 |
 | Vì sao không dùng ByteTrack? | Ở 2 khung/giây box hai khung liền nhau gần như không chồng nhau; gom theo vị trí mặt đất xác nhận được nhiều người hơn trên video thật | `docs/results/sds_mot_confirm.md` |

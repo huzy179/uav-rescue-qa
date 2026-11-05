@@ -258,3 +258,53 @@ code .term, .term code { color: inherit; }
 body.learn-on header { overflow-x: auto; } body.learn-on .tab, body.learn-on header h1 { white-space: nowrap; }
 #page-learn .dhead .ico svg.i { width: 24px; height: 24px; }
 #page-learn .stage .ico svg.i { width: 20px; height: 20px; }
+
+/* ---------- Câu hỏi nghiên cứu ---------- */
+#lQuest { flex-direction: column; overflow-y: auto; }
+.qhero { display: flex; gap: 28px; align-items: center; padding: 26px 40px; background: var(--hero); color: #fff; border-bottom: 1px solid var(--line); }
+.qhero h2 { margin: 0 0 6px; font-size: 26px; font-weight: 600; }
+.qhero p { margin: 0; color: #cfe3da; max-width: 760px; line-height: 1.55; }
+.qstat { margin-left: auto; display: grid; grid-template-columns: repeat(2, minmax(110px, 1fr)); gap: 8px; flex: none; }
+.qs { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: 8px 12px; }
+.qs b { display: block; font-size: 20px; color: #fff; }
+.qs span { font-size: 12px; color: #cfe3da; }
+.qs.done b { color: #34e0b4; } .qs.tool b { color: #b693ff; } .qs.wait b { color: #f5b347; }
+.qwrap { padding: 24px 40px 60px; max-width: 1180px; }
+.thesis { display: flex; gap: 14px; align-items: flex-start; padding: 16px 20px; margin-bottom: 22px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--mint) 40%, var(--line)); background: color-mix(in srgb, var(--mint) 9%, var(--panel)); }
+.thesis svg.i { color: var(--mint); margin-top: 3px; }
+.thesis .tt { font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--mint); margin-bottom: 4px; }
+.thesis p { margin: 0; line-height: 1.65; font-size: 15px; color: var(--text); }
+.thesis b { color: var(--ink); }
+.rqcard { --c: var(--blue); margin-bottom: 22px; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+.rqhead { display: flex; gap: 16px; align-items: flex-start; padding: 20px 24px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 14%, var(--panel)), var(--panel) 75%); border-bottom: 1px solid var(--line); }
+.rqid { flex: none; font-weight: 700; font-size: 15px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); border-radius: 10px; padding: 8px 10px; }
+.rqhead h3 { margin: 2px 0 6px; font-size: 19px; color: var(--ink); font-weight: 600; }
+.official { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.official .tag { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--raised2); color: var(--muted); border: 1px solid var(--line); }
+.rqprog { flex: none; width: 150px; margin-left: auto; text-align: right; }
+.rqprog .num { font-size: 22px; font-weight: 700; color: var(--c); }
+.rqprog .lbl { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.rqprog .track { height: 6px; background: var(--line-soft); border-radius: 9999px; overflow: hidden; }
+.rqprog .fill { height: 100%; background: var(--c); border-radius: 9999px; }
+.subs { display: grid; }
+.sub { display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: start; padding: 14px 24px; border-bottom: 1px solid var(--line-soft); }
+.sub:last-child { border-bottom: 0; }
+.sub:hover { background: var(--raised); }
+.sid { font-family: "Geist Mono", Consolas, monospace; font-size: 13px; font-weight: 600; color: var(--c); padding-top: 2px; }
+.sq { font-size: 15px; font-weight: 500; color: var(--ink); line-height: 1.5; }
+.show { margin-top: 4px; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+.show b { color: var(--text); font-weight: 600; }
+.smeta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-top: 8px; font-size: 12.5px; }
+.stagechip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); background: var(--raised); color: var(--text); border-radius: 9999px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.stagechip:hover { border-color: var(--c); color: var(--ink); }
+.stagechip svg.i { width: 13px; height: 13px; }
+.pill { max-width: 240px; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; line-height: 1.35; text-align: center; border: 1px solid transparent; }
+.pill.done { background: color-mix(in srgb, var(--mint) 16%, transparent); color: var(--mint); border-color: color-mix(in srgb, var(--mint) 35%, transparent); }
+.pill.tool { background: color-mix(in srgb, var(--violet) 16%, transparent); color: var(--violet); border-color: color-mix(in srgb, var(--violet) 35%, transparent); }
+.pill.wait { background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--amber); border-color: color-mix(in srgb, var(--amber) 35%, transparent); }
+.rqchip.more { border-style: dashed; }
+@media (max-width: 860px) {
+  .qhero { flex-direction: column; align-items: flex-start; padding: 20px 16px; } .qstat { margin: 0; } .qwrap { padding: 16px; }
+  .rqhead { flex-wrap: wrap; padding: 16px; } .rqprog { width: 100%; text-align: left; margin: 0; }
+  .sub { grid-template-columns: 1fr; padding: 12px 16px; } .pill { justify-self: start; }
+}
