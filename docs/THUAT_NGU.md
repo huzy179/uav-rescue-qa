@@ -95,7 +95,7 @@ Chỉ dự án này dùng. Trong luận văn, bảng kết quả ghi tên mô t�
 | E2b | Tinh chỉnh trên VisDrone + C2A | Có cấu hình, không chạy |
 | E2c | Tinh chỉnh trên VisDrone + AFO (người dưới nước) | Xong, mô hình chính |
 | E2d | Như E2c, thêm HydroVigilance | Có cấu hình |
-| E2e | Như E2c, thêm C2A (thêm người cỡ to) | Đang chạy trên Kaggle |
+| E2e | Như E2c, thêm C2A (thêm người cỡ to) | Phiên 1 xong 33/55 epoch, chờ phiên 2 |
 | E3 | Như E2c, thêm nhánh phát hiện P2 | Xong, không đáng chi phí |
 | E4 | Mô hình chính + cắt ô (SAHI hoặc bộ cắt ô riêng `E4tiled`) | Xong trên VisDrone và SeaDronesSee |
 | E5 | Như E2c nhưng dùng YOLO11s | Có cấu hình |

@@ -34,6 +34,8 @@ Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ 
 
 Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặc một thí nghiệm cần.
 
+**Cập nhật 6/11:** E2e phiên 1 xong trên Kaggle: 33/55 epoch, 19,1 phút mỗi epoch (gần gấp đôi E2c), mAP50 val ngang E2c ở cùng epoch (`docs/results/E2e.md`). Phiên 2 (22 epoch, khoảng 7 giờ) chạy tiếp bằng `MODE = "resume"`.
+
 **Cập nhật 5/11:**
 - **Thuật ngữ chuẩn hoá:** `docs/THUAT_NGU.md` là bảng chuẩn duy nhất (thuật ngữ ngành, khái niệm dự án đặt tên tiếng Việt, ký hiệu nội bộ, quy tắc dùng trong luận văn); TECHNICAL mục 18 trỏ sang.
 - **Tab "Hiểu dự án"** trong `python -m console`: bản đồ dự án 6 khâu (làm gì, vì sao, kết quả kèm file nguồn, file mã), đọc mọi tài liệu với giải thích thuật ngữ khi di chuột, tìm kiếm, xem mã.
@@ -260,7 +262,7 @@ Notebook chỉ làm ba việc: clone kho mã ở một commit cố định, cài
 |---|---|---|
 | E0 | YOLO26s COCO, 640 | Đã có |
 | E1 | 1280 | Đã có |
-| E2 | Fine-tune (VisDrone; FinlandProper tạm bỏ) | Xong: E2 (VisDrone), **E2c (+ AFO), mô hình chính**; E2d (+ HydroVigilance) có cấu hình; E2e (E2c + C2A) có cấu hình, chạy tuần 4/11 (#14) |
+| E2 | Fine-tune (VisDrone; FinlandProper tạm bỏ) | Xong: E2 (VisDrone), **E2c (+ AFO), mô hình chính**; E2d (+ HydroVigilance) có cấu hình; E2e (E2c + C2A) phiên 1 xong 33/55 epoch, phiên 2 chờ chạy (#14, `E2e.md`) |
 | E3 | E2c + đầu P2 | Xong 28/10, không đáng chi phí (`docs/results/E3.md`) |
 | E4 | E2c + cắt ô | Xong trên VisDrone và SDS; thêm biến thể thu nhỏ theo độ cao (`--target-person-px`), chỉ đánh giá trên SDS (#13); trên tập lũ chờ nhãn, chỉ cắt ô |
 | E5 | E2c với YOLO11s | Có cấu hình (`E5_s0.yaml`, `E5_<tập>.yaml`), chưa huấn luyện |
