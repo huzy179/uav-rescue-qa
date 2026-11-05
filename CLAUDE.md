@@ -9,6 +9,7 @@
 - [docs/THUAT_TOAN.md](docs/THUAT_TOAN.md): thuật toán trên UAV từng bước, kèm ví dụ tính tay.
 - [docs/TECHNICAL.md](docs/TECHNICAL.md): giải thích kỹ thuật. Mỗi mục gắn nhãn `[Đã có]` hoặc `[Thiết kế]`; khi cài xong một phần thì đổi nhãn của mục đó.
 - [docs/THUAT_NGU.md](docs/THUAT_NGU.md): thuật ngữ và ký hiệu chuẩn; tài liệu mới dùng đúng tên trong đó.
+- [docs/DAN_Y_LUAN_VAN.md](docs/DAN_Y_LUAN_VAN.md): dàn ý sáu chương, mỗi mục dùng kết quả nào, đã có hay còn chờ.
 - [docs/DEMO_BAO_VE.md](docs/DEMO_BAO_VE.md): kịch bản demo bảo vệ, chuẩn bị, câu hỏi dễ gặp.
 - [README.md](README.md): cài đặt, dữ liệu, lệnh chạy, định dạng file kết quả.
 - [docs/LABELING.md](docs/LABELING.md): gán nhãn và khoá tập test lũ. [docs/results/](docs/results/): mỗi kết quả đã đo một file.

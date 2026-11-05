@@ -34,6 +34,8 @@ Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ 
 
 Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặc một thí nghiệm cần.
 
+**Cập nhật 6/11 (chiều):** E2e phiên 2 lần đầu lỗi ngay ô huấn luyện (Input chưa có `last_resume.pt`), không mất kết quả phiên 1; chạy lại bằng dataset `floodeye-e2e-resume` (`docs/results/E2e.md`). Thêm dàn ý luận văn (`docs/DAN_Y_LUAN_VAN.md`).
+
 **Cập nhật 6/11:** E2e phiên 1 xong trên Kaggle: 33/55 epoch, 19,1 phút mỗi epoch (E2c: 10,0 phút), mAP50 val ngang E2c ở cùng epoch (`docs/results/E2e.md`). Phiên 2 (22 epoch, khoảng 7 giờ) chạy tiếp bằng `MODE = "resume"`.
 
 **Cập nhật 5/11:**

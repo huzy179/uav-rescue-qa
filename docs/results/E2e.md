@@ -33,4 +33,4 @@ E2c sau 55 epoch: 0,782. Số đọc từ cột `metrics/mAP50(B)` của hai fil
 
 ## Chạy tiếp (phiên 2)
 
-Notebook `floodeye-train-e2e`: Add Input là Output của chính phiên bản 2 (có `last_resume.pt`), `MODE = "resume"`, `STOP_AFTER = None`, giữ `COMMIT`, `CONFIG`, AFO, C2A. Save & Run All (Commit).
+Lần thử đầu (phiên bản 3 của notebook, 6/11) dừng ở ô huấn luyện vì Input chưa có `last_resume.pt`; phiên bản 3 không có file này, nên gắn "output mới nhất" của notebook sẽ lỗi lại. Cách chạy: tải `runs/train/E2e_s0/weights/last_resume.pt` và `results.csv` lên thành một dataset riêng (`floodeye-e2e-resume`, hai file cùng thư mục để `results.csv` nối tiếp), Add Input dataset đó cùng AFO, C2A; `MODE = "resume"`, `STOP_AFTER = None`, giữ `COMMIT`, `CONFIG`, `EPOCHS = 55`; Save & Run All (Commit).

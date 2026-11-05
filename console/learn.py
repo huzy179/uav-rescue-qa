@@ -16,7 +16,7 @@ OVERVIEW = ROOT / "docs" / "TONG_QUAN.md"
 # Thứ tự hiện trong danh sách tài liệu: đọc từ tổng quan tới chi tiết.
 DOC_ORDER = [
     "docs/TONG_QUAN.md", "docs/THUAT_TOAN.md", "docs/THUAT_NGU.md", "docs/ROADMAP.md", "docs/TECHNICAL.md",
-    "docs/LABELING.md", "docs/DEMO_BAO_VE.md", "README.md",
+    "docs/LABELING.md", "docs/DAN_Y_LUAN_VAN.md", "docs/DEMO_BAO_VE.md", "README.md",
 ]
 SOURCE_DIRS = ("edge", "ground", "shared", "eval", "sim", "scripts", "tools", "training", "console", "configs", "tests")
 SOURCE_SUFFIXES = {".py", ".sh", ".yaml", ".yml", ".html", ".toml", ".md"}
