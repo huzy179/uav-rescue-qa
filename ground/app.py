@@ -52,6 +52,29 @@ def image_media_type(data: bytes) -> str:
     return "image/png" if data.startswith(b"\x89PNG") else "image/jpeg"
 
 
+class TruthPerson(BaseModel):
+    """Một người thật trong lớp đáp án (tools/make_truth_layer.py): khoảng thời gian drone thấy và đường đi trên mặt đất."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: int
+    t_in: float
+    t_out: float
+    track: list[tuple[float, float, float]]  # (t, lat, lon), t tăng dần
+
+
+class TruthLayer(BaseModel):
+    """Lớp đáp án cho demo: chỉ để đối chiếu trực quan trên bản đồ, không thay cho chỉ số trong docs/results."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: str = ""
+    note: str = ""
+    r_match_m: float = 10.0  # sự cố cách người ≤ r_match_m thì coi là tìm thấy người đó (như r_eval của RQ3)
+    tail_s: float = 10.0  # người rời khung quá tail_s mà chưa có sự cố nào thì coi là bỏ sót
+    people: list[TruthPerson]
+
+
 class IncidentUpdate(BaseModel):
     """Người vận hành cập nhật một sự cố: trạng thái và thẻ (dưới nước, trên mái); trường không gửi thì giữ nguyên."""
 
@@ -291,6 +314,20 @@ def create_app(
                 {**item["state"], "age_s": now - item["received"], "track": list(item["track"]), "footprints": list(item["footprints"])}
                 for item in uavs.values()
             ]
+
+    truth: dict[str, Any] = {}
+
+    @app.post("/api/truth")
+    def post_truth(layer: TruthLayer) -> dict[str, int]:
+        """Nạp lớp đáp án (thay lớp cũ)."""
+        truth.clear()
+        truth.update(layer.model_dump())
+        return {"people": len(layer.people)}
+
+    @app.get("/api/truth")
+    def get_truth() -> dict[str, Any]:
+        """Lớp đáp án đã nạp; chưa nạp thì people rỗng."""
+        return truth or {"people": []}
 
     @app.get("/", response_class=HTMLResponse)
     def map_page() -> str:

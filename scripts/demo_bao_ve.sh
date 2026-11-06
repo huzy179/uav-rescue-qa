@@ -30,12 +30,16 @@ case "$CMD" in
     if [ -f "$SCENARIO" ]; then
       # Chuyến bay mô phỏng: sinh ảnh tổng hợp, telemetry và phát hiện giả vào cache; không cần GPU.
       $PY -m sim.make_rq3 --config "$SCENARIO" --output "$CACHE"
+      $PY tools/make_truth_layer.py --rq3 "$CACHE/ground_truth.json" --output "$CACHE/truth_layer.json"
       exit 0
     fi
     # Phát hiện cho mọi khung nguồn (--fps bằng fps nguồn, bỏ --min-views), để lúc phát lại thiết bị nào chọn khung
     # nào cũng có sẵn. Bước này cần mô hình và GPU.
     SRC_FPS=$(sed -n 's/^source_fps: *//p' "$CFG")
     $PY -m edge.main --config "$CFG" --fps "${SRC_FPS:-30}" --min-views 0 --output "$CACHE" --drain-s 0
+    # Lớp đáp án từ nhãn SeaDronesSee của cùng đoạn (thư mục chứa telemetry trong cấu hình), cho nút "Đối chiếu đáp án".
+    SEQ=$(dirname "$(sed -n 's/^telemetry: *//p' "$CFG")")
+    [ -f "$SEQ/truth.json" ] && $PY tools/make_truth_layer.py --sds "$SEQ" --config "$CFG" --output "$CACHE/truth_layer.json"
     ;;
   chay)
     need_cache
@@ -50,6 +54,10 @@ case "$CMD" in
     GROUND_PID=$!
     trap 'kill $GROUND_PID 2>/dev/null' EXIT
     for _ in $(seq 1 40); do curl -s -o /dev/null "http://localhost:$PORT/" && break; sleep 0.25; done
+    # Nạp lớp đáp án nếu có: nút "Đối chiếu đáp án" trên bản đồ (tắt sẵn, bấm để hiện người thật, bỏ sót, báo nhầm).
+    if [ -f "$CACHE/truth_layer.json" ]; then
+      curl -s -X POST -H "Content-Type: application/json" --data @"$CACHE/truth_layer.json" "http://localhost:$PORT/api/truth" > /dev/null
+    fi
     LIVE=8001
     echo "Màn hình điều phối: http://localhost:$PORT/?video=http://localhost:$LIVE/"
     echo "(mở trên trình duyệt, rồi bấm Enter để bắt đầu chuyến bay)"

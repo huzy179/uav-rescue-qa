@@ -86,3 +86,13 @@ def test_trail_fills_coverage_gap_after_outage(tmp_path: Path) -> None:
     assert len(uav["track"]) == 21 and len(uav["footprints"]) == 21
     assert uav["track"][10][0] == tel(10).lat and "trail" not in uav
     assert reporter.unsent == []
+
+
+def test_truth_layer_roundtrip(tmp_path: Path) -> None:
+    client = TestClient(create_app(tmp_path / "g.sqlite"))
+    assert client.get("/api/truth").json() == {"people": []}
+    layer = {"source": "x", "people": [{"id": 3, "t_in": 1.0, "t_out": 5.0, "track": [[1.0, 21.0, 105.8], [5.0, 21.0, 105.8001]]}]}
+    assert client.post("/api/truth", json=layer).json() == {"people": 1}
+    got = client.get("/api/truth").json()
+    assert got["people"][0]["id"] == 3 and got["r_match_m"] == 10.0
+    assert client.post("/api/truth", json={"people": [{"id": 1}]}).status_code == 422

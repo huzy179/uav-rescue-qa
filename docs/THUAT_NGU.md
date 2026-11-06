@@ -71,6 +71,7 @@ Luôn kèm tên tiếng Anh khi gặp lần đầu, để hội đồng đối c
 | vùng tìm 95% | 95% search area | Vòng tròn quanh vị trí cảnh báo chứa người thật với xác suất 95%, bán kính 2,448 lần sai số 1σ | Bản đồ trạm vẽ vòng này, không vẽ 1σ |
 | vùng đã quét | covered area | Hợp các vùng mặt đất camera đã nhìn qua trong chuyến bay, tô trên bản đồ trạm; chỗ đã quét mà không có cảnh báo thì khỏi tìm lại | |
 | gói trạng thái | status message, heartbeat | Gói nhỏ drone gửi mỗi giây: vị trí, vùng camera nhìn, cảnh báo đang chờ; trạm dựa vào đó biết drone mất liên lạc | Không qua hàng đợi gửi, hỏng thì bỏ |
+| lớp đáp án | ground-truth overlay | Người thật hiện trên bản đồ demo để đối chiếu: được cảnh báo riêng, nằm trong vùng tìm, bỏ sót | Minh hoạ; số chính thức ở `docs/results/` |
 | ảnh tổng hợp | synthetic imagery | Ảnh vẽ bằng máy cho chuyến bay mô phỏng (nước, mái nhà, người), chỉ để trình bày | Không dùng để đo detector |
 | sự cố | incident | Trạm mặt đất gộp nhiều cảnh báo về cùng một người (gần nhau) thành một sự cố | |
 | giả lập thời gian thiết bị | device timing simulation | Pipeline chạy trên máy này nhưng tính thời gian xử lý theo hồ sơ của Jetson | Kết quả là ước lượng, không phải số đo |

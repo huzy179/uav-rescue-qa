@@ -926,6 +926,17 @@ Hai drone có thể cảnh báo cùng một người. Khi một cảnh báo mớ
 
 Leaflet hiển thị incident theo màu ưu tiên, kèm vòng nét đứt là vùng tìm 95% (mục 8.4), bấm để xem ảnh cắt và lịch sử; bảng bên cạnh hiện FPS, băng thông, số cảnh báo đang chờ của mỗi drone. Ô bản đồ (ảnh vệ tinh và bản đồ đường của Esri; máy chủ ô của OpenStreetMap không trả lời từ mạng của dự án, CARTO đòi khoá API) đi qua `/tiles/<lớp>/<z>/<x>/<y>` của chính trạm. **[Đã có]** Ô đã xem được giữ trên đĩa (`FLOODEYE_TILE_CACHE`, mặc định `runs/ground/tiles`), nên vùng đã xem khi diễn tập vẫn hiện khi mất mạng; ô chưa xem thì hiện nền lưới, điểm sự cố vẫn đọc được. Leaflet 1.9.4 đóng gói trong `ground/static/leaflet/` (giấy phép BSD-2), trang bản đồ không tải gì từ internet. Không tải trước cả vùng: điều khoản của Esri hạn chế tải hàng loạt để dùng ngoại tuyến; triển khai thật cần nguồn ô có giấy phép dùng ngoại tuyến (ví dụ tự dựng từ OpenStreetMap).
 
+### 12.6. Đối chiếu đáp án trên bản đồ (demo) [Đã có]
+
+Khi có nhãn, trạm nạp một **lớp đáp án** (`POST /api/truth`; `tools/make_truth_layer.py` sinh từ `ground_truth.json` của chuyến bay mô phỏng hoặc từ nhãn SeaDronesSee chiếu xuống mặt đất bằng telemetry của drone; `scripts/demo_bao_ve.sh` tự sinh và tự nạp). Nút "Đối chiếu đáp án" trên bản đồ hiện người thật mà drone đã bay qua, ở hai mức:
+
+- **được cảnh báo riêng** (chấm xanh đặc): như `eval/rq3_metrics.py`, mỗi sự cố gán cho người gần nhất (vị trí lúc sự cố được thấy lần đầu) nếu cách ≤ 10 m; trả lời "hệ thống có tách được từng người không";
+- **nằm trong vùng tìm** (vòng xanh): người cách một sự cố không quá bán kính vùng tìm 95% của sự cố đó; trả lời "đội cứu hộ tới đúng vùng trên bản đồ có gặp người không";
+- **bỏ sót** (chấm đỏ): không thuộc mức nào khi người đã rời khung quá 10 s hoặc chuyến bay đã hết; trắng rỗng là đang trong tầm, chưa xác nhận;
+- sự cố không có người nào trong 10 m là **báo nhầm** (viền đỏ nét đứt, nhãn trong danh sách).
+
+Chỉ tính người có mặt trong khung ít nhất 1 s (`--min-span-s`): người lướt qua mép khung hay track đứt vài khung thì không hệ thống nào xác nhận được (cần thấy 3 lần), như điều kiện "đủ điều kiện" của `eval/track_confirm_eval.py`. Với nhãn SeaDronesSee, vị trí người lấy qua cùng telemetry với pipeline nên có cùng sai số GPS: lớp này cho biết ai được cảnh báo, không đo sai số định vị. Đây là **minh hoạ trực tiếp** cho buổi trình bày; số chính thức tính từ log bằng `eval/` và nằm trong `docs/results/` (cách đếm khác: theo cảnh báo trong không gian ảnh, khung xử lý khác).
+
 ---
 
 ## 13. Huấn luyện

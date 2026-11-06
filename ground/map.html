@@ -53,6 +53,10 @@
   #banner small { display: block; font-weight: 400; opacity: .9; }
   .mapbtn { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font: inherit; font-size: 12px; cursor: pointer; }
   .mapbtn.on { border-color: var(--scan); color: var(--scan); }
+  .mapbtn.truth.on { border-color: var(--ok); color: var(--ok); }
+  .chip.truth { border-color: var(--ok); }
+  .fa { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; }
+  .ok-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--ok); color: #0d1117; font-size: 11px; font-weight: 700; }
   .drone { filter: drop-shadow(0 0 4px #000); transition: transform .25s linear; }
   #side h2 { margin: 2px 2px 0; }
   .item { display: grid; grid-template-columns: 56px 1fr; gap: 8px; padding: 8px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line); cursor: pointer; border-left: 4px solid var(--c, var(--muted)); }
@@ -87,6 +91,7 @@
       <span class="chip">Sự cố đang mở <b id="kOpen">0</b></span>
       <span class="chip">Cảnh báo đã nhận <b id="nalerts">0</b></span>
       <span class="chip">Thời gian bay <b id="kTime">–</b></span>
+      <span class="chip truth" id="kTruth" hidden title="Đối chiếu trực tiếp để minh hoạ; số chính thức ở docs/results"></span>
     </div>
   </header>
   <div id="main">
@@ -104,6 +109,13 @@
           <span><i style="border:2px solid var(--scan);background:none"></i>Camera đang nhìn</span>
           <span><i style="background:#d62728"></i>Sự cố ưu tiên cao</span>
           <span><i style="border:1px dashed #ccc;background:none"></i>Vùng tìm 95%</span>
+        </div>
+        <div class="legend" id="truthLegend" hidden style="margin-top:6px">
+          <span><i style="background:var(--ok);border-radius:50%"></i>Người thật: được cảnh báo riêng</span>
+          <span><i style="border:2px solid var(--ok);border-radius:50%;background:none"></i>Trong vùng tìm (bị gộp)</span>
+          <span><i style="background:var(--bad);border-radius:50%"></i>Bỏ sót</span>
+          <span><i style="border:2px solid #fff;border-radius:50%;background:none"></i>Đang trong tầm, chưa xác nhận</span>
+          <span><i style="border:2px dashed var(--bad);background:none"></i>Sự cố báo nhầm</span>
         </div>
       </section>
     </aside>
@@ -179,7 +191,8 @@
     let uavs;
     try { uavs = await (await fetch("/api/uavs")).json(); } catch (e) { return; }
     document.getElementById("kUav").textContent = uavs.length;
-    if (uavs.length) document.getElementById("kTime").textContent = fmt(Math.max(...uavs.map(u => u.t)), 0) + " s";
+    if (uavs.length) { flightT = Math.max(...uavs.map(u => u.t)); document.getElementById("kTime").textContent = fmt(flightT, 0) + " s"; }
+    flightDone = uavs.length > 0 && uavs.every(u => u.done);
     const cards = [], lost = [];
     for (const u of uavs) {
       const stale = !u.done && u.age_s > STALE_S;
@@ -320,13 +333,16 @@
         + `<div class="why">${inc.priority_reasons.map(esc).join("; ")}</div></div>`;
       item.onclick = () => { follow = false; followControl.button.classList.remove("on"); map.setView([inc.lat, inc.lon], 19); markers[key].openPopup(); };
       items.push(item);
+      listItems[key] = item;
     }
+    lastIncidents = incidents;
     list.replaceChildren(...(items.length ? items : [Object.assign(document.createElement("div"), { className: "empty", textContent: "Chưa có sự cố." })]));
     if (!fitted && incidents.length && !Object.keys(drones).length) {
       map.fitBounds(incidents.map(i => [i.lat, i.lon]), { maxZoom: 19, padding: [40, 40] });
       fitted = true;
     }
     firstLoad = false;
+    renderTruth();
   }
   // Trạm đẩy sự kiện "update" khi có thay đổi (/api/stream); mất kết nối thì quay về hỏi lại mỗi 2 giây.
   refresh();
@@ -337,7 +353,126 @@
   source.onopen = () => { if (poll) { clearInterval(poll); poll = null; } };
   // Trạng thái drone đổi mỗi giây và cần biết "đã im lặng bao lâu", nên hỏi đều mỗi giây.
   refreshUavs();
-  setInterval(refreshUavs, 1000);
+  setInterval(() => refreshUavs().then(renderTruth), 1000);
+
+  // ---------- Đối chiếu đáp án (demo): người thật drone đã bay qua, tìm thấy hay bỏ sót, sự cố nào báo nhầm ----------
+  // Hai mức "tìm thấy", trả lời hai câu hỏi khác nhau:
+  //  - được cảnh báo riêng: như eval/rq3_metrics.py, mỗi sự cố gán cho người gần nhất (vị trí lúc sự cố được thấy lần
+  //    đầu) nếu cách ≤ r_match_m; hệ thống có tách được từng người không;
+  //  - nằm trong vùng tìm: người cách một sự cố không quá bán kính vùng tìm 95% của nó; đội cứu hộ tới đúng vùng trên
+  //    bản đồ thì gặp người. Nhóm người sát nhau bị gộp thành một sự cố nên hai số chênh nhau.
+  // Sự cố không có người nào trong r_match_m là báo nhầm. Người không thuộc cả hai mức, rời khung quá tail_s (hoặc hết
+  // chuyến), là bỏ sót. Chỉ để minh hoạ trực tiếp; số chính thức tính từ log bằng eval/ (docs/results).
+  let truthData = null, truthOn = false, flightT = 0, flightDone = false, lastIncidents = [];
+  const listItems = {};
+  const truthLayer = L.layerGroup();
+  const truthMarkers = {};
+  const TruthControl = L.Control.extend({
+    onAdd() {
+      const b = L.DomUtil.create("button", "mapbtn truth");
+      b.textContent = "Đối chiếu đáp án";
+      b.style.display = "none";
+      L.DomEvent.disableClickPropagation(b);
+      b.onclick = () => { truthOn = !truthOn; b.classList.toggle("on", truthOn); renderTruth(); };
+      this.button = b;
+      return b;
+    },
+  });
+  const truthControl = new TruthControl({ position: "topleft" }).addTo(map);
+
+  async function loadTruth() {
+    try {
+      const data = await (await fetch("/api/truth")).json();
+      if (data.people && data.people.length) { truthData = data; truthControl.button.style.display = ""; return; }
+    } catch (e) { /* trạm chưa sẵn sàng */ }
+    setTimeout(loadTruth, 5000);
+  }
+  loadTruth();
+
+  function posAt(person, t) {
+    const tr = person.track;
+    if (t <= tr[0][0]) return [tr[0][1], tr[0][2]];
+    for (let i = 1; i < tr.length; i++) {
+      if (t <= tr[i][0]) {
+        const a = tr[i - 1], b = tr[i], f = (t - a[0]) / Math.max(b[0] - a[0], 1e-9);
+        return [a[1] + f * (b[1] - a[1]), a[2] + f * (b[2] - a[2])];
+      }
+    }
+    const last = tr[tr.length - 1];
+    return [last[1], last[2]];
+  }
+  function metres(a, b) {
+    const k = Math.PI / 180, R = 6371000;
+    const dn = (b[0] - a[0]) * k * R, de = (b[1] - a[1]) * k * R * Math.cos(a[0] * k);
+    return Math.hypot(dn, de);
+  }
+
+  function judge() {
+    const people = truthData.people, found = {}, falseIds = new Set();
+    for (const inc of lastIncidents) {
+      let best = null;
+      for (const p of people) {
+        const d = metres(posAt(p, inc.first_t), [inc.lat, inc.lon]);
+        if (!best || d < best.d) best = { p, d };
+      }
+      if (best && best.d <= truthData.r_match_m) (found[best.p.id] ||= []).push({ inc: inc.incident_id, d: best.d });
+      else falseIds.add(inc.incident_id);
+    }
+    const inArea = (p) => lastIncidents.find(inc => metres(posAt(p, Math.max(inc.first_t, p.t_in)), [inc.lat, inc.lon]) <= R95 * inc.position_error_m);
+    const rows = people.filter(p => flightT >= p.t_in).map(p => {
+      const area = found[p.id] ? null : inArea(p);
+      // Hết chuyến thì không còn "chờ": ai chưa thuộc mức nào là bỏ sót.
+      const status = found[p.id] ? "found" : area ? "area" : flightDone || flightT > p.t_out + truthData.tail_s ? "missed" : "pending";
+      return { p, hits: found[p.id] || [], area, status };
+    });
+    return { rows, falseIds };
+  }
+
+  function renderTruth() {
+    const chip = document.getElementById("kTruth"), legend = document.getElementById("truthLegend");
+    if (!truthOn || !truthData) {
+      if (map.hasLayer(truthLayer)) map.removeLayer(truthLayer);
+      chip.hidden = true; legend.hidden = true;
+      for (const [id, m] of Object.entries(markers)) m.setStyle({ color: "#fff", dashArray: null, weight: 2 });
+      for (const item of Object.values(listItems)) item.querySelectorAll(".fa,.ok-tag").forEach(x => x.remove());
+      return;
+    }
+    if (!map.hasLayer(truthLayer)) truthLayer.addTo(map);
+    chip.hidden = false; legend.hidden = false;
+    const { rows, falseIds } = judge();
+    const colors = { found: "#3fb950", area: "#3fb950", missed: "#f85149", pending: "#ffffff" };
+    const label = { found: "được cảnh báo riêng", area: "nằm trong vùng tìm của một sự cố (bị gộp với người gần)", missed: "bỏ sót", pending: "đang trong tầm, chưa xác nhận" };
+    const shown = new Set();
+    for (const r of rows) {
+      const pos = posAt(r.p, Math.min(flightT, r.p.t_out));
+      let m = truthMarkers[r.p.id];
+      if (!m) m = truthMarkers[r.p.id] = L.circleMarker(pos, { radius: 6, weight: 2 }).bindTooltip("");
+      if (!truthLayer.hasLayer(m)) truthLayer.addLayer(m);
+      const c = colors[r.status];
+      m.setLatLng(pos).setStyle({ color: c, fillColor: c, fillOpacity: r.status === "found" || r.status === "missed" ? .9 : 0 });
+      const hit = r.hits.length ? ` (sự cố #${r.hits.map(h => h.inc).join(", #")}, lệch ${fmt(Math.min(...r.hits.map(h => h.d)))} m)`
+        : r.area ? ` (sự cố #${r.area.incident_id})` : "";
+      m.setTooltipContent(`Người thật #${r.p.id}: ${label[r.status]}${hit}`);
+      shown.add(String(r.p.id));
+    }
+    for (const [id, m] of Object.entries(truthMarkers)) if (!shown.has(id)) truthLayer.removeLayer(m);
+    for (const [id, m] of Object.entries(markers)) {
+      const fa = falseIds.has(Number(id));
+      m.setStyle(fa ? { color: "#f85149", dashArray: "3 3", weight: 3 } : { color: "#fff", dashArray: null, weight: 2 });
+    }
+    for (const [id, item] of Object.entries(listItems)) {
+      item.querySelectorAll(".fa,.ok-tag").forEach(x => x.remove());
+      const head = item.querySelector(".t1");
+      if (!head) continue;
+      const tag = document.createElement("span");
+      tag.className = falseIds.has(Number(id)) ? "fa" : "ok-tag";
+      tag.textContent = falseIds.has(Number(id)) ? "báo nhầm" : "đúng người";
+      head.appendChild(tag);
+    }
+    const n = (s) => rows.filter(r => r.status === s).length;
+    chip.innerHTML = `Đáp án ${rows.length} người: cảnh báo riêng <b>${n("found")}</b> · trong vùng tìm <b>${n("found") + n("area")}</b>`
+      + ` · bỏ sót <b>${n("missed")}</b> · báo nhầm <b>${falseIds.size}</b>`;
+  }
 </script>
 </body>
 </html>
