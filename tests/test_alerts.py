@@ -57,6 +57,23 @@ def test_retry_after_outage_with_backoff(tmp_path: Path) -> None:
     assert outbox.pending() == 0
 
 
+def test_link_probe_sends_backlog_when_link_returns(tmp_path: Path) -> None:
+    """Mất mạng 0–20 s, hai gói cùng lúc, mỗi giây một lượt gửi. Không thăm dò: lần thử cuối trong lúc mất là 15 s và
+    18 s, chờ tiếp 16 s nên tới trạm ở 31 s và 34 s. Thăm dò mỗi 2 s khi không có gói đến hạn: lần thăm dò ở 20 s được ack
+    và gói còn lại gửi ngay trong cùng lượt."""
+
+    def delivered(probe_s: float | None) -> list[tuple[float, str]]:
+        outbox = Outbox(tmp_path / f"o_{probe_s}.sqlite", FlakyTransport(down=(0.0, 20.0)), jitter=0.0, probe_s=probe_s)
+        outbox.enqueue(alert(1), None, 0.0)
+        outbox.enqueue(alert(2), None, 0.0)
+        records = [r for now in range(0, 50) for r in outbox.pump(float(now))]
+        assert outbox.pending() == 0
+        return [(r["t"], r["msg_id"]) for r in records if r["ok"]]
+
+    assert delivered(None) == [(31.0, "uav1-1:coords"), (34.0, "uav1-2:coords")]
+    assert delivered(2.0) == [(20.0, "uav1-1:coords"), (20.0, "uav1-2:coords")]
+
+
 def test_crop_waits_for_coords_ack(tmp_path: Path) -> None:
     """Mất gói toạ độ thì không gửi ảnh cắt trong lượt đó."""
     transport = FlakyTransport(down=(0.0, 1.0))

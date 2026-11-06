@@ -70,8 +70,8 @@ Theo ba câu hỏi; mỗi câu hỏi con một tiểu mục ngắn: bảng, hìn
 | | RQ2c thiết bị yếu | Giả lập thời gian thiết bị, hiệu chỉnh từ RQ2 (ước lượng, bảng riêng) | **Chờ** hiệu chỉnh |
 | 5.3 Câu hỏi 3 | RQ3a số khung mỗi giây | `rq3_adaptive.md`, `rq3_altitude.md`, `rq3_altprofile.md` | Có, mô phỏng |
 | | RQ3b xác nhận | `sds_mot_confirm.md`, `rq3_cmc_cause.md` | Có, sơ bộ |
-| | RQ3c sai số GPS | Mô phỏng sai số | **Chờ** bảng tổng hợp |
-| | RQ3d mất sóng | Giả lập mạng | **Chờ** bảng tổng hợp |
+| | RQ3c sai số GPS | `rq3_geoerr.md` | Có, mô phỏng |
+| | RQ3d mất sóng | `rq3_network.md` | Có, mô phỏng |
 | | RQ3e gộp sự cố | `alert_memory.md` | Có |
 | 5.4 Luận điểm xuyên suốt | Nối RQ1d, RQ2c, RQ3b | Các mục trên | Viết sau khi đủ 5.1–5.3 |
 | 5.5 Phân tích lỗi | Ảnh bỏ sót, báo nhầm tiêu biểu theo nhóm cỡ và thẻ ảnh | Báo cáo phân tích lỗi của giao diện (`python -m console`) | **Chờ** tập lũ |
@@ -90,5 +90,5 @@ Theo ba câu hỏi; mỗi câu hỏi con một tiểu mục ngắn: bảng, hìn
 1. Gán và khoá tập ảnh lũ (11/11), rồi chấm mọi mô hình: mở khoá RQ1a (phần lũ), RQ1e, RQ1f, mục 5.5.
 2. E2e phiên 2, rồi chấm trên SeaDronesSee: hoàn tất RQ1b.
 3. Chạy RQ2 trên T4: RQ2a, RQ2b; sau đó hiệu chỉnh giả lập thiết bị: RQ2c.
-4. Một lần chạy tổng hợp sai số GPS và mất sóng thành bảng: RQ3c, RQ3d (công cụ đã có, `sim/sweep_rq3.py`).
+4. ~~Một lần chạy tổng hợp sai số GPS và mất sóng thành bảng: RQ3c, RQ3d~~ (xong 6/11, `rq3_geoerr.md`, `rq3_network.md`).
 5. Ba seed cho mô hình cuối (tuần 14–20/11) nếu còn giờ GPU; không đủ thì ghi một seed vào giới hạn.

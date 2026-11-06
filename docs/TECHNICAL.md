@@ -654,6 +654,8 @@ Tổng gần đúng (các nguồn độc lập): căn bậc hai của tổng bì
 
 **[Đã có]** `edge.georef.position_error_m(u, v, tel, cam, ErrorModel)`: đúng bảng trên, với nghiêng camera tính đủ ở mép là `h·(1 + d²/h²)·δθ` (đạo hàm của `h·tanθ` tại `θ = atan(d/h)`). `edge/main.py` tính cho điểm tâm đáy box của mỗi cảnh báo, thay cho hằng số 5 m trước đây; độ lệch chuẩn từng nguồn đặt bằng `--gps-sigma-m` (3), `--alt-sigma-m` (2), `--yaw-sigma-deg` (2), `--tilt-sigma-deg` (1) (giá trị mặc định là giả định cho GPS thường, chưa hiệu chỉnh trên drone thật); `--position-error-m` vẫn ép một hằng số. Ở 50 m, video 4K, góc nhìn 82° chéo, với các giá trị mặc định: 3,12 m ở tâm ảnh, 4,08 m ở góc (tính bằng chính hàm này), nên GPS vẫn trội.
 
+**Bán kính hiển thị: 1σ hay 95%.** `position_error_m` là 1σ. Sai số mặt đất có hai chiều; nếu mỗi trục là Gauss σ thì khoảng cách tới vị trí đúng theo phân bố Rayleigh, P(r ≤ kσ) = 1 − exp(−k²/2): vòng 1σ chỉ chứa khoảng 39%, vòng chứa 95% có bán kính √(−2 ln 0,05)·σ ≈ 2,448σ (`edge.georef.R95_FACTOR`). Mô phỏng khớp điều này: khi GPS σ 3 m đúng như giả định, 0,278 số người nằm trong vòng 1σ, vòng 95% chứa 1,000 (`results/rq3_geoerr.md`). Vì vậy bản đồ trạm vẽ **vùng tìm 95%** quanh mỗi sự cố. Khi GPS thật kém hơn giả định (σ 5 m), vùng 95% chỉ còn chứa 0,763–0,833: `--gps-sigma-m` phải đặt theo GPS của drone thật.
+
 Một tinh tế: GPS thường lệch **chậm** (sai số tương quan theo thời gian), nên giữa hai khung liên tiếp, vị trí của cùng một người gần như lệch cùng chiều. Điều này có lợi cho `confirm` kiểu `geo`: bán kính gom có thể nhỏ hơn sai số tuyệt đối. Mô phỏng nên dùng nhiễu GPS dạng quá trình ngẫu nhiên tương quan (ví dụ Gauss–Markov bậc 1), không phải nhiễu trắng độc lập mỗi khung.
 
 ---
@@ -786,6 +788,7 @@ pump(now):
 - **Lùi theo hàm mũ có nhiễu** (exponential backoff with jitter): tránh dội liên tục khi mất sóng, và tránh nhiều drone cùng thử lại một lúc khi sóng có lại.
 - **Toạ độ trước:** `priority` bảo đảm mọi gói toạ độ đang chờ được gửi trước bất kỳ ảnh cắt nào. Khi sóng yếu, trạm vẫn có vị trí người ngay.
 - **Giới hạn băng thông:** có thể đặt ngân sách byte mỗi giây; ảnh cắt chỉ gửi khi còn ngân sách.
+- **Thăm dò đường truyền** **[Đã có]** (`--link-probe-s`, `Outbox(probe_s=…)`, mặc định tắt): thời gian chờ tăng dần có trần 30 s nên một gói hỏng ngay trước khi sóng có lại có thể nằm chờ thêm gần 30 s. Khi không có gói nào đến hạn và đã `probe_s` giây không gửi gì, thử gửi gói toạ độ cũ nhất; một gói bất kỳ được ack thì mọi gói đang chờ đến hạn ngay. Lần thăm dò hỏng không đẩy lùi thêm thời gian chờ. Mô phỏng (`results/rq3_network.md`): không mất cảnh báo nào, độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s; bật mặc định hay không là quyết định #17 của ROADMAP.
 
 ### 10.3. Bảo đảm giao nhận
 
@@ -913,7 +916,7 @@ Hai drone có thể cảnh báo cùng một người. Khi một cảnh báo mớ
 
 ### 12.5. Bản đồ
 
-Leaflet hiển thị incident theo màu ưu tiên, bấm để xem ảnh cắt và lịch sử; bảng bên cạnh hiện FPS, băng thông, số cảnh báo đang chờ của mỗi drone. Ô bản đồ (ảnh vệ tinh và bản đồ đường của Esri; máy chủ ô của OpenStreetMap không trả lời từ mạng của dự án, CARTO đòi khoá API) đi qua `/tiles/<lớp>/<z>/<x>/<y>` của chính trạm. **[Đã có]** Ô đã xem được giữ trên đĩa (`FLOODEYE_TILE_CACHE`, mặc định `runs/ground/tiles`), nên vùng đã xem khi diễn tập vẫn hiện khi mất mạng; ô chưa xem thì hiện nền lưới, điểm sự cố vẫn đọc được. Leaflet 1.9.4 đóng gói trong `ground/static/leaflet/` (giấy phép BSD-2), trang bản đồ không tải gì từ internet. Không tải trước cả vùng: điều khoản của Esri hạn chế tải hàng loạt để dùng ngoại tuyến; triển khai thật cần nguồn ô có giấy phép dùng ngoại tuyến (ví dụ tự dựng từ OpenStreetMap).
+Leaflet hiển thị incident theo màu ưu tiên, kèm vòng nét đứt là vùng tìm 95% (mục 8.4), bấm để xem ảnh cắt và lịch sử; bảng bên cạnh hiện FPS, băng thông, số cảnh báo đang chờ của mỗi drone. Ô bản đồ (ảnh vệ tinh và bản đồ đường của Esri; máy chủ ô của OpenStreetMap không trả lời từ mạng của dự án, CARTO đòi khoá API) đi qua `/tiles/<lớp>/<z>/<x>/<y>` của chính trạm. **[Đã có]** Ô đã xem được giữ trên đĩa (`FLOODEYE_TILE_CACHE`, mặc định `runs/ground/tiles`), nên vùng đã xem khi diễn tập vẫn hiện khi mất mạng; ô chưa xem thì hiện nền lưới, điểm sự cố vẫn đọc được. Leaflet 1.9.4 đóng gói trong `ground/static/leaflet/` (giấy phép BSD-2), trang bản đồ không tải gì từ internet. Không tải trước cả vùng: điều khoản của Esri hạn chế tải hàng loạt để dùng ngoại tuyến; triển khai thật cần nguồn ô có giấy phép dùng ngoại tuyến (ví dụ tự dựng từ OpenStreetMap).
 
 ---
 

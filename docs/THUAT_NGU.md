@@ -67,6 +67,8 @@ Luôn kèm tên tiếng Anh khi gặp lần đầu, để hội đồng đối c
 | vùng bỏ qua | ignore region | Vùng trong ảnh mà box rơi vào không bị tính là báo nhầm (đám đông không gán được từng người) | |
 | nhóm kích thước | size group | Chia người theo cạnh ngắn của box: dưới 8, 8–16, 16–32, trên 32 px | COCO chia khác (nhỏ là dưới 32×32); dự án chia mịn hơn vì người rất nhỏ |
 | hàng đợi gửi (outbox) | transactional outbox | Lưu cảnh báo vào SQLite trên UAV trước, gửi khi có mạng, gửi lại khi lỗi | Thuật ngữ kỹ thuật phần mềm |
+| thăm dò đường truyền | link probing | Khi mọi cảnh báo đang chờ gửi lại, cứ vài giây thử một gói nhỏ; gửi được thì gửi ngay cả hàng đợi | Tuỳ chọn `--link-probe-s` |
+| vùng tìm 95% | 95% search area | Vòng tròn quanh vị trí cảnh báo chứa người thật với xác suất 95%, bán kính 2,448 lần sai số 1σ | Bản đồ trạm vẽ vòng này, không vẽ 1σ |
 | sự cố | incident | Trạm mặt đất gộp nhiều cảnh báo về cùng một người (gần nhau) thành một sự cố | |
 | giả lập thời gian thiết bị | device timing simulation | Pipeline chạy trên máy này nhưng tính thời gian xử lý theo hồ sơ của Jetson | Kết quả là ước lượng, không phải số đo |
 | hồ sơ thiết bị | device profile | File ghi thời gian ước lượng mỗi ô, mỗi lượt toàn ảnh của một thiết bị (`configs/devices/`) | |

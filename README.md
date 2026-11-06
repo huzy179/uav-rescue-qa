@@ -58,7 +58,7 @@ FLOODEYE_GROUND_DB=runs/ground/ground.sqlite .venv/bin/python -m uvicorn --facto
 # 2. UAV phát lại video; telemetry giả lập bay thẳng, hoặc --telemetry file.csv / file.SRT của DJI
 .venv/bin/python -m edge.main --config configs/edge.yaml --source video.mp4 --output runs/edge/demo \
     --ground-url http://localhost:8000 --save-video
-# thêm --net-loss 0.2 --net-outage 30 90 để giả lập mạng chập chờn
+# thêm --net-loss 0.2 --net-outage 30 90 để giả lập mạng chập chờn; --link-probe-s 2 để gửi bù ngay khi có sóng lại (rq3_network.md)
 # thêm --target-person-px 10 để thu nhỏ khung theo độ cao trước khi phát hiện (mô hình fine-tune, TECHNICAL mục 4.5)
 
 # 3. Chạy lại phần sau detector mà không cần mô hình (RQ3): đọc lại phát hiện đã lưu

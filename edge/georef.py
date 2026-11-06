@@ -69,6 +69,11 @@ class ErrorModel:
     box_sigma_px: float = 2.0
 
 
+# Sai số mặt đất hai chiều, mỗi trục Gauss σ: khoảng cách r theo phân bố Rayleigh, P(r ≤ kσ) = 1 − exp(−k²/2).
+# Bán kính 1σ chỉ chứa khoảng 39 %; vùng chứa 95 % có bán kính √(−2 ln 0,05) σ ≈ 2,448 σ (dùng cho vòng tròn trên bản đồ).
+R95_FACTOR = math.sqrt(-2.0 * math.log(0.05))
+
+
 def position_error_m(u: float, v: float, tel: Telemetry, cam: Camera, model: ErrorModel) -> float:
     """Sai số vị trí (1σ, mét) của điểm ảnh (u, v) sau pixel_to_gps: căn tổng bình phương các nguồn độc lập.
 

@@ -107,6 +107,7 @@ class Outbox:
         cap_s: float = 30.0,
         jitter: float = 0.2,
         seed: int = 0,
+        probe_s: float | None = None,
     ) -> None:
         self.db = sqlite3.connect(str(db_path))
         self.db.execute("PRAGMA journal_mode=WAL")
@@ -121,6 +122,10 @@ class Outbox:
         self.transport = transport
         self.base_s, self.cap_s, self.jitter = base_s, cap_s, jitter
         self._rng = random.Random(seed)
+        # Thăm dò đường truyền (None = tắt): khi mọi gói đang chờ lùi thời gian và đã probe_s giây không gửi gì, thử gửi
+        # gói toạ độ cũ nhất; một gói bất kỳ được ack (sóng đã có lại) thì mọi gói đang chờ đến hạn ngay.
+        self.probe_s = probe_s
+        self._last_send_t = float("-inf")
 
     def enqueue(self, alert: Alert, crop: AlertCrop | None, now: float) -> None:
         """Ghi gói toạ độ (và ảnh cắt nếu có) vào outbox trong một giao dịch."""
@@ -138,7 +143,8 @@ class Outbox:
         """Gửi các thông điệp đến hạn theo (ưu tiên, thời điểm tạo); trả về bản ghi từng lần gửi để ghi log.
 
         Ảnh cắt chỉ được gửi sau khi gói toạ độ cùng alert_id đã được ack. Gặp lần gửi thất bại đầu tiên thì
-        dừng lượt này: đường truyền đang hỏng, gửi tiếp chỉ tốn băng thông.
+        dừng lượt này: đường truyền đang hỏng, gửi tiếp chỉ tốn băng thông. Lần thăm dò (probe_s) thất bại không đẩy
+        lùi thêm thời gian chờ của gói được dùng để thăm dò.
         """
         records: list[dict[str, object]] = []
         while True:
@@ -151,10 +157,20 @@ class Outbox:
                    ORDER BY priority, created_t, msg_id LIMIT 1""",
                 (now,),
             ).fetchone()
+            probe = False
             if row is None:
-                break
+                if self.probe_s is None or now - self._last_send_t < self.probe_s:
+                    break
+                row = self.db.execute(
+                    """SELECT msg_id, alert_id, kind, payload, attempts FROM outbox
+                       WHERE status = 'pending' AND kind = 'coords' ORDER BY created_t, msg_id LIMIT 1"""
+                ).fetchone()
+                if row is None:
+                    break
+                probe = True
             msg_id, alert_id, kind, payload, attempts = row
             ok = self.transport.send(OutboxMessage(msg_id, alert_id, kind, payload), now)
+            self._last_send_t = now
             attempts += 1
             with self.db:
                 if ok:
@@ -162,12 +178,18 @@ class Outbox:
                         "UPDATE outbox SET status = 'acked', attempts = ?, acked_t = ? WHERE msg_id = ?",
                         (attempts, now, msg_id),
                     )
+                    if self.probe_s is not None:
+                        self.db.execute("UPDATE outbox SET next_try_t = ? WHERE status = 'pending' AND next_try_t > ?", (now, now))
+                elif probe:
+                    self.db.execute("UPDATE outbox SET attempts = ? WHERE msg_id = ?", (attempts, msg_id))
                 else:
                     wait = min(self.cap_s, self.base_s * 2 ** (attempts - 1)) * (1.0 + self.jitter * self._rng.random())
                     self.db.execute(
                         "UPDATE outbox SET attempts = ?, next_try_t = ? WHERE msg_id = ?", (attempts, now + wait, msg_id)
                     )
-            records.append({"t": now, "msg_id": msg_id, "kind": kind, "ok": ok, "attempts": attempts, "bytes": len(payload)})
+            records.append(
+                {"t": now, "msg_id": msg_id, "kind": kind, "ok": ok, "attempts": attempts, "bytes": len(payload), "probe": probe}
+            )
             if not ok:
                 break
         return records

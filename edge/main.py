@@ -87,6 +87,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ground-url", default=None, help="Địa chỉ trạm mặt đất; không có thì dùng transport giả luôn ack")
     parser.add_argument("--net-loss", type=float, default=0.0, help="Giả lập: xác suất mất mỗi lần gửi")
     parser.add_argument("--net-outage", type=float, nargs=2, action="append", default=None, metavar=("START", "END"), help="Giả lập: khoảng mất sóng (giây), lặp được")
+    parser.add_argument("--link-probe-s", type=float, default=None, help="Gửi cảnh báo: khi mọi gói đang chờ gửi lại, cứ mỗi số giây này thử một gói toạ độ; gửi được thì gửi ngay mọi gói đang chờ (mặc định tắt)")
     parser.add_argument("--drain-s", type=float, default=60.0, help="Sau khung cuối, tiếp tục gửi bù thêm số giây này")
     parser.add_argument("--seed", type=int, default=0, help="Seed cho giả lập mạng và nhiễu thời gian chờ gửi lại")
     parser.add_argument("--output", type=Path, default=Path("runs/edge/demo"), help="Thư mục log")
@@ -213,7 +214,7 @@ def main() -> None:
     # Outbox của lần chạy trước trong cùng thư mục là của thí nghiệm khác: xoá để lần chạy tái lập được.
     for suffix in ("", "-wal", "-shm"):
         (args.output / f"outbox.sqlite{suffix}").unlink(missing_ok=True)
-    outbox = Outbox(args.output / "outbox.sqlite", transport, seed=args.seed)
+    outbox = Outbox(args.output / "outbox.sqlite", transport, seed=args.seed, probe_s=args.link_probe_s)
     model_name = Path(args.replay or args.model).name
     device = BusyDevice(load_profile(args.device_profile)) if args.device_profile else None
     pacer = RealtimePacer(args.realtime_speed) if args.realtime else None

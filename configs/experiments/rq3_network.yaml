@@ -1,0 +1,19 @@
+# RQ3d mô phỏng: mất gói ngẫu nhiên và mất sóng hẳn một khoảng (15 s hoặc 30 s giữa chuyến bay 60 s) làm cảnh báo tới
+# trạm trễ bao lâu và có mất cảnh báo nào không, khi gửi lại theo thời gian chờ tăng dần (trần 30 s) có hoặc không thăm dò
+# đường truyền mỗi 2 s (--link-probe-s). Gửi bù tối đa 60 s sau khung cuối (--drain-s mặc định). Kịch bản như rq3_gps.yaml.
+output: runs/rq3/network
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  recall: 0.7
+  fp_per_frame: 0.5
+  gps_sigma_m: 0.5
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+  confirm: geo
+grid:
+  pipeline.net_loss: [0, 0.2, 0.5]
+  pipeline.net_outage: [null, [[20, 35]], [[15, 45]]]
+  pipeline.link_probe_s: [null, 2]

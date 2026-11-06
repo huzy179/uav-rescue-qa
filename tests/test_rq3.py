@@ -67,6 +67,11 @@ def test_metrics_hand_example() -> None:
     by_id = {p["person_id"]: p for p in per_person}
     assert by_id[0]["time_to_alert_s"] == pytest.approx(5.0)
     assert by_id[0]["position_error_m"] == pytest.approx(1.0, abs=1e-6)
+    assert by_id[0]["reported_error_m"] == 5.0
+    # Chỉ người 0 được cảnh báo kịp, sai số 1 m ≤ bán kính báo 5 m.
+    assert summary["within_reported_radius"] == pytest.approx(1.0)
+    assert summary["within_reported_radius_95"] == pytest.approx(1.0)
+    assert summary["position_error_m_max"] == pytest.approx(1.0, abs=1e-6)
     assert summary["delivery_delay_s_median"] == pytest.approx(0.0) and summary["delivery_delay_s_max"] == pytest.approx(3.0)
     assert summary["lost_rate"] == pytest.approx(0.25)  # uav1-4 chưa từng được ack
     assert summary["kb_per_alert"] == pytest.approx((4 * 300 + 2048) / 1024 / 4)
@@ -139,6 +144,10 @@ def test_sweep_summary_and_config_validation(tmp_path) -> None:
     item = summarize(rows, ["confirm"])[0]
     assert (item["n_seeds"], item["missed_rate_mean"], item["missed_rate_std"]) == (3, 0.2, 0.2)
     assert item["time_to_alert_s_median_mean"] is None and item["time_to_alert_s_median_n"] == 0
+    # Giá trị lưới dạng danh sách (khoảng mất sóng) vẫn gom được theo tổ hợp.
+    rows = [{"net_outage": o, "seed": s, **{m: None for m in METRICS}, "lost_rate": 0.0} for s, o in enumerate([None, [[20, 35]], [[20, 35]]])]
+    groups = summarize(rows, ["net_outage"])
+    assert [(g["net_outage"], g["n_seeds"]) for g in groups] == [(None, 1), ([[20, 35]], 2)]
 
     with pytest.raises(ValidationError):
         SweepConfig(output=tmp_path, grid={"gps_sigma_m": [1]})  # thiếu tiền tố scenario./pipeline.
@@ -146,3 +155,12 @@ def test_sweep_summary_and_config_validation(tmp_path) -> None:
         validate(SweepConfig(output=tmp_path, grid={"pipeline.confrim": ["geo"]}))
     with pytest.raises(SystemExit, match="tự đặt"):
         validate(SweepConfig(output=tmp_path, scenario={"seed": 3}))
+
+
+def test_r95_factor_is_rayleigh_95_percent() -> None:
+    import math
+
+    from edge.georef import R95_FACTOR
+
+    assert 1.0 - math.exp(-R95_FACTOR**2 / 2.0) == pytest.approx(0.95)
+    assert 1.0 - math.exp(-0.5) == pytest.approx(0.3935, abs=1e-4)  # bán kính 1σ chỉ chứa khoảng 39 %

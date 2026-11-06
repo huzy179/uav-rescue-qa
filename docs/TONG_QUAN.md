@@ -65,8 +65,8 @@ Khi ghép phát hiện qua nhiều khung để xác nhận rồi gửi cảnh b�
 |---|---|---|---|---|---|
 | RQ3a | Bao nhiêu khung mỗi giây là đủ, và thay đổi theo độ cao, vận tốc ra sao? | Mô phỏng tần số theo độ cao | Camera và lấy khung | Có, mô phỏng | `rq3_adaptive.md`, `rq3_altitude.md`, `rq3_altprofile.md` |
 | RQ3b | Gom theo toạ độ mặt đất hay theo dõi trên ảnh (ByteTrack) tốt hơn khi xử lý ít khung? | Video thật SeaDronesSee có telemetry | Xác nhận | Có, sơ bộ (ba đoạn video) | `sds_mot_confirm.md`, `rq3_cmc_cause.md` |
-| RQ3c | Sai số GPS và độ cao làm vị trí cảnh báo lệch bao nhiêu? | Mô hình lan truyền sai số, mô phỏng | Định vị | Có công cụ, chưa có bảng tổng hợp | `TECHNICAL.md` |
-| RQ3d | Mất sóng làm cảnh báo tới trễ bao lâu, có mất cảnh báo nào không? | Giả lập mạng (mất gói, mất sóng) | Gửi cảnh báo | Có công cụ, chưa có bảng tổng hợp | `TECHNICAL.md` |
+| RQ3c | Sai số GPS và độ cao làm vị trí cảnh báo lệch bao nhiêu? | Mô hình lan truyền sai số, mô phỏng | Định vị | Có, mô phỏng | `rq3_geoerr.md` |
+| RQ3d | Mất sóng làm cảnh báo tới trễ bao lâu, có mất cảnh báo nào không? | Giả lập mạng (mất gói, mất sóng) | Gửi cảnh báo | Có, mô phỏng | `rq3_network.md` |
 | RQ3e | Gộp cảnh báo thành sự cố bớt được bao nhiêu cảnh báo lặp? | Gộp theo bán kính ở trạm mặt đất | Trạm mặt đất và bản đồ | Có | `alert_memory.md` |
 
 #### Luận điểm xuyên suốt
@@ -463,7 +463,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 
 ---
 
-## 8. Trạng thái tổng hợp (5/11/2026)
+## 8. Trạng thái tổng hợp (6/11/2026)
 
 | Bước | Trạng thái |
 |---|---|
@@ -477,7 +477,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; **E3 (P2) xong 28/10**: người dưới 8 px chỉ +0,012–0,013 AP50, kém hơn ở người to, không đáng chi phí; giữ E2c (`E3.md`); E2d (+ HydroVigilance) có cấu hình; **E2e (E2c + C2A): phiên 1 xong 33/55 epoch** (19,1 phút/epoch; mAP50 val ngang E2c ở cùng epoch, `E2e.md`), phiên 2 chờ chạy (quyết định #14); **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
 | 9. Pipeline UAV | Xong; demo trực tiếp `scripts/live_demo.py` |
 | 10. Trạm mặt đất | Xong; bản đồ Esri (ô OpenStreetMap không tải được); gộp cảnh báo thành sự cố, bán kính 5 m (`alert_memory.md`), rộng hơn khi hai drone khác nhau; xếp ưu tiên có lý do, người vận hành gắn thẻ và đóng sự cố; demo hai drone |
-| 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`); quét độ cao với recall theo cỡ người (`rq3_altitude.md`) |
+| 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`); quét độ cao với recall theo cỡ người (`rq3_altitude.md`); **6/11 sai số vị trí** (`rq3_geoerr.md`: GPS là nguồn chính; vòng 1σ chỉ chứa 0,278 số người khi GPS σ 3 m nên bản đồ vẽ vùng 95%; lệch hướng 5° ở 100 m gây tách nhầm) và **mạng** (`rq3_network.md`: thêm thăm dò đường truyền, không mất cảnh báo nào, độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s) |
 | 12. RQ2 | Mã xong (2/11): xuất TensorRT FP16/INT8, chấm độ chính xác, đo cả pipeline, bảng recall theo FPS; chạy thử phần PyTorch trên máy cá nhân; **chưa chạy trên Kaggle T4**; giả lập thời gian thiết bị biên (`--device-profile`, TECHNICAL 14.6), hồ sơ chưa hiệu chỉnh |
 | Giao diện thử nghiệm | Xong 3/11 (`python -m console`): xem lỗi từng ảnh (bỏ sót, báo nhầm theo nhóm kích thước và thẻ), chạy thử pipeline, trạm mặt đất; dùng cho phân tích lỗi chương 5 và demo |
 | Hiểu dự án | Xong 5/11: tab đầu của `python -m console`, nền tối: bản đồ dự án (ví dụ đời thường, kết quả kèm thanh so sánh, 19 câu hỏi tự kiểm tra), đọc tài liệu có giải thích thuật ngữ khi di chuột (`docs/THUAT_NGU.md`), câu hỏi nghiên cứu và câu hỏi con kèm trạng thái (mục 1.3), thẻ ghi nhớ, tìm kiếm, xem mã |

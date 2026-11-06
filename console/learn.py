@@ -76,12 +76,16 @@ STAGES: list[dict[str, Any]] = [
         "quiz": [
             {"q": 'Cần những thông tin gì để đổi pixel thành toạ độ GPS?', "a": 'Vị trí GPS, độ cao, hướng của UAV và góc nhìn của camera (dữ liệu bay).', "doc": 'docs/TECHNICAL.md'},
             {"q": 'Phép chiếu đang giả định điều gì về camera và mặt đất?', "a": 'Camera nhìn thẳng xuống và mặt nước phẳng. Camera nghiêng hay gió làm rung thì vị trí lệch; đây là một giới hạn đã ghi.', "doc": 'docs/TECHNICAL.md'},
+            {"q": 'Vì sao bản đồ vẽ vùng tìm 95% chứ không vẽ bán kính sai số 1σ?', "a": 'Sai số trên mặt đất có hai chiều, nên vòng 1σ chỉ chứa khoảng 39% trường hợp. Mô phỏng với GPS σ 3 m: chỉ 0,278 số người nằm trong vòng 1σ, vùng 95% (2,448 lần) chứa 1,000.', "doc": 'docs/results/rq3_geoerr.md'},
         ],
-        "metrics": [],
+        "metrics": [
+            {"label": "Tỉ lệ người nằm trong vòng tròn trên bản đồ (mô phỏng, GPS σ 3 m, 50 m)", "a_label": "vòng 1σ", "a": 0.278, "b_label": "vùng tìm 95%", "b": 1.0, "max": 1, "doc": "docs/results/rq3_geoerr.md"},
+        ],
         "what": "Đổi vị trí box trên ảnh (pixel) thành toạ độ GPS trên mặt đất, dùng dữ liệu bay: vị trí, độ cao, hướng của UAV và góc nhìn camera.",
         "why": "Đội cứu hộ cần biết người ở đâu ngoài thực địa, không phải ở pixel nào. Toạ độ mặt đất cũng là nền cho bước xác nhận.",
         "results": [
             ("Sai số vị trí tính theo vị trí trong ảnh và độ cao, gửi kèm mỗi cảnh báo", "docs/TECHNICAL.md"),
+            ("Mô phỏng sai số: GPS là nguồn chính; bản đồ vẽ vùng tìm 95%; la bàn lệch 5° ở 100 m làm một người thành nhiều cảnh báo", "docs/results/rq3_geoerr.md"),
         ],
         "files": ["edge/georef.py", "edge/telemetry.py"],
         "docs": [("Kỹ thuật, mục 8", "docs/TECHNICAL.md"), ("Thuật toán từng bước", "docs/THUAT_TOAN.md")],
@@ -116,12 +120,16 @@ STAGES: list[dict[str, Any]] = [
         "quiz": [
             {"q": 'Vì sao gửi toạ độ trước, ảnh cắt sau?', "a": 'Gói toạ độ chỉ vài trăm byte nên tới trạm nhanh kể cả khi mạng yếu; ảnh nặng hơn gửi sau.', "doc": 'docs/TECHNICAL.md'},
             {"q": 'Mất sóng giữa chừng thì cảnh báo có mất không?', "a": 'Không: cảnh báo được lưu vào hàng đợi trên UAV trước khi gửi và gửi lại khi có sóng; trạm bỏ qua bản trùng theo mã cảnh báo.', "doc": 'docs/TECHNICAL.md'},
+            {"q": 'Thăm dò đường truyền giải quyết vấn đề gì?', "a": 'Gửi lại có thời gian chờ tăng dần tới 30 s, nên sóng có lại rồi mà cảnh báo vẫn nằm chờ. Cứ 2 s thử một gói nhỏ; được thì gửi ngay cả hàng đợi.', "doc": 'docs/results/rq3_network.md'},
         ],
-        "metrics": [],
+        "metrics": [
+            {"label": "Độ trễ lớn nhất khi mất một nửa số gói (giây, thấp hơn là tốt; mô phỏng)", "a_label": "không thăm dò", "a": 41.167, "b_label": "thăm dò mỗi 2 s", "b": 8.333, "max": 45, "unit": " s", "doc": "docs/results/rq3_network.md"},
+        ],
         "what": "Mỗi cảnh báo gồm toạ độ (vài trăm byte, gửi trước) và ảnh cắt nhỏ (gửi sau). Cảnh báo được lưu vào hàng đợi trên UAV trước khi gửi; mất mạng thì gửi lại khi có sóng, trạm bỏ qua bản trùng.",
         "why": "Vùng lũ thường mất sóng; không gửi được video về. Không được mất cảnh báo nào khi mạng chập chờn.",
         "results": [
             ("Giả lập mất gói và mất sóng theo đồng hồ mô phỏng; demo có banner mất sóng và gửi bù", "docs/DEMO_BAO_VE.md"),
+            ("Mô phỏng mạng: có thăm dò đường truyền thì không mất cảnh báo nào, kể cả mất một nửa số gói cộng 30 s mất sóng", "docs/results/rq3_network.md"),
         ],
         "files": ["edge/alerts.py", "sim/netem.py"],
         "docs": [("Kỹ thuật, mục 10–11", "docs/TECHNICAL.md")],

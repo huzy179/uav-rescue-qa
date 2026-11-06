@@ -4,7 +4,9 @@ Ghép cảnh báo với người thật theo khoảng cách mặt đất tại t
 - cảnh báo không gần người nào (> r_eval) là báo động giả;
 - cảnh báo gần từ hai người trở lên là gộp nhầm;
 - người nhận từ hai cảnh báo trở lên (tính theo người gần nhất của mỗi cảnh báo) là tách nhầm;
-- người không có cảnh báo nào trong [t_in, t_out + tail] là bỏ sót hoàn toàn.
+- người không có cảnh báo nào trong [t_in, t_out + tail] là bỏ sót hoàn toàn;
+- sai số vị trí lấy ở cảnh báo đầu tiên của mỗi người, so với bán kính sai số 1σ cảnh báo đó tự báo (within_reported_radius) và
+  bán kính 95 % = R95_FACTOR × 1σ (within_reported_radius_95).
 
 Ví dụ:
     .venv/bin/python eval/rq3_metrics.py --run runs/rq3/demo/geo --truth runs/rq3/demo/ground_truth.json
@@ -17,7 +19,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from edge.georef import ground_distance_m
+from edge.georef import R95_FACTOR, ground_distance_m
 from shared.provenance import write_run_config
 from shared.schema import Alert
 from sim.scenario import Person
@@ -68,13 +70,16 @@ def compute_metrics(
     for pid, (t_in, t_out) in sorted(spans.items()):
         in_window = [a for a in alerts_of[pid] if a.t <= t_out + tail_s]
         first = min((a.t for a in in_window), default=None)
+        # Cảnh báo đầu tiên (gần nhất nếu nhiều cảnh báo cùng lúc): sai số thật và bán kính sai số hệ thống tự báo.
+        best = None if first is None else min(
+            ((ground_distance_m(a.lat, a.lon, *people[pid].at(a.t)), a.position_error_m) for a in in_window if a.t == first)
+        )
         per_person.append(
             {
                 "person_id": pid, "t_in": t_in, "t_out": t_out, "n_alerts": len(alerts_of[pid]),
                 "time_to_alert_s": None if first is None else first - t_in,
-                "position_error_m": None if first is None else min(
-                    ground_distance_m(a.lat, a.lon, *people[pid].at(a.t)) for a in in_window if a.t == first
-                ),
+                "position_error_m": None if best is None else best[0],
+                "reported_error_m": None if best is None else best[1],
             }
         )
 
@@ -84,7 +89,8 @@ def compute_metrics(
             acked.setdefault(record["msg_id"].rsplit(":", 1)[0], record["t"])
     delays = [acked[a.alert_id] - a.t for a in alerts if a.alert_id in acked]
     times = [p["time_to_alert_s"] for p in per_person if p["time_to_alert_s"] is not None]
-    errors = [p["position_error_m"] for p in per_person if p["position_error_m"] is not None]
+    found = [p for p in per_person if p["position_error_m"] is not None]
+    errors = [p["position_error_m"] for p in found]
     n_people = len(per_person)
     summary = {
         "n_people": n_people,
@@ -97,6 +103,12 @@ def compute_metrics(
         "time_to_alert_s_median": _median(times),
         "time_to_alert_s_max": max(times, default=None),
         "position_error_m_median": _median(errors),
+        "position_error_m_max": max(errors, default=None),
+        # Tỉ lệ người (đã được cảnh báo) nằm trong bán kính sai số mà cảnh báo đầu tiên tự báo (vòng tròn trên bản đồ).
+        "within_reported_radius": sum(p["position_error_m"] <= p["reported_error_m"] for p in found) / len(found) if found else None,
+        "within_reported_radius_95": (
+            sum(p["position_error_m"] <= R95_FACTOR * p["reported_error_m"] for p in found) / len(found) if found else None
+        ),
         "delivery_delay_s_median": _median(delays),
         "delivery_delay_s_max": max(delays, default=None),
         "lost_rate": (len(alerts) - len(delays)) / len(alerts) if alerts else None,

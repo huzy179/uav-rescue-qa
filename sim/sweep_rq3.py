@@ -41,7 +41,8 @@ from shared.provenance import write_run_config
 
 METRICS = [
     "n_alerts", "false_alarms_per_min", "missed_rate", "merge_errors", "split_errors",
-    "time_to_alert_s_median", "position_error_m_median", "delivery_delay_s_median", "lost_rate", "kb_per_alert", "frames_processed",
+    "time_to_alert_s_median", "position_error_m_median", "position_error_m_max", "within_reported_radius", "within_reported_radius_95",
+    "delivery_delay_s_median", "delivery_delay_s_max", "lost_rate", "kb_per_alert", "frames_processed",
 ]
 # Do sweep tự đặt cho từng lần chạy; không được ghi đè trong cấu hình.
 RESERVED = {"scenario": {"output", "seed"}, "pipeline": {"source", "telemetry", "replay", "output", "seed", "source_fps"}}
@@ -137,12 +138,12 @@ def run_pipeline(scenario_dir: Path, run_dir: Path, params: dict[str, Any], conf
 
 def summarize(rows: list[dict[str, Any]], keys: list[str]) -> list[dict[str, Any]]:
     """Trung bình và độ lệch chuẩn của từng chỉ số qua các seed, cho từng tổ hợp tham số."""
-    groups: dict[tuple, list[dict[str, Any]]] = {}
-    for row in rows:
-        groups.setdefault(tuple(row[k] for k in keys), []).append(row)
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:  # khoá theo JSON vì giá trị lưới có thể là danh sách (ví dụ net_outage)
+        groups.setdefault(json.dumps([row[k] for k in keys]), []).append(row)
     summary = []
-    for combo, group in groups.items():
-        item: dict[str, Any] = dict(zip(keys, combo)) | {"n_seeds": len(group)}
+    for group in groups.values():
+        item: dict[str, Any] = {k: group[0][k] for k in keys} | {"n_seeds": len(group)}
         for metric in METRICS:
             values = [r[metric] for r in group if r[metric] is not None]
             item[f"{metric}_mean"] = round(statistics.fmean(values), 4) if values else None

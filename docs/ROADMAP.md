@@ -38,6 +38,11 @@ Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặ
 
 **Cập nhật 6/11:** E2e phiên 1 xong trên Kaggle: 33/55 epoch, 19,1 phút mỗi epoch (E2c: 10,0 phút), mAP50 val ngang E2c ở cùng epoch (`docs/results/E2e.md`). Phiên 2 (22 epoch, khoảng 7 giờ) chạy tiếp bằng `MODE = "resume"`.
 
+**Cập nhật 6/11 (RQ3c, RQ3d, mô phỏng):**
+- **Sai số vị trí** (`rq3_geoerr.md`, `rq3_geoerr.yaml`): GPS là nguồn sai số chính; khi GPS σ 3 m chỉ 0,278 số người nằm trong bán kính 1σ mà cảnh báo ghi, vùng 95% chứa 1,000. Bản đồ trạm giờ vẽ **vùng tìm 95%** (2,448 × 1σ, `R95_FACTOR`); trường `position_error_m` vẫn là 1σ. Lệch hướng 5° ở 100 m gây tách nhầm 5,333 mỗi kịch bản.
+- **Mạng** (`rq3_network.md`, `rq3_network.yaml`): thêm **thăm dò đường truyền** (`--link-probe-s`, mặc định tắt): không mất cảnh báo nào; độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s. Quyết định #17.
+- Phiên 2 của E2e đang chạy trên Kaggle (dataset `floodeye-e2e-resume`).
+
 **Cập nhật 5/11:**
 - **Thuật ngữ chuẩn hoá:** `docs/THUAT_NGU.md` là bảng chuẩn duy nhất (thuật ngữ ngành, khái niệm dự án đặt tên tiếng Việt, ký hiệu nội bộ, quy tắc dùng trong luận văn); TECHNICAL mục 18 trỏ sang.
 - **Tab "Hiểu dự án"** trong `python -m console`: bản đồ dự án 6 khâu (làm gì, vì sao, kết quả kèm file nguồn, file mã), đọc mọi tài liệu với giải thích thuật ngữ khi di chuột, tìm kiếm, xem mã.
@@ -365,4 +370,5 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 | 13 | ~~Đưa "thu nhỏ khung theo độ cao" thành một đóng góp, đánh giá trên tập lũ cạnh E4?~~ → chốt 4/11: **chỉ đánh giá trên SDS** (có độ cao từ metadata) và trong mô phỏng RQ3. 188 khung lũ lấy từ video YouTube, không có độ cao bay; suy độ cao từ nhãn là dùng nhãn test để đặt tham số. Tập lũ chạy E4 cắt ô không thu nhỏ; ghi giới hạn | Học viên | Xong |
 | 14 | ~~Tuần 31/10–6/11 dư khoảng 10 giờ GPU vì E3 xong sớm: seed thứ hai của E2c, E2d, hay E2c + C2A?~~ → chốt 4/11: **E2e = E2c + C2A** (`E2e_s0.yaml`), vì E2c yếu với người to (`e6_sds_pilot.md`) | Học viên | Xong |
 | 15 | ~~4/10 video lũ dưới 1080p: tải lại hay giữ?~~ → chốt 4/11: **giữ** (74 khung sau khi gộp San Angelo; bỏ thì còn 114, dưới mức 150), ngoại lệ ghi ở LABELING mục 6 và phần giới hạn của luận văn | Học viên | Xong |
+| 17 | Bật thăm dò đường truyền (`--link-probe-s 2`) mặc định trong `configs/edge.yaml` và cấu hình demo? Mô phỏng: không mất cảnh báo nào, độ trễ lớn nhất giảm ở mọi mức mất gói và mất sóng, dữ liệu gửi gần như không đổi (`rq3_network.md`). Đổi mặc định không làm thay đổi bảng RQ3 cũ (các bảng đó không giả lập mạng). **Đề xuất: bật** | Học viên | 13/11 |
 | 16 | Trình bày câu hỏi nghiên cứu: giữ ba câu của đề cương, thêm câu hỏi con đo được cho mỗi câu, và luận điểm xuyên suốt "dữ liệu bay giúp cả ba khâu" (báo cáo 6/11). Đã viết vào TONG_QUAN mục 1.3–1.4 dưới dạng đề xuất; cô không đồng ý thì trả về bản cũ trong lịch sử git | Cô | Buổi gặp 6/11 |

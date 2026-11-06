@@ -53,6 +53,11 @@
   }
 
   // Mỗi sự cố (ground/incidents.py) là một điểm; mở ra thấy ảnh cắt mới nhất, lý do ưu tiên và nút cho người vận hành.
+  // Sai số trong cảnh báo là 1σ; vòng 1σ chỉ chứa khoảng 39 % trường hợp (sai số hai chiều), nên vẽ vùng 95 %:
+  // bán kính √(−2 ln 0,05) × 1σ (edge/georef.py, R95_FACTOR).
+  const R95 = Math.sqrt(-2 * Math.log(0.05));
+  const areas = {};
+
   function popup(inc) {
     const a = inc.alerts[0];
     const crop = a && a.has_crop ? `<br><img src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" width="200">` : "<br><i>Chưa có ảnh cắt</i>";
@@ -63,7 +68,7 @@
         + `<button onclick='update(${id}, {status: "resolved"})'>Đã cứu</button><button onclick='update(${id}, {status: "false_alarm"})'>Báo nhầm</button>`
       : `<button onclick='update(${id}, {status: "open"})'>Mở lại</button>`;
     return `<b>Sự cố #${id}</b> · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")}<br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.join(", ")}<br>`
-      + `Sai số ±${inc.position_error_m.toFixed(1)} m · độ tin cậy cao nhất ${inc.max_confidence.toFixed(2)}`
+      + `Vùng tìm (95%): bán kính ${(R95 * inc.position_error_m).toFixed(1).replace(".", ",")} m · độ tin cậy cao nhất ${inc.max_confidence.toFixed(2).replace(".", ",")}`
       + `<div class="why">${inc.priority_reasons.join("; ")}</div>`
       + `${crop}<div class="actions">${actions}</div><small>${ids}</small>`;
   }
@@ -80,6 +85,10 @@
         if (!markers[key]) {
           markers[key] = L.circleMarker([inc.lat, inc.lon], { weight: 2 }).addTo(map).bindPopup("");
         }
+        if (!areas[key]) {
+          areas[key] = L.circle([inc.lat, inc.lon], { radius: 1, weight: 1, dashArray: "4 4", fillOpacity: 0.08, interactive: false }).addTo(map);
+        }
+        areas[key].setLatLng([inc.lat, inc.lon]).setRadius(R95 * inc.position_error_m).setStyle({ color: color(inc) });
         markers[key].setLatLng([inc.lat, inc.lon]).setRadius(Math.min(8 + 2 * (inc.n_alerts - 1), 16)).setStyle({ color: color(inc) });
         // Cập nhật nội dung thay vì gắn popup mới, để popup đang mở không bị đóng mỗi lần hỏi lại.
         markers[key].setPopupContent(popup(inc));
