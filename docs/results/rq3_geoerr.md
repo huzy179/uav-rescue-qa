@@ -7,7 +7,7 @@
 - Kịch bản `sim/make_rq3.py`: 60 s, 10 người đứng yên, cách đường bay tối đa 25 m, 10 m/s, 2 khung/giây, ảnh 4K, góc nhìn 82° chéo; detector giả recall 0,7, 0,5 báo nhầm mỗi khung; 3 seed.
 - Nhiễu thật trong telemetry: GPS Gauss–Markov σ mỗi trục, τ 30 s (TECHNICAL mục 11); hướng bay lệch cố định `--yaw-bias-deg`; độ cao lệch cố định `--alt-bias-m`.
 - Pipeline: xác nhận geo, N = 3, mô hình sai số **giữ mặc định** (GPS 3 m, độ cao 2 m, hướng 2°, nghiêng 1°; TECHNICAL mục 8.4), như khi chưa biết GPS thật tốt hay kém.
-- Chỉ số (`eval/rq3_metrics.py`, TECHNICAL mục 15.4): sai số vị trí lấy ở **cảnh báo đầu tiên** của mỗi người; "trong bán kính 1σ" là tỉ lệ người có sai số ≤ `position_error_m` của cảnh báo đó; "trong vùng 95%" là ≤ 2,448 × `position_error_m` (`edge/georef.py`, `R95_FACTOR`). Chỉ tính người đã được cảnh báo; cảnh báo lệch quá 10 m (`r_eval`) bị tính là báo động giả và người đó là bỏ sót.
+- Chỉ số (`eval/rq3_metrics.py`, TECHNICAL mục 15.4): sai số vị trí lấy ở **cảnh báo đầu tiên** của mỗi người; "trong bán kính 1σ" là tỉ lệ người có sai số ≤ `position_error_m` của cảnh báo đó; "trong vùng 95%" là ≤ 2,448 × `position_error_m` (`shared/schema.py`, `R95_FACTOR`). Chỉ tính người đã được cảnh báo; cảnh báo lệch quá 10 m (`r_eval`) bị tính là báo động giả và người đó là bỏ sót.
 - Lưới: độ cao {50, 100} m × GPS σ {0, 1, 3, 5} m × lệch hướng {0, 5}° × lệch độ cao {0, 5} m. Cấu hình `configs/experiments/rq3_geoerr.yaml`, kết quả `runs/rq3/geoerr/summary.csv` (cột `*_mean`, trung bình 3 seed).
 
 ## Chỉ có nhiễu GPS (hướng và độ cao đúng)

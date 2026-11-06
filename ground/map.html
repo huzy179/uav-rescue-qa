@@ -54,6 +54,13 @@
   .mapbtn { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font: inherit; font-size: 12px; cursor: pointer; }
   .mapbtn.on { border-color: var(--scan); color: var(--scan); }
   .mapbtn.truth.on { border-color: var(--ok); color: var(--ok); }
+  .rrow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  a.mapbtn { text-decoration: none; display: inline-block; }
+  #speed { width: 56px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 2px 4px; font: inherit; }
+  .dist { color: #ffd479 !important; }
+  .order { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #ffd479; color: #0d1117; font-size: 11px; font-weight: 800; border: 2px solid #0d1117; }
+  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--line); padding: 6px 14px; border-radius: 8px; z-index: 2000; display: none; }
+  .actions a { color: var(--accent); font-size: 12px; align-self: center; margin-left: 4px; }
   .chip.truth { border-color: var(--ok); }
   .fa { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; }
   .ok-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--ok); color: #0d1117; font-size: 11px; font-weight: 700; }
@@ -83,6 +90,7 @@
 </style>
 </head>
 <body>
+<div id="toast" role="status"></div>
 <div id="app">
   <header>
     <h1>FloodEye · <span>trạm điều phối</span></h1>
@@ -102,6 +110,17 @@
         <div class="note">Chỉ để trình bày: drone thật không gửi video về trạm, chỉ gửi toạ độ, ảnh cắt nhỏ và trạng thái.</div>
       </section>
       <div id="uavs"><section class="card"><h2>Drone</h2><div class="empty">Chưa nhận trạng thái drone nào.</div></section></div>
+      <section class="card" id="rescueCard">
+        <h2>Đội cứu hộ</h2>
+        <div class="rrow">
+          <button class="mapbtn" id="btnBoat">Đặt vị trí thuyền</button>
+          <button class="mapbtn" id="btnRoute">Gợi ý thứ tự đi cứu</button>
+          <a class="mapbtn" href="/api/incidents.gpx" download title="Sự cố đang mở dạng GPX, nạp vào máy định vị cầm tay hoặc điện thoại">Tải GPX</a>
+        </div>
+        <div id="boatInfo" class="note">Chưa đặt vị trí thuyền: bấm "Đặt vị trí thuyền" rồi bấm lên bản đồ (kéo được).</div>
+        <div class="note">Tốc độ thuyền <input id="speed" type="number" min="0.5" max="20" step="0.5" value="3"> m/s</div>
+        <div id="routeInfo" class="note"></div>
+      </section>
       <section class="card">
         <h2>Chú giải bản đồ</h2>
         <div class="legend">
@@ -269,7 +288,7 @@
   const markers = {}, areas = {}, seen = new Set();
   let fitted = false, firstLoad = true;
   // Sai số trong cảnh báo là 1σ; vòng 1σ chỉ chứa khoảng 39 % trường hợp (sai số hai chiều), nên vẽ vùng 95 %:
-  // bán kính √(−2 ln 0,05) × 1σ (edge/georef.py, R95_FACTOR; docs/results/rq3_geoerr.md).
+  // bán kính √(−2 ln 0,05) × 1σ (shared/schema.py, R95_FACTOR; docs/results/rq3_geoerr.md).
   const R95 = Math.sqrt(-2 * Math.log(0.05));
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -298,7 +317,11 @@
       + ` · thấy lần đầu ở giây ${fmt(inc.first_t, 0)} của chuyến bay<br>`
       + `Vùng tìm (95%): bán kính ${fmt(R95 * inc.position_error_m)} m · độ tin cậy cao nhất ${fmt(inc.max_confidence, 2)}`
       + `<div class="why">${inc.priority_reasons.map(esc).join("; ")}</div>`
-      + `${crop}<div class="actions">${actions}</div><small>${esc(ids)}</small>`;
+      + `${crop}<div class="actions">${actions}</div>`
+      + `<div class="actions"><button onclick='copyCoords(${inc.lat}, ${inc.lon})'>Chép toạ độ</button>`
+      + `<button onclick='legTo(${id})'>Đường từ thuyền</button>`
+      + `<a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${inc.lat.toFixed(7)},${inc.lon.toFixed(7)}">Google Maps ↗</a></div>`
+      + `<small>${esc(ids)}</small>`;
   }
 
   async function refresh() {
@@ -343,6 +366,7 @@
     }
     firstLoad = false;
     renderTruth();
+    renderRescue();
   }
   // Trạm đẩy sự kiện "update" khi có thay đổi (/api/stream); mất kết nối thì quay về hỏi lại mỗi 2 giây.
   refresh();
@@ -354,6 +378,128 @@
   // Trạng thái drone đổi mỗi giây và cần biết "đã im lặng bao lâu", nên hỏi đều mỗi giây.
   refreshUavs();
   setInterval(() => refreshUavs().then(renderTruth), 1000);
+
+  // ---------- Đội cứu hộ: vị trí thuyền, khoảng cách và hướng tới từng sự cố, thứ tự đi cứu, GPX ----------
+  // Tính trên trình duyệt theo đường thẳng (không biết đường thuỷ, vật cản); vị trí thuyền đặt tay, giữ trong trình duyệt.
+  let boat = null, placing = false, showRoute = false, legTarget = null;
+  try { const b = JSON.parse(localStorage.getItem("floodeye.boat")); if (Array.isArray(b) && b.length === 2) boat = b; } catch (e) { /* không có bộ nhớ trình duyệt */ }
+  if (params.get("boat")) { const b = params.get("boat").split(",").map(Number); if (b.length === 2 && b.every(Number.isFinite)) boat = b; }
+  const rescueLayer = L.layerGroup().addTo(map);
+  const BOAT_ICON = L.divIcon({ className: "", iconSize: [32, 32], iconAnchor: [16, 16], html:
+    '<svg width="32" height="32" viewBox="-16 -16 32 32" style="filter:drop-shadow(0 0 3px #000)"><circle r="14" fill="#ffd479" fill-opacity=".25" stroke="#ffd479" stroke-width="2"/>'
+    + '<path d="M-9,1 L9,1 L6,7 L-6,7 Z" fill="#ffd479"/><path d="M0,-9 L0,1 M0,-9 L7,-2 L0,-2" stroke="#ffd479" stroke-width="2" fill="none"/></svg>' });
+  let boatMarker = null;
+  const COMPASS = ["Bắc", "Đông Bắc", "Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc"];
+  const btnBoat = document.getElementById("btnBoat"), btnRoute = document.getElementById("btnRoute"), speedInput = document.getElementById("speed");
+  try { const v = Number(localStorage.getItem("floodeye.speed")); if (v > 0) speedInput.value = v; } catch (e) { /* bỏ qua */ }
+
+  function setBoat(pos) {
+    boat = pos;
+    try { localStorage.setItem("floodeye.boat", JSON.stringify(pos)); } catch (e) { /* bỏ qua */ }
+    renderRescue();
+  }
+  btnBoat.onclick = () => {
+    placing = !placing;
+    btnBoat.classList.toggle("on", placing);
+    map.getContainer().style.cursor = placing ? "crosshair" : "";
+  };
+  map.on("click", (e) => {
+    if (!placing) return;
+    placing = false; btnBoat.classList.remove("on"); map.getContainer().style.cursor = "";
+    setBoat([e.latlng.lat, e.latlng.lng]);
+  });
+  btnRoute.onclick = () => { showRoute = !showRoute; btnRoute.classList.toggle("on", showRoute); renderRescue(); };
+  speedInput.onchange = () => { try { localStorage.setItem("floodeye.speed", speedInput.value); } catch (e) { /* bỏ qua */ } renderRescue(); };
+
+  function bearing(a, b) {
+    const k = Math.PI / 180;
+    const dn = (b[0] - a[0]), de = (b[1] - a[1]) * Math.cos(a[0] * k);
+    return (Math.atan2(de, dn) / k + 360) % 360;
+  }
+  const compass = (deg) => COMPASS[Math.round(deg / 45) % 8];
+  const metersText = (m) => m >= 1000 ? fmt(m / 1000, 2) + " km" : Math.round(m) + " m";
+  const minutesText = (m) => { const s = m / Math.max(Number(speedInput.value) || 3, 0.1); return s < 60 ? Math.round(s) + " giây" : fmt(s / 60, 1) + " phút"; };
+
+  // Thứ tự đi cứu: theo nhóm ưu tiên (đỏ, cam, vàng: cùng ngưỡng với màu trên bản đồ), trong mỗi nhóm đi tới sự cố gần
+  // nhất kế tiếp (láng giềng gần nhất). Đơn giản, giải thích được; không phải lời giải tối ưu.
+  function plan() {
+    const open = lastIncidents.filter(i => i.status === "open");
+    const tiers = [open.filter(i => i.priority >= 3), open.filter(i => i.priority >= 1.5 && i.priority < 3), open.filter(i => i.priority < 1.5)];
+    let here = boat, total = 0;
+    const order = [];
+    for (const tier of tiers) {
+      const left = [...tier];
+      while (left.length) {
+        let k = 0;
+        for (let j = 1; j < left.length; j++) if (metres(here, [left[j].lat, left[j].lon]) < metres(here, [left[k].lat, left[k].lon])) k = j;
+        const inc = left.splice(k, 1)[0], to = [inc.lat, inc.lon], d = metres(here, to);
+        total += d; order.push({ inc, d }); here = to;
+      }
+    }
+    return { order, total };
+  }
+
+  function renderRescue() {
+    rescueLayer.clearLayers();
+    const info = document.getElementById("boatInfo"), routeInfo = document.getElementById("routeInfo");
+    for (const item of Object.values(listItems)) item.querySelectorAll(".dist").forEach(x => x.remove());
+    if (!boat) { routeInfo.textContent = ""; return; }
+    if (!boatMarker) {
+      boatMarker = L.marker(boat, { icon: BOAT_ICON, draggable: true, zIndexOffset: 900 }).bindTooltip("Thuyền cứu hộ", { direction: "top", offset: [0, -14] });
+      boatMarker.on("dragend", () => { const p = boatMarker.getLatLng(); setBoat([p.lat, p.lng]); });
+    }
+    boatMarker.setLatLng(boat).addTo(rescueLayer);
+    info.textContent = `Thuyền: ${boat[0].toFixed(6)}, ${boat[1].toFixed(6)} (kéo để dời)`;
+    const { order, total } = plan();
+    const rank = Object.fromEntries(order.map((o, i) => [o.inc.incident_id, i + 1]));
+    for (const inc of lastIncidents) {
+      const item = listItems[inc.incident_id];
+      if (!item || inc.status !== "open") continue;
+      const d = metres(boat, [inc.lat, inc.lon]);
+      const line = document.createElement("div");
+      line.className = "t2 dist";
+      line.textContent = `cách thuyền ${metersText(d)} · hướng ${compass(bearing(boat, [inc.lat, inc.lon]))} · khoảng ${minutesText(d)}`
+        + (showRoute ? ` · thứ tự ${rank[inc.incident_id]}` : "");
+      item.querySelector(".t1")?.after(line);
+    }
+    if (showRoute && order.length) {
+      L.polyline([boat, ...order.map(o => [o.inc.lat, o.inc.lon])], { color: "#ffd479", weight: 3, dashArray: "8 6", interactive: false }).addTo(rescueLayer);
+      order.forEach((o, i) => L.marker([o.inc.lat, o.inc.lon], { interactive: false, zIndexOffset: 800,
+        icon: L.divIcon({ className: "", iconSize: [20, 20], iconAnchor: [-6, 22], html: `<div class="order">${i + 1}</div>` }) }).addTo(rescueLayer));
+      routeInfo.innerHTML = `${order.length} sự cố đang mở · tổng <b>${metersText(total)}</b> · khoảng <b>${minutesText(total)}</b> theo đường thẳng`
+        + `<br>Thứ tự: ưu tiên cao trước, trong cùng mức thì đến chỗ gần nhất kế tiếp.`;
+    } else routeInfo.textContent = showRoute ? "Không có sự cố đang mở." : "";
+    if (legTarget) {
+      const inc = lastIncidents.find(i => i.incident_id === legTarget);
+      if (inc) {
+        const d = metres(boat, [inc.lat, inc.lon]);
+        L.polyline([boat, [inc.lat, inc.lon]], { color: "#ffffff", weight: 3, interactive: false }).addTo(rescueLayer)
+          .bindTooltip(`${metersText(d)} · ${compass(bearing(boat, [inc.lat, inc.lon]))} (${Math.round(bearing(boat, [inc.lat, inc.lon]))}°)`, { permanent: true, direction: "center" });
+      }
+    }
+  }
+
+  function legTo(id) {
+    if (!boat) { toast("Chưa đặt vị trí thuyền"); return; }
+    legTarget = legTarget === id ? null : id;
+    renderRescue();
+  }
+  async function copyCoords(lat, lon) {
+    const text = `${lat.toFixed(7)}, ${lon.toFixed(7)}`;
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {  // http không phải localhost: không có clipboard API
+      const area = Object.assign(document.createElement("textarea"), { value: text });
+      document.body.appendChild(area); area.select(); document.execCommand("copy"); area.remove();
+    }
+    toast("Đã chép " + text);
+  }
+  function toast(text) {
+    const t = document.getElementById("toast");
+    t.textContent = text; t.style.display = "block";
+    clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.style.display = "none"; }, 2200);
+  }
+  // Gọi sau khi cả trang chạy xong: listItems, lastIncidents khai báo ở khối đối chiếu đáp án bên dưới.
+  setTimeout(renderRescue, 0);
 
   // ---------- Đối chiếu đáp án (demo): người thật drone đã bay qua, tìm thấy hay bỏ sót, sự cố nào báo nhầm ----------
   // Hai mức "tìm thấy", trả lời hai câu hỏi khác nhau:

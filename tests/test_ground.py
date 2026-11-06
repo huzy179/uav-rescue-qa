@@ -140,6 +140,30 @@ def test_tile_cached_after_first_view_and_served_offline(tmp_path: Path) -> None
 
 
 def test_map_page_works_without_internet(tmp_path: Path) -> None:
+    """Trang không tải gì từ internet: mọi địa chỉ http(s) phải là link người dùng tự bấm (mở Google Maps trên điện
+    thoại), không phải script, stylesheet hay ảnh."""
+    import re
+
     client = TestClient(create_app(tmp_path / "g.sqlite"))
-    assert "https://" not in client.get("/").text
+    allowed = ("https://www.google.com/maps/search/", "http://www.w3.org/2000/svg")  # SVG namespace: không tải gì
+    urls = re.findall(r"https?://[^\s\"'`<>)]+", client.get("/").text)
+    assert all(url.startswith(allowed) for url in urls), urls
     assert client.get("/static/leaflet/leaflet.js").status_code == 200
+
+
+def test_incidents_gpx_lists_open_incidents(tmp_path: Path) -> None:
+    """Hai sự cố cách xa nhau, đóng một: GPX còn một điểm mốc, toạ độ và tên đúng, XML hợp lệ."""
+    import xml.etree.ElementTree as ET
+
+    client = TestClient(create_app(tmp_path / "g.sqlite"))
+    post(client, "uav1-1", "uav1", 21.0, 105.8)
+    post(client, "uav1-2", "uav1", 21.01, 105.8)
+    incidents = client.get("/api/incidents").json()
+    closed = next(i for i in incidents if abs(i["lat"] - 21.01) < 1e-9)["incident_id"]
+    client.patch(f"/api/incidents/{closed}", json={"status": "resolved"})
+    response = client.get("/api/incidents.gpx")
+    assert response.headers["content-type"].startswith("application/gpx+xml")
+    ns = {"g": "http://www.topografix.com/GPX/1/1"}
+    (wpt,) = ET.fromstring(response.content).findall("g:wpt", ns)
+    assert float(wpt.get("lat")) == 21.0 and float(wpt.get("lon")) == 105.8
+    assert wpt.find("g:name", ns).text.startswith("FE-") and "vùng tìm 95%" in wpt.find("g:desc", ns).text

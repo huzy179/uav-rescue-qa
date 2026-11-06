@@ -7,6 +7,9 @@ from pydantic import BaseModel, Field
 Box = tuple[float, float, float, float]  # x1, y1, x2, y2 trên ảnh gốc (pixel)
 # Mã chỉ gồm chữ, số, "_", ".", "-": an toàn khi ghép vào URL và HTML của trạm mặt đất.
 ID_PATTERN = r"^[A-Za-z0-9_.-]{1,64}$"
+# Sai số mặt đất hai chiều, mỗi trục Gauss σ: P(r ≤ kσ) = 1 − exp(−k²/2). Vùng chứa 95 % có bán kính √(−2 ln 0,05)·σ
+# ≈ 2,448σ; position_error_m của cảnh báo là 1σ (docs/results/rq3_geoerr.md). Dùng chung cho edge, eval và trạm.
+R95_FACTOR = 2.4477468306808166
 
 
 class Telemetry(BaseModel):

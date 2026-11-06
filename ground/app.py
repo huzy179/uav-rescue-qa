@@ -16,6 +16,7 @@ import threading
 import time
 import urllib.request
 import zlib
+from xml.sax.saxutils import escape, quoteattr
 from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,7 +29,7 @@ from pydantic import BaseModel, ConfigDict
 
 from ground.incidents import MergeRule, choose_incident, merged_position
 from ground.priority import STATUSES, TAGS, PriorityRule, rank
-from shared.schema import Alert, AlertCrop, UavState
+from shared.schema import R95_FACTOR, Alert, AlertCrop, UavState
 
 MAP_HTML = Path(__file__).with_name("map.html")
 MAX_TRACK = 7200  # điểm đường bay giữ lại mỗi drone (2 giờ nếu một gói mỗi giây)
@@ -222,6 +223,25 @@ def create_app(
             inc["max_confidence"] = max((a["confidence"] for a in inc["alerts"]), default=0.0)
         return rank(incidents, priority_rule)
 
+    @app.get("/api/incidents.gpx")
+    def incidents_gpx() -> Response:
+        """Sự cố đang mở dạng GPX (điểm mốc theo thứ tự ưu tiên), để nạp vào máy định vị cầm tay hay điện thoại của đội
+        cứu hộ khi không có bản đồ trạm. Tên điểm "FE-<số sự cố>", mô tả gồm ưu tiên, lý do, bán kính vùng tìm 95%."""
+        rows = [inc for inc in list_incidents() if inc["status"] == "open"]
+        points = []
+        for inc in rows:
+            desc = (f"Ưu tiên {vn(inc['priority'], 2)}; {'; '.join(inc['priority_reasons'])}; "
+                    f"vùng tìm 95% bán kính {vn(R95_FACTOR * inc['position_error_m'], 1)} m; {inc['n_alerts']} cảnh báo")
+            points.append(
+                f'  <wpt lat="{inc["lat"]:.7f}" lon="{inc["lon"]:.7f}"><name>FE-{inc["incident_id"]}</name>'
+                f"<desc>{escape(desc)}</desc><sym>Flag, Red</sym></wpt>"
+            )
+        gpx = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+               f'<gpx version="1.1" creator={quoteattr("FloodEye trạm mặt đất")} xmlns="http://www.topografix.com/GPX/1/1">\n'
+               + "\n".join(points) + "\n</gpx>\n")
+        return Response(gpx, media_type="application/gpx+xml",
+                        headers={"Content-Disposition": 'attachment; filename="floodeye_su_co.gpx"'})
+
     @app.patch("/api/incidents/{incident_id}")
     def update_incident(incident_id: int, update: IncidentUpdate) -> dict[str, Any]:
         """Người vận hành gắn thẻ (water, roof) hoặc đóng sự cố (resolved, false_alarm); open để mở lại."""
@@ -334,6 +354,11 @@ def create_app(
         return MAP_HTML.read_text(encoding="utf-8")
 
     return app
+
+
+def vn(x: float, digits: int) -> str:
+    """Số thập phân kiểu Việt Nam (dấu phẩy), cho chữ hiển thị cho người vận hành."""
+    return f"{x:.{digits}f}".replace(".", ",")
 
 
 def change_token(db_path: str) -> str:
