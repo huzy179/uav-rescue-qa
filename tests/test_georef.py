@@ -80,3 +80,14 @@ def test_sai_so_vi_tri_tinh_tay() -> None:
     assert position_error_m(1000, 500, tel, cam, model) == pytest.approx(math.sqrt(9 + 4 + 2 * 1.745329**2 + 0.04), rel=1e-5)
     # Không có sai số nào trừ GPS: đúng bằng σ_GPS ở mọi chỗ.
     assert position_error_m(1000, 0, tel, cam, ErrorModel(3.0, 0, 0, 0, 0)) == pytest.approx(3.0)
+
+
+def test_footprint_corners_round_trip() -> None:
+    """Bốn góc vùng camera nhìn chiếu ngược về đúng bốn góc ảnh; ở 50 m, f = 1920 px, ảnh rộng 3840 px phủ 100 m."""
+    from edge.georef import footprint
+
+    corners = footprint(tel(30.0), CAM)
+    pixels = [gps_to_pixel(lat, lon, tel(30.0), CAM) for lat, lon in corners]
+    assert pixels == [pytest.approx(p, abs=0.01) for p in [(0, 0), (3840, 0), (3840, 2160), (0, 2160)]]
+    north, east = ground_offset_m(*corners[0], *corners[1])
+    assert math.hypot(north, east) == pytest.approx(100.0, rel=1e-4)

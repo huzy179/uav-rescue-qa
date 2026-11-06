@@ -3,43 +3,256 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FloodEye – trạm mặt đất</title>
+<title>FloodEye – trạm điều phối</title>
 <link rel="stylesheet" href="/static/leaflet/leaflet.css">
 <script src="/static/leaflet/leaflet.js"></script>
 <style>
-  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
-  #wrap { display: flex; height: 100%; }
-  /* Nền lưới khi ô bản đồ chưa có (mất mạng, vùng chưa xem): điểm sự cố vẫn đọc được. */
-  #map { flex: 1; background: #dfe6ea repeating-linear-gradient(0deg, transparent 0 63px, #c5ced4 63px 64px),
-         repeating-linear-gradient(90deg, transparent 0 63px, #c5ced4 63px 64px); }
-  #side { width: 320px; overflow-y: auto; border-left: 1px solid #ccc; padding: 8px; box-sizing: border-box; }
-  #side h1 { font-size: 16px; margin: 4px 0 8px; }
-  .item { padding: 6px 4px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
-  .item:hover { background: #f3f3f3; }
-  .item.closed { color: #888; }
-  .why { color: #555; font-size: 12px; }
-  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-  .actions button { margin: 2px 2px 0 0; font-size: 12px; }
-  @media (max-width: 700px) { #wrap { flex-direction: column; } #side { width: 100%; height: 40%; border-left: 0; } }
+  /* Màn hình điều phối: video trên drone, bản đồ (drone, vùng đã quét, sự cố), danh sách sự cố. Nền tối để ảnh vệ
+     tinh và màu cảnh báo nổi trên máy chiếu. Không tải gì từ internet ngoài ô bản đồ qua /tiles. */
+  :root {
+    --bg: #0d1117; --panel: #151b23; --panel2: #1c2430; --line: #2a3441; --text: #e6edf3; --muted: #93a1b0;
+    --ok: #3fb950; --warn: #f0a020; --bad: #f85149; --scan: #39c5e0; --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, "Segoe UI", sans-serif; }
+  #app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+  header { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: .2px; }
+  header h1 span { color: var(--scan); }
+  .kpi { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+  .chip { padding: 3px 10px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); font-size: 13px; white-space: nowrap; }
+  .chip b { font-variant-numeric: tabular-nums; }
+  #main { display: grid; grid-template-columns: minmax(300px, 30%) 1fr 320px; min-height: 0; }
+  #main.novideo { grid-template-columns: 280px 1fr 320px; }
+  #left, #side { overflow-y: auto; background: var(--panel); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+  #left { border-right: 1px solid var(--line); }
+  #side { border-left: 1px solid var(--line); }
+  .card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  #video { width: 100%; aspect-ratio: 16 / 9; background: #000 center/contain no-repeat; border-radius: 6px; display: block; object-fit: contain; }
+  .wait { display: grid; place-items: center; aspect-ratio: 16 / 9; border-radius: 6px; background: #000; color: var(--muted); font-size: 13px; text-align: center; padding: 12px; }
+  .uav { display: grid; gap: 6px; }
+  .uavhead { display: flex; align-items: center; gap: 8px; }
+  .uavhead .name { font-weight: 700; font-size: 15px; }
+  .badge { margin-left: auto; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #0d1117; }
+  .badge.ok { background: var(--ok); } .badge.lost { background: var(--bad); color: #fff; animation: blink 1s steps(2) infinite; } .badge.done { background: var(--muted); }
+  @keyframes blink { 50% { opacity: .55; } }
+  .rows { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 13px; }
+  .rows dt { color: var(--muted); } .rows dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .pipe { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: #0b0f14; margin-top: 2px; }
+  .pipe .got { background: var(--ok); } .pipe .wait2 { background: var(--warn); }
+  .legend { display: flex; gap: 10px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  #mapwrap { position: relative; min-height: 0; }
+  #map { position: absolute; inset: 0; background: #1b222b repeating-linear-gradient(0deg, transparent 0 63px, #26303b 63px 64px),
+         repeating-linear-gradient(90deg, transparent 0 63px, #26303b 63px 64px); }
+  #banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1000; display: none;
+            background: var(--bad); color: #fff; font-weight: 700; padding: 8px 16px; border-radius: 8px; box-shadow: 0 4px 18px #0008; text-align: center; }
+  #banner small { display: block; font-weight: 400; opacity: .9; }
+  .mapbtn { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+  .mapbtn.on { border-color: var(--scan); color: var(--scan); }
+  .drone { filter: drop-shadow(0 0 4px #000); transition: transform .25s linear; }
+  #side h2 { margin: 2px 2px 0; }
+  .item { display: grid; grid-template-columns: 56px 1fr; gap: 8px; padding: 8px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line); cursor: pointer; border-left: 4px solid var(--c, var(--muted)); }
+  .item:hover { border-color: var(--accent); }
+  .item.closed { opacity: .5; }
+  .item.fresh { animation: fresh 2.4s ease-out; }
+  @keyframes fresh { 0% { box-shadow: 0 0 0 3px var(--warn); background: #3a2f12; } 100% { box-shadow: none; } }
+  .thumb { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; background: #0b0f14; display: grid; place-items: center; color: var(--muted); font-size: 11px; text-align: center; }
+  .item .t1 { font-weight: 600; } .item .t2, .why { color: var(--muted); font-size: 12px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 8px; }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel2); color: var(--text); }
+  .leaflet-popup-content { font-size: 13px; }
+  .leaflet-popup-content img { border-radius: 6px; margin-top: 6px; }
+  .actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .actions button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 3px 8px; font-size: 12px; cursor: pointer; }
+  .actions button:hover { border-color: var(--accent); }
+  .leaflet-control-layers, .leaflet-bar a { background: var(--panel); color: var(--text); }
+  .leaflet-control-attribution { background: #0d1117aa !important; color: var(--muted); }
+  .leaflet-control-attribution a { color: var(--muted); }
+  @media (max-width: 900px) {
+    #main, #main.novideo { grid-template-columns: 1fr; grid-template-rows: auto 60vh auto; }
+    #left, #side { border: 0; }
+  }
 </style>
 </head>
 <body>
-<div id="wrap">
-  <div id="map"></div>
-  <div id="side"><h1>Sự cố theo ưu tiên (<span id="count">0</span>) · cảnh báo (<span id="nalerts">0</span>)</h1><div id="list"></div></div>
+<div id="app">
+  <header>
+    <h1>FloodEye · <span>trạm điều phối</span></h1>
+    <div class="kpi">
+      <span class="chip">Drone <b id="kUav">0</b></span>
+      <span class="chip">Sự cố đang mở <b id="kOpen">0</b></span>
+      <span class="chip">Cảnh báo đã nhận <b id="nalerts">0</b></span>
+      <span class="chip">Thời gian bay <b id="kTime">–</b></span>
+    </div>
+  </header>
+  <div id="main">
+    <aside id="left">
+      <section class="card" id="videoCard">
+        <h2>Màn hình trên drone</h2>
+        <div id="videoBox"><div class="wait">Đang chờ video từ drone…</div></div>
+        <div class="note">Chỉ để trình bày: drone thật không gửi video về trạm, chỉ gửi toạ độ, ảnh cắt nhỏ và trạng thái.</div>
+      </section>
+      <div id="uavs"><section class="card"><h2>Drone</h2><div class="empty">Chưa nhận trạng thái drone nào.</div></section></div>
+      <section class="card">
+        <h2>Chú giải bản đồ</h2>
+        <div class="legend">
+          <span><i style="background:var(--scan);opacity:.6"></i>Vùng đã quét</span>
+          <span><i style="border:2px solid var(--scan);background:none"></i>Camera đang nhìn</span>
+          <span><i style="background:#d62728"></i>Sự cố ưu tiên cao</span>
+          <span><i style="border:1px dashed #ccc;background:none"></i>Vùng tìm 95%</span>
+        </div>
+      </section>
+    </aside>
+    <div id="mapwrap"><div id="map"></div><div id="banner"></div></div>
+    <aside id="side">
+      <h2 class="card" style="padding:8px 12px">Sự cố theo ưu tiên (<span id="count">0</span>)</h2>
+      <div id="list"><div class="empty">Chưa có sự cố.</div></div>
+    </aside>
+  </div>
 </div>
 <script>
+  // ?video=<url MJPEG> (edge/main.py --live-port) bật khung video; không có thì ẩn.
+  const params = new URLSearchParams(location.search);
+  const videoUrl = params.get("video");
+  if (!videoUrl) { document.getElementById("videoCard").remove(); document.getElementById("main").classList.add("novideo"); }
+  else startVideo();
+
+  function startVideo() {
+    const box = document.getElementById("videoBox");
+    const img = new Image();
+    img.id = "video"; img.alt = "Video trên drone";
+    img.onload = () => { if (!img.isConnected) box.replaceChildren(img); };
+    // Drone chưa chạy hoặc đã tắt: thử lại sau 2 giây, giữ ô chờ.
+    img.onerror = () => { box.replaceChildren(waitBox("Đang chờ video từ drone…")); setTimeout(() => { img.src = videoUrl + (videoUrl.includes("?") ? "&" : "?") + "r=" + Date.now(); }, 2000); };
+    img.src = videoUrl;
+  }
+  function waitBox(text) { const d = document.createElement("div"); d.className = "wait"; d.textContent = text; return d; }
+
   // Ô bản đồ đi qua /tiles của trạm (ground/app.py): ô đã xem được giữ trên đĩa nên vẫn hiện khi mất mạng
   // (TECHNICAL mục 12.5). Nguồn là Esri; tile.openstreetmap.org không trả lời từ mạng của dự án, CARTO đòi khoá API.
-  // maxNativeZoom: phóng quá mức ảnh có thật thì phóng to ô cuối cùng thay vì hiện ô trắng.
   const map = L.map("map", { maxZoom: 20 }).setView([21.0285, 105.8542], 15);
   const satellite = L.tileLayer("/tiles/satellite/{z}/{x}/{y}",
     { maxZoom: 20, maxNativeZoom: 19, attribution: "Ảnh vệ tinh © Esri, Maxar, Earthstar Geographics" }).addTo(map);
   const streets = L.tileLayer("/tiles/streets/{z}/{x}/{y}",
     { maxZoom: 20, maxNativeZoom: 19, attribution: "Bản đồ © Esri" });
-  L.control.layers({ "Ảnh vệ tinh": satellite, "Bản đồ đường": streets }).addTo(map);
-  const markers = {};
-  let fitted = false;
+  const coverageLayer = L.layerGroup().addTo(map);
+  const trackLayer = L.layerGroup().addTo(map);
+  const areaLayer = L.layerGroup().addTo(map);
+  const incidentLayer = L.layerGroup().addTo(map);
+  const droneLayer = L.layerGroup().addTo(map);
+  L.control.layers({ "Ảnh vệ tinh": satellite, "Bản đồ đường": streets },
+    { "Vùng đã quét": coverageLayer, "Đường bay": trackLayer, "Vùng tìm 95%": areaLayer }).addTo(map);
+  const fmt = (x, d = 1) => x == null ? "–" : x.toFixed(d).replace(".", ",");
+
+  // Bám theo drone: bật sẵn; người dùng kéo bản đồ thì tắt, bấm nút để bật lại.
+  let follow = true;
+  const FollowControl = L.Control.extend({
+    onAdd() {
+      const b = L.DomUtil.create("button", "mapbtn on");
+      b.textContent = "Bám theo drone";
+      L.DomEvent.disableClickPropagation(b);
+      b.onclick = () => { follow = !follow; b.classList.toggle("on", follow); refreshUavs(); };
+      this.button = b;
+      return b;
+    },
+  });
+  const followControl = new FollowControl({ position: "topleft" }).addTo(map);
+  map.on("dragstart", () => { follow = false; followControl.button.classList.remove("on"); });
+
+  // ---------- Drone: vị trí, hướng, camera đang nhìn, vùng đã quét, đường bay ----------
+  const drones = {};  // uav_id -> {marker, view, coverage, track}
+  const STALE_S = 3;  // không nhận trạng thái quá số giây này thì coi là mất liên lạc
+  let alertsByUav = {};
+
+  function droneIcon(yaw, color) {
+    const svg = `<svg class="drone" width="34" height="34" viewBox="-17 -17 34 34" style="transform:rotate(${yaw}deg)">
+      <circle r="15" fill="${color}" fill-opacity=".25" stroke="${color}" stroke-width="2"/>
+      <path d="M0,-12 L8,9 L0,4 L-8,9 Z" fill="${color}" stroke="#0d1117" stroke-width="1.5"/></svg>`;
+    return L.divIcon({ html: svg, className: "", iconSize: [34, 34], iconAnchor: [17, 17] });
+  }
+
+  async function refreshUavs() {
+    let uavs;
+    try { uavs = await (await fetch("/api/uavs")).json(); } catch (e) { return; }
+    document.getElementById("kUav").textContent = uavs.length;
+    if (uavs.length) document.getElementById("kTime").textContent = fmt(Math.max(...uavs.map(u => u.t)), 0) + " s";
+    const cards = [], lost = [];
+    for (const u of uavs) {
+      const stale = !u.done && u.age_s > STALE_S;
+      if (stale) lost.push(u);
+      const color = stale ? "#93a1b0" : "#39c5e0";
+      let d = drones[u.uav_id];
+      if (!d) {
+        d = drones[u.uav_id] = {
+          // Hợp các vùng camera đã nhìn: một đa giác nhiều vòng, luật nonzero, nên chỗ chồng nhau không đậm dần.
+          coverage: L.polygon([], { stroke: false, fillColor: "#39c5e0", fillOpacity: .22, fillRule: "nonzero", interactive: false }).addTo(coverageLayer),
+          track: L.polyline([], { color: "#ffffff", weight: 2, opacity: .7, dashArray: "6 6", interactive: false }).addTo(trackLayer),
+          view: L.polygon([], { color: "#39c5e0", weight: 2, fill: false, interactive: false }).addTo(droneLayer),
+          marker: L.marker([u.lat, u.lon], { zIndexOffset: 1000 }).addTo(droneLayer).bindTooltip(u.uav_id, { direction: "top", offset: [0, -16] }),
+        };
+      }
+      d.coverage.setLatLngs(u.footprints);
+      d.track.setLatLngs(u.track);
+      d.view.setLatLngs(u.footprint).setStyle({ color, dashArray: stale ? "4 6" : null });
+      d.marker.setLatLng([u.lat, u.lon]).setIcon(droneIcon(u.yaw_deg, color));
+      cards.push(uavCard(u, stale));
+    }
+    const box = document.getElementById("uavs");
+    if (cards.length) box.replaceChildren(...cards);
+    const banner = document.getElementById("banner");
+    if (lost.length) {
+      const u = lost[0];
+      banner.innerHTML = `${SIGNAL_SVG} Mất liên lạc với ${esc(u.uav_id)} · ${Math.round(u.age_s)} s`
+        + `<small>Cảnh báo vẫn được lưu trên drone (lần cuối: ${u.pending_alerts} gói chờ gửi), sẽ gửi bù khi có sóng</small>`;
+      banner.style.display = "block";
+    } else banner.style.display = "none";
+    // Lần đầu: khung bản đồ vừa vùng camera của mọi drone. Sau đó, nếu đang bám và chỉ một drone bay, giữ nó ở giữa.
+    const live = uavs.filter(u => !u.done);
+    if (uavs.length && !fittedUav) { map.fitBounds(uavs.flatMap(u => u.footprint), { maxZoom: 18, padding: [30, 30] }); fittedUav = true; }
+    else if (follow && live.length === 1) map.panTo([live[0].lat, live[0].lon], { animate: true, duration: .5 });
+  }
+  let fittedUav = false;
+  // Biểu tượng vẽ bằng SVG thay cho emoji: máy chiếu hoặc trình duyệt thiếu phông emoji vẫn hiện đúng.
+  const DRONE_SVG = '<svg width="16" height="16" viewBox="-8 -8 16 16" style="vertical-align:-2px"><path d="M0,-7 L5,6 L0,3 L-5,6 Z" fill="#39c5e0"/></svg>';
+  const SIGNAL_SVG = '<svg width="18" height="14" viewBox="0 0 18 14" style="vertical-align:-1px"><path d="M1 13h2M6 13V9M10 13V5M14 13V1" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M1 1l16 12" stroke="#fff" stroke-width="2"/></svg>';
+
+  function uavCard(u, stale) {
+    // Số đã tới trạm đếm trực tiếp, số tạo trên drone lấy từ gói trạng thái gần nhất (mỗi giây): cảnh báo có thể tới
+    // trước gói trạng thái kế tiếp, nên số tạo không nhỏ hơn số đã tới.
+    const got = alertsByUav[u.uav_id] || 0;
+    const created = Math.max(u.alerts_total, got);
+    const waiting = created - got;
+    const badge = u.done ? '<span class="badge done">Hết chuyến</span>'
+      : stale ? `<span class="badge lost">Mất sóng ${Math.round(u.age_s)} s</span>` : '<span class="badge ok">Đang bay</span>';
+    const total = Math.max(created, 1);
+    const sec = document.createElement("section");
+    sec.className = "card uav";
+    sec.innerHTML = `<div class="uavhead"><span class="name">${DRONE_SVG} ${esc(u.uav_id)}</span>${badge}</div>
+      <dl class="rows">
+        <dt>Độ cao</dt><dd>${fmt(u.alt_m, 0)} m</dd>
+        <dt>Tốc độ</dt><dd>${u.speed_mps == null ? "–" : fmt(u.speed_mps) + " m/s"}</dd>
+        <dt>Xử lý</dt><dd>${fmt(u.fps)} khung/giây</dd>
+        <dt>Thiết bị</dt><dd>${u.device ? esc(u.device.replace(/\s*\(.*\)\s*$/, "")) + " · giả lập thời gian" : "máy chạy demo"}</dd>
+        <dt>Telemetry</dt><dd>${u.telemetry_real ? "thật (từ file bay)" : "giả lập"}</dd>
+        <dt>Cảnh báo tạo trên drone</dt><dd>${created}</dd>
+        <dt>Đã tới trạm</dt><dd>${got}</dd>
+        <dt>Còn kẹt trên drone</dt><dd style="color:${waiting ? "var(--warn)" : "inherit"}">${waiting}</dd>
+      </dl>
+      <div class="pipe" title="Xanh: đã tới trạm · cam: còn trên drone"><div class="got" style="width:${100 * got / total}%"></div><div class="wait2" style="width:${100 * waiting / total}%"></div></div>
+      ${stale ? `<div class="note">Số liệu là lần nhận cuối, ${Math.round(u.age_s)} s trước.</div>` : ""}`;
+    return sec;
+  }
+
+  // ---------- Sự cố ----------
+  const markers = {}, areas = {}, seen = new Set();
+  let fitted = false, firstLoad = true;
+  // Sai số trong cảnh báo là 1σ; vòng 1σ chỉ chứa khoảng 39 % trường hợp (sai số hai chiều), nên vẽ vùng 95 %:
+  // bán kính √(−2 ln 0,05) × 1σ (edge/georef.py, R95_FACTOR; docs/results/rq3_geoerr.md).
+  const R95 = Math.sqrt(-2 * Math.log(0.05));
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // Màu theo điểm ưu tiên (ground/priority.py); sự cố đã đóng màu xám.
   function color(inc) {
@@ -53,11 +266,6 @@
   }
 
   // Mỗi sự cố (ground/incidents.py) là một điểm; mở ra thấy ảnh cắt mới nhất, lý do ưu tiên và nút cho người vận hành.
-  // Sai số trong cảnh báo là 1σ; vòng 1σ chỉ chứa khoảng 39 % trường hợp (sai số hai chiều), nên vẽ vùng 95 %:
-  // bán kính √(−2 ln 0,05) × 1σ (edge/georef.py, R95_FACTOR).
-  const R95 = Math.sqrt(-2 * Math.log(0.05));
-  const areas = {};
-
   function popup(inc) {
     const a = inc.alerts[0];
     const crop = a && a.has_crop ? `<br><img src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" width="200">` : "<br><i>Chưa có ảnh cắt</i>";
@@ -67,48 +275,52 @@
       ? `<button onclick='update(${id}, {tag: "water"})'>Dưới nước</button><button onclick='update(${id}, {tag: "roof"})'>Trên mái</button>`
         + `<button onclick='update(${id}, {status: "resolved"})'>Đã cứu</button><button onclick='update(${id}, {status: "false_alarm"})'>Báo nhầm</button>`
       : `<button onclick='update(${id}, {status: "open"})'>Mở lại</button>`;
-    return `<b>Sự cố #${id}</b> · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")}<br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.join(", ")}<br>`
-      + `Vùng tìm (95%): bán kính ${(R95 * inc.position_error_m).toFixed(1).replace(".", ",")} m · độ tin cậy cao nhất ${inc.max_confidence.toFixed(2).replace(".", ",")}`
-      + `<div class="why">${inc.priority_reasons.join("; ")}</div>`
-      + `${crop}<div class="actions">${actions}</div><small>${ids}</small>`;
+    return `<b>Sự cố #${id}</b> · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")}<br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.map(esc).join(", ")}`
+      + ` · thấy lần đầu ở giây ${fmt(inc.first_t, 0)} của chuyến bay<br>`
+      + `Vùng tìm (95%): bán kính ${fmt(R95 * inc.position_error_m)} m · độ tin cậy cao nhất ${fmt(inc.max_confidence, 2)}`
+      + `<div class="why">${inc.priority_reasons.map(esc).join("; ")}</div>`
+      + `${crop}<div class="actions">${actions}</div><small>${esc(ids)}</small>`;
   }
 
   async function refresh() {
-    try {
-      const incidents = await (await fetch("/api/incidents")).json();
-      document.getElementById("count").textContent = incidents.length;
-      document.getElementById("nalerts").textContent = incidents.reduce((n, i) => n + i.n_alerts, 0);
-      const list = document.getElementById("list");
-      list.replaceChildren();
-      for (const inc of incidents) {
-        const key = inc.incident_id;
-        if (!markers[key]) {
-          markers[key] = L.circleMarker([inc.lat, inc.lon], { weight: 2 }).addTo(map).bindPopup("");
-        }
-        if (!areas[key]) {
-          areas[key] = L.circle([inc.lat, inc.lon], { radius: 1, weight: 1, dashArray: "4 4", fillOpacity: 0.08, interactive: false }).addTo(map);
-        }
-        areas[key].setLatLng([inc.lat, inc.lon]).setRadius(R95 * inc.position_error_m).setStyle({ color: color(inc) });
-        markers[key].setLatLng([inc.lat, inc.lon]).setRadius(Math.min(8 + 2 * (inc.n_alerts - 1), 16)).setStyle({ color: color(inc) });
-        // Cập nhật nội dung thay vì gắn popup mới, để popup đang mở không bị đóng mỗi lần hỏi lại.
-        markers[key].setPopupContent(popup(inc));
-        const item = document.createElement("div");
-        item.className = inc.status === "open" ? "item" : "item closed";
-        const dot = document.createElement("span");
-        dot.className = "dot";
-        dot.style.background = color(inc);
-        const why = document.createElement("div");
-        why.className = "why";
-        why.textContent = inc.priority_reasons.join("; ");
-        item.append(dot, `#${key} · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")} · ${inc.n_alerts} cảnh báo · ${inc.uav_ids.length} UAV`, why);
-        item.onclick = () => { map.setView([inc.lat, inc.lon], 19); markers[key].openPopup(); };
-        list.appendChild(item);
+    let incidents;
+    try { incidents = await (await fetch("/api/incidents")).json(); } catch (e) { console.error(e); return; }
+    document.getElementById("count").textContent = incidents.length;
+    document.getElementById("kOpen").textContent = incidents.filter(i => i.status === "open").length;
+    document.getElementById("nalerts").textContent = incidents.reduce((n, i) => n + i.n_alerts, 0);
+    alertsByUav = {};
+    for (const inc of incidents) for (const a of inc.alerts) alertsByUav[a.uav_id] = (alertsByUav[a.uav_id] || 0) + 1;
+    const list = document.getElementById("list");
+    const items = [];
+    for (const inc of incidents) {
+      const key = inc.incident_id, c = color(inc);
+      const isNew = !seen.has(key) && !firstLoad;
+      seen.add(key);
+      if (!markers[key]) {
+        markers[key] = L.circleMarker([inc.lat, inc.lon], { weight: 2, fillOpacity: .85 }).addTo(incidentLayer).bindPopup("", { maxWidth: 260 });
+        areas[key] = L.circle([inc.lat, inc.lon], { radius: 1, weight: 1, dashArray: "4 4", fillOpacity: 0.08, interactive: false }).addTo(areaLayer);
       }
-      if (!fitted && incidents.length) {
-        map.fitBounds(incidents.map(i => [i.lat, i.lon]), { maxZoom: 19, padding: [40, 40] });
-        fitted = true;
-      }
-    } catch (e) { console.error(e); }
+      areas[key].setLatLng([inc.lat, inc.lon]).setRadius(R95 * inc.position_error_m).setStyle({ color: c });
+      markers[key].setLatLng([inc.lat, inc.lon]).setRadius(Math.min(8 + 2 * (inc.n_alerts - 1), 16)).setStyle({ color: "#fff", fillColor: c });
+      // Cập nhật nội dung thay vì gắn popup mới, để popup đang mở không bị đóng mỗi lần hỏi lại.
+      markers[key].setPopupContent(popup(inc));
+      const a = inc.alerts.find(x => x.has_crop);
+      const item = document.createElement("div");
+      item.className = "item" + (inc.status === "open" ? "" : " closed") + (isNew ? " fresh" : "");
+      item.style.setProperty("--c", c);
+      const thumb = a ? `<img class="thumb" src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" alt="">` : '<div class="thumb">chưa có ảnh</div>';
+      item.innerHTML = `${thumb}<div><div class="t1">#${key} · ưu tiên ${fmt(inc.priority, 2)}</div>`
+        + `<div class="t2">giây ${fmt(inc.first_t, 0)} · ${inc.n_alerts} cảnh báo · ${inc.uav_ids.length} drone · ±${fmt(R95 * inc.position_error_m)} m</div>`
+        + `<div class="why">${inc.priority_reasons.map(esc).join("; ")}</div></div>`;
+      item.onclick = () => { follow = false; followControl.button.classList.remove("on"); map.setView([inc.lat, inc.lon], 19); markers[key].openPopup(); };
+      items.push(item);
+    }
+    list.replaceChildren(...(items.length ? items : [Object.assign(document.createElement("div"), { className: "empty", textContent: "Chưa có sự cố." })]));
+    if (!fitted && incidents.length && !Object.keys(drones).length) {
+      map.fitBounds(incidents.map(i => [i.lat, i.lon]), { maxZoom: 19, padding: [40, 40] });
+      fitted = true;
+    }
+    firstLoad = false;
   }
   // Trạm đẩy sự kiện "update" khi có thay đổi (/api/stream); mất kết nối thì quay về hỏi lại mỗi 2 giây.
   refresh();
@@ -117,6 +329,9 @@
   source.addEventListener("update", refresh);
   source.onerror = () => { if (!poll) poll = setInterval(refresh, 2000); };
   source.onopen = () => { if (poll) { clearInterval(poll); poll = null; } };
+  // Trạng thái drone đổi mỗi giây và cần biết "đã im lặng bao lâu", nên hỏi đều mỗi giây.
+  refreshUavs();
+  setInterval(refreshUavs, 1000);
 </script>
 </body>
 </html>

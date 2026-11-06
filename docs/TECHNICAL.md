@@ -815,6 +815,12 @@ class Transport(Protocol):
 - MQTT (QoS 1) là lựa chọn tự nhiên cho IoT, nhưng thêm một broker cần chạy; chỉ làm nếu thầy yêu cầu.
 - `FakeTransport` cho kiểm thử; `NetemTransport` (mục 11) bọc bên ngoài cả hai.
 
+### 10.6. Trạng thái drone và video xem trực tiếp [Đã có]
+
+`edge/status.py`. Ngoài cảnh báo, drone gửi **gói trạng thái** `UavState` (`shared/schema.py`, khoảng 500 byte) mỗi `--state-every-s` giây: vị trí, độ cao, hướng, tốc độ, bốn góc vùng camera đang nhìn trên mặt đất (`edge.georef.footprint`), số khung/giây đạt được, số gói đang chờ trong outbox, số cảnh báo đã tạo, thiết bị giả lập, telemetry thật hay giả lập, hết chuyến chưa. Gói trạng thái **không qua outbox**: gói cũ vô giá trị nên hỏng thì bỏ, không gửi lại. Nó đi qua cùng khoảng mất sóng (`NetemTransport` riêng, seed khác), nên khi mất sóng trạm thật sự không nghe thấy drone; seed riêng giữ nguyên chuỗi sự kiện mạng của cảnh báo, kết quả RQ3d không đổi. Mặc định tắt. Trạm (`POST /api/uav/state`, `GET /api/uavs`) giữ gói mới nhất của mỗi drone trong bộ nhớ, bỏ gói tới muộn, cộng dồn đường bay và các vùng camera đã nhìn (**vùng đã quét**), và tính số giây đã im lặng theo đồng hồ của trạm.
+
+`--live-port` phát khung đã vẽ dạng MJPEG trên một cổng cục bộ để trang điều phối nhúng video. **Chỉ để trình bày**: drone thật không gửi video về (mục 10.4); trang ghi rõ điều này.
+
 ---
 
 ## 11. Giả lập (sim/)
@@ -915,6 +921,8 @@ Hai drone có thể cảnh báo cùng một người. Khi một cảnh báo mớ
 **[Đã có]** `ground/priority.py` (hàm thuần, `PriorityRule`): điểm = thẻ của người vận hành (dưới nước 3, trên mái 0,5) + độ tin cậy cao nhất (×1) + 0,5 cho mỗi drone thêm cùng thấy + 0,5 cho mỗi sự cố mở khác trong 30 m (tối đa 4) + chờ lâu (tới 2 điểm ở 10 phút, theo đồng hồ chuyến bay: lấy `t` lớn nhất đã nhận). Mỗi phần kèm một dòng lý do hiện trên bản đồ. Sự cố đã cứu hoặc báo nhầm xếp cuối, không điểm. `PATCH /api/incidents/{id}` nhận `status` (open, resolved, false_alarm) và `tag` (water, roof). Trọng số là lựa chọn thiết kế, không học từ dữ liệu: không có dữ liệu cứu hộ thật để học. Cảnh báo mới rơi vào sự cố đã đóng vẫn được gắn vào đó mà không mở lại (người đã cứu, hay phao đã đánh dấu báo nhầm, không làm phiền lại); người vận hành mở lại được.
 
 ### 12.5. Bản đồ
+
+**[Đã có] Màn hình điều phối** (`ground/map.html`, nền tối cho máy chiếu): cột trái là video trên drone (khi mở với `?video=<url MJPEG>`) và thẻ mỗi drone (độ cao, tốc độ, khung/giây, thiết bị, telemetry thật hay giả lập, cảnh báo tạo trên drone so với đã tới trạm, thanh xanh/cam cho phần còn kẹt trên drone); giữa là bản đồ với drone (mũi tên theo hướng bay), vùng camera đang nhìn, **vùng đã quét** (hợp các vùng đã nhìn, tô bằng luật nonzero nên chỗ chồng không đậm dần), đường bay, sự cố và vùng tìm 95%; banner đỏ khi không nhận trạng thái quá 3 giây ("mất liên lạc… cảnh báo vẫn lưu trên drone"); nút bám theo drone; phải là danh sách sự cố kèm ảnh cắt nhỏ, giây phát hiện trong chuyến bay, sự cố mới nháy sáng. Mục cũ:
 
 Leaflet hiển thị incident theo màu ưu tiên, kèm vòng nét đứt là vùng tìm 95% (mục 8.4), bấm để xem ảnh cắt và lịch sử; bảng bên cạnh hiện FPS, băng thông, số cảnh báo đang chờ của mỗi drone. Ô bản đồ (ảnh vệ tinh và bản đồ đường của Esri; máy chủ ô của OpenStreetMap không trả lời từ mạng của dự án, CARTO đòi khoá API) đi qua `/tiles/<lớp>/<z>/<x>/<y>` của chính trạm. **[Đã có]** Ô đã xem được giữ trên đĩa (`FLOODEYE_TILE_CACHE`, mặc định `runs/ground/tiles`), nên vùng đã xem khi diễn tập vẫn hiện khi mất mạng; ô chưa xem thì hiện nền lưới, điểm sự cố vẫn đọc được. Leaflet 1.9.4 đóng gói trong `ground/static/leaflet/` (giấy phép BSD-2), trang bản đồ không tải gì từ internet. Không tải trước cả vùng: điều khoản của Esri hạn chế tải hàng loạt để dùng ngoại tuyến; triển khai thật cần nguồn ô có giấy phép dùng ngoại tuyến (ví dụ tự dựng từ OpenStreetMap).
 

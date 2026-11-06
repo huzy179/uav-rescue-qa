@@ -12,6 +12,8 @@ import asyncio
 import base64
 import os
 import sqlite3
+import threading
+import time
 import urllib.request
 import zlib
 from collections.abc import Callable
@@ -26,9 +28,10 @@ from pydantic import BaseModel, ConfigDict
 
 from ground.incidents import MergeRule, choose_incident, merged_position
 from ground.priority import STATUSES, TAGS, PriorityRule, rank
-from shared.schema import Alert, AlertCrop
+from shared.schema import Alert, AlertCrop, UavState
 
 MAP_HTML = Path(__file__).with_name("map.html")
+MAX_TRACK = 7200  # điểm đường bay giữ lại mỗi drone (2 giờ nếu một gói mỗi giây)
 STATIC_DIR = Path(__file__).with_name("static")
 # Ô ảnh vệ tinh và bản đồ đường của Esri (không cần khoá; tile.openstreetmap.org không trả lời từ mạng của dự án).
 TILE_SOURCES = {
@@ -257,6 +260,33 @@ def create_app(
             path.write_bytes(data)
         data = path.read_bytes()
         return Response(data, media_type=image_media_type(data), headers={"Cache-Control": "max-age=86400"})
+
+    # Trạng thái drone giữ trong bộ nhớ (không cần bền: gói mới thay gói cũ mỗi giây). Mỗi drone: gói mới nhất, lúc
+    # nhận theo đồng hồ của trạm (để biết đã im lặng bao lâu), đường bay và các vùng camera đã nhìn (vùng đã quét).
+    uavs: dict[str, dict[str, Any]] = {}
+    uav_lock = threading.Lock()
+
+    @app.post("/api/uav/state")
+    def post_uav_state(state: UavState) -> dict[str, str]:
+        """Nhận trạng thái drone; gói cũ hơn gói đã có (tới muộn) chỉ được ack, không ghi đè."""
+        with uav_lock:
+            item = uavs.setdefault(state.uav_id, {"track": [], "footprints": [], "state": None})
+            if item["state"] is None or state.t >= item["state"]["t"]:
+                item["state"], item["received"] = state.model_dump(), time.monotonic()
+                item["track"].append((state.lat, state.lon))
+                item["footprints"].append(state.footprint)
+                del item["track"][:-MAX_TRACK], item["footprints"][:-MAX_TRACK]
+        return {"ack": f"{state.uav_id}:state:{state.seq}"}
+
+    @app.get("/api/uavs")
+    def list_uavs() -> list[dict[str, Any]]:
+        """Mọi drone: trạng thái mới nhất, số giây từ lần nhận cuối (age_s), đường bay và vùng đã quét."""
+        now = time.monotonic()
+        with uav_lock:
+            return [
+                {**item["state"], "age_s": now - item["received"], "track": list(item["track"]), "footprints": list(item["footprints"])}
+                for item in uavs.values()
+            ]
 
     @app.get("/", response_class=HTMLResponse)
     def map_page() -> str:

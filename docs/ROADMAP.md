@@ -42,6 +42,7 @@ Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặ
 - **Sai số vị trí** (`rq3_geoerr.md`, `rq3_geoerr.yaml`): GPS là nguồn sai số chính; khi GPS σ 3 m chỉ 0,278 số người nằm trong bán kính 1σ mà cảnh báo ghi, vùng 95% chứa 1,000. Bản đồ trạm giờ vẽ **vùng tìm 95%** (2,448 × 1σ, `R95_FACTOR`); trường `position_error_m` vẫn là 1σ. Lệch hướng 5° ở 100 m gây tách nhầm 5,333 mỗi kịch bản.
 - **Mạng** (`rq3_network.md`, `rq3_network.yaml`): thêm **thăm dò đường truyền** (`--link-probe-s`, mặc định tắt): không mất cảnh báo nào; độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s. Quyết định #17.
 - Phiên 2 của E2e đang chạy trên Kaggle (dataset `floodeye-e2e-resume`).
+- **Màn hình điều phối cho demo:** drone gửi trạng thái mỗi giây (`--state-every-s`, `edge/status.py`), video xem trực tiếp (`--live-port`); bản đồ hiện drone, vùng camera đang nhìn, vùng đã quét, mất liên lạc và cảnh báo còn kẹt trên drone. Giới hạn: các đoạn SeaDronesSee drone đi tối đa khoảng 100 m, nên vùng đã quét trong demo nhỏ.
 
 **Cập nhật 5/11:**
 - **Thuật ngữ chuẩn hoá:** `docs/THUAT_NGU.md` là bảng chuẩn duy nhất (thuật ngữ ngành, khái niệm dự án đặt tên tiếng Việt, ký hiệu nội bộ, quy tắc dùng trong luận văn); TECHNICAL mục 18 trỏ sang.

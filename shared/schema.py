@@ -68,3 +68,25 @@ class AlertCrop(BaseModel):
 
     alert_id: str = Field(pattern=ID_PATTERN)
     jpeg_base64: str
+
+
+class UavState(BaseModel):
+    """Gói trạng thái drone gửi về trạm mỗi giây hoặc vài giây (vài trăm byte), để bản đồ hiện drone, vùng camera
+    đang nhìn và đường truyền còn sống hay không. Gửi một lần, không gửi lại: gói cũ không còn giá trị."""
+
+    schema_version: int = 1
+    uav_id: str = Field(pattern=ID_PATTERN)
+    seq: int = 0  # số thứ tự gói, trạm ack "<uav_id>:state:<seq>"
+    t: float  # giây theo đồng hồ chuyến bay
+    lat: float
+    lon: float
+    alt_m: float
+    yaw_deg: float
+    speed_mps: float | None = None
+    footprint: list[tuple[float, float]]  # (lat, lon) bốn góc ảnh trên mặt đất (edge.georef.footprint)
+    fps: float | None = None  # số khung xử lý mỗi giây đạt được
+    pending_alerts: int = 0  # gói đang chờ trong outbox (toạ độ và ảnh cắt)
+    alerts_total: int = 0  # số cảnh báo drone đã tạo
+    device: str | None = None  # tên hồ sơ thiết bị giả lập, nếu có
+    telemetry_real: bool = True  # False khi pipeline dùng đường bay giả lập
+    done: bool = False  # chuyến bay đã kết thúc

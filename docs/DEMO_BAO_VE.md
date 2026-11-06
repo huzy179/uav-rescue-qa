@@ -12,7 +12,7 @@ Mục tiêu: hội đồng thấy bài toán khó ở đâu, hệ thống chạy
 | Video so sánh cho slide | `scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super`; thêm một lần Orin Nano với `sds_v21_px10` |
 | Video dự phòng toàn bộ demo | Quay màn hình một lần chạy `chay`, nhúng vào slide |
 | Máy chiếu | Thử độ phân giải thật; phóng to trình duyệt để chữ đọc được từ cuối phòng |
-| Mở sẵn trước khi lên | Trình duyệt ở `http://localhost:8000`, terminal đã gõ sẵn lệnh `chay`, slide ở trang demo |
+| Mở sẵn trước khi lên | Terminal đã gõ sẵn lệnh `chay`; trình duyệt mở link màn hình điều phối nó in ra (`http://localhost:8000/?video=http://localhost:8001/`), toàn màn hình (F11); slide ở trang demo |
 
 ## Kịch bản
 
@@ -20,7 +20,7 @@ Mục tiêu: hội đồng thấy bài toán khó ở đâu, hệ thống chạy
 |---|---|---|
 | 0:00–0:45 | Một khung lũ 4K, chưa có khung phát hiện. Hỏi: "Thầy cô thấy bao nhiêu người?". Chờ vài giây, phóng to, rồi hiện khung | Người chỉ vài chục pixel trên ảnh 4K; đó là lý do cần cắt ô và fine-tune |
 | 0:45–2:00 | Trước và sau fine-tune trên cùng khung (`runs/edge/demo_truoc_sau.jpg` hoặc khung mới), một hai con số RQ1 từ `docs/results/` | Chỉ dùng số có trong `docs/results/`, đúng mô hình E2c như trong quyển |
-| 2:00–4:00 | `scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super 20 30`: video bên trái, bản đồ bên phải. Cảnh báo hiện dần, bấm một sự cố xem ảnh cắt và bán kính sai số. Giây 20–30 có banner mất sóng; sau đó cảnh báo được gửi bù | Telemetry thật của drone (SeaDronesSee), không phải giả lập. Outbox giữ cảnh báo khi mất sóng, gửi lại không trùng |
+| 2:00–4:00 | `scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super 20 30`: một trang điều phối, video trên drone bên trái, bản đồ ở giữa, sự cố bên phải. Chỉ vào drone trên bản đồ và vùng camera đang nhìn; sự cố hiện dần kèm ảnh cắt, bấm một sự cố xem vùng tìm 95%. Giây 20–30: drone trên bản đồ chuyển xám, banner "mất liên lạc", thẻ drone hiện thanh cam "còn kẹt trên drone" tăng dần; có sóng lại thì thanh chuyển xanh, sự cố bị kẹt hiện ra một loạt | Telemetry thật của drone (SeaDronesSee), không phải giả lập. Drone không gửi video, chỉ toạ độ, ảnh cắt nhỏ và trạng thái mỗi giây; outbox giữ cảnh báo khi mất sóng, gửi lại không trùng |
 | 4:00–5:15 | Video so sánh: AGX Orin theo kịp 8 khung/giây; Orin Nano Super ở 4K chỉ khoảng một nửa và bỏ khung; Orin Nano với thu nhỏ theo độ cao theo kịp | Thời gian thiết bị là **ước lượng** từ số công bố (TECHNICAL 14.6), không phải đo trên Jetson. Thu nhỏ theo độ cao giảm 32 ô xuống 6 ô mỗi khung |
 | 5:15–6:00 | Một trường hợp sai: người bị bỏ sót hoặc báo nhầm (vật nổi, loá), giải thích vì sao | Chủ động nói giới hạn trước khi bị hỏi |
 

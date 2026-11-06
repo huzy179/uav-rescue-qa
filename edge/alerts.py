@@ -24,7 +24,7 @@ PRIORITY = {"coords": 0, "crop": 1}
 class OutboxMessage:
     msg_id: str  # "<alert_id>:coords" hoặc "<alert_id>:crop"
     alert_id: str
-    kind: str  # 'coords' | 'crop'
+    kind: str  # 'coords' | 'crop' | 'state' (trạng thái drone, edge/status.py, không qua outbox)
     payload: str  # JSON của Alert hoặc AlertCrop
 
 
@@ -50,7 +50,7 @@ class HttpTransport:
         self.base_url, self.timeout_s = base_url.rstrip("/"), timeout_s
 
     def send(self, msg: OutboxMessage, now: float) -> bool:
-        path = "/api/alerts" if msg.kind == "coords" else f"/api/alerts/{msg.alert_id}/crop"
+        path = {"coords": "/api/alerts", "state": "/api/uav/state"}.get(msg.kind, f"/api/alerts/{msg.alert_id}/crop")
         request = urllib.request.Request(
             self.base_url + path, data=msg.payload.encode(), headers={"Content-Type": "application/json"}
         )

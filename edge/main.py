@@ -26,6 +26,7 @@ from edge.georef import (
 )
 from edge.pacing import RealtimePacer
 from edge.sampler import iter_timed_frames, views_fps
+from edge.status import LiveView, StatusReporter
 from edge.telemetry import SampledTelemetry, TelemetrySource
 from eval.draw import draw_boxes
 from shared.config import parse_args_with_config
@@ -88,6 +89,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--net-loss", type=float, default=0.0, help="Giả lập: xác suất mất mỗi lần gửi")
     parser.add_argument("--net-outage", type=float, nargs=2, action="append", default=None, metavar=("START", "END"), help="Giả lập: khoảng mất sóng (giây), lặp được")
     parser.add_argument("--link-probe-s", type=float, default=None, help="Gửi cảnh báo: khi mọi gói đang chờ gửi lại, cứ mỗi số giây này thử một gói toạ độ; gửi được thì gửi ngay mọi gói đang chờ (mặc định tắt)")
+    parser.add_argument("--state-every-s", type=float, default=None, help="Gửi trạng thái drone (vị trí, vùng camera nhìn, cảnh báo đang chờ) về trạm mỗi số giây này, qua cùng giả lập mạng; mặc định tắt (edge/status.py)")
+    parser.add_argument("--live-port", type=int, default=None, help="Demo: phát video đã vẽ dạng MJPEG ở cổng này để trang bản đồ nhúng (http://localhost:<cổng>/); drone thật không gửi video")
     parser.add_argument("--drain-s", type=float, default=60.0, help="Sau khung cuối, tiếp tục gửi bù thêm số giây này")
     parser.add_argument("--seed", type=int, default=0, help="Seed cho giả lập mạng và nhiễu thời gian chờ gửi lại")
     parser.add_argument("--output", type=Path, default=Path("runs/edge/demo"), help="Thư mục log")
@@ -215,6 +218,15 @@ def main() -> None:
     for suffix in ("", "-wal", "-shm"):
         (args.output / f"outbox.sqlite{suffix}").unlink(missing_ok=True)
     outbox = Outbox(args.output / "outbox.sqlite", transport, seed=args.seed, probe_s=args.link_probe_s)
+    # Trạng thái drone đi đường riêng (không qua outbox), cùng khoảng mất sóng nhưng seed khác, để bật hay tắt không đổi
+    # chuỗi sự kiện mạng của cảnh báo (kết quả RQ3d giữ nguyên).
+    state_transport: Transport = HttpTransport(args.ground_url) if args.ground_url else FakeTransport()
+    if args.net_loss > 0 or args.net_outage:
+        state_transport = NetemTransport(state_transport, args.net_loss, [tuple(o) for o in args.net_outage or []], args.seed + 7919)
+    live = LiveView(args.live_port) if args.live_port else None
+    if live:
+        print(f"Video trực tiếp: http://localhost:{live.port}/")
+    drawing = args.save_video or args.save_frames or args.show or live is not None
     model_name = Path(args.replay or args.model).name
     device = BusyDevice(load_profile(args.device_profile)) if args.device_profile else None
     pacer = RealtimePacer(args.realtime_speed) if args.realtime else None
@@ -236,6 +248,21 @@ def main() -> None:
     last_dets: list[Any] = []
     n_frames, t = 0, 0.0
 
+    def report(t_now: float, tel: Any, force: bool = False, done: bool = False) -> None:
+        """Gửi trạng thái drone về trạm nếu tới hạn (--state-every-s)."""
+        if reporter is None or cam is None:
+            return
+        if force and reporter.last_t is not None:
+            # Gói ép gửi (hết chuyến) không được sớm hơn gói trước, nếu không trạm coi là gói tới muộn và bỏ qua.
+            t_now = max(t_now, reporter.last_t)
+        prev = telemetry.at(max(t_now - 1.0, 0.0))
+        speed = ground_distance_m(prev.lat, prev.lon, tel.lat, tel.lon) / min(t_now, 1.0) if t_now > 0 else None
+        reporter.maybe_send(
+            t_now, tel, cam, force=force, speed_mps=speed, fps=device.achieved_fps(t_now) if device else fps_now,
+            pending_alerts=outbox.pending(), alerts_total=len(confirmed),
+            device=device.profile.name if device else None, telemetry_real=not synthetic, done=done,
+        )
+
     def status(t_now: float) -> tuple[list[str], str | None]:
         """Dòng trạng thái và banner vẽ lên video demo."""
         lines = []
@@ -248,7 +275,8 @@ def main() -> None:
     def skip_frame(frame: Any, frame_id: Any, t_now: float, tel: Any) -> None:
         """Khung không chạy detector (tần số theo độ cao, thiết bị bận): video demo vẫn ghi để phát đúng nhịp."""
         assert cam is not None
-        if args.save_video or args.save_frames or args.show:
+        report(t_now, tel)
+        if drawing:
             write_frame(annotate(frame, [d.box_px for d in last_dets], [d.conf for d in last_dets], confirmed, tel, cam,
                                  synthetic, None, t_now, args.expire_s), frame_id, t_now)
         if pacer:
@@ -258,6 +286,8 @@ def main() -> None:
         nonlocal video
         assert cam is not None
         drawn = draw_status(drawn, *status(t_now))
+        if live:
+            live.publish(drawn)
         if args.show:
             scale = min(1.0, 1280 / drawn.shape[1])
             cv2.imshow("FloodEye - UAV", cv2.resize(drawn, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA))
@@ -275,7 +305,9 @@ def main() -> None:
         (args.output / "alerts.jsonl").open("w", encoding="utf-8") as alert_log,
         (args.output / "alerts_sent.jsonl").open("w", encoding="utf-8") as sent_log,
         (args.output / "timings.jsonl").open("w", encoding="utf-8") as time_log,
+        (args.output / "states_sent.jsonl").open("w", encoding="utf-8") as state_log,
     ):
+        reporter = StatusReporter(state_transport, args.uav_id, args.state_every_s, state_log) if args.state_every_s else None
         for frame_id, t, frame in iter_timed_frames(args.source, args.fps, args.source_fps, args.max_frames):
             if cam is None or confirmer is None:
                 cam = Camera.from_fov(args.fov_deg, args.fov_type, frame.shape[1], frame.shape[0])
@@ -339,13 +371,15 @@ def main() -> None:
                 write_jsonl(sent_log, record)
             write_jsonl(time_log, {"frame_id": frame_id, "t": t, "n_dets": len(dets), **timings})
             n_frames += 1
+            report(t_done, telemetry.at(t_done))
 
-            if args.save_video or args.save_frames or args.show:
+            if drawing:
                 tracks = getattr(confirmer, "last_assignments", None)
                 drawn = annotate(frame, [d.box_px for d in dets], [d.conf for d in dets], confirmed, tel, cam, synthetic, tracks,
                                  t, args.expire_s)
                 write_frame(drawn, frame_id, t)
         # Hết video: tiếp tục gửi bù mỗi giây, như UAV vẫn bay tiếp và giữ kết nối.
+        t_end = t
         for k in range(1, int(args.drain_s) + 1):
             if outbox.pending() == 0:
                 break
@@ -353,8 +387,14 @@ def main() -> None:
                 pacer.wait_until(t + k)
             for record in outbox.pump(t + k):
                 write_jsonl(sent_log, record)
+            t_end = t + k
+            report(t_end, telemetry.at(t))
+        # Gói cuối báo hết chuyến, để trạm không hiểu im lặng sau đó là mất sóng.
+        report(t_end, telemetry.at(t), force=True, done=True)
     if video is not None:
         video.release()
+    if live:
+        live.close()
     pending = outbox.pending()
     outbox.close()
     if device:

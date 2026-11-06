@@ -3,7 +3,7 @@
 # Không cần GPU khi trình bày: phát hiện đã tính trước (chuan-bi), lúc demo chỉ phát lại (--replay).
 #
 #   scripts/demo_bao_ve.sh chuan-bi sds_v21_goc            # một lần, có GPU: chạy E2c trên mọi khung, lưu phát hiện
-#   scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super # demo: mở http://localhost:8000 và cửa sổ video
+#   scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super # demo: mở màn hình điều phối (video, drone, bản đồ) trên trình duyệt
 #   scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super 20 30   # thêm mất sóng từ giây 20 tới 30
 #   scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super   # video hai thiết bị cạnh nhau
 #
@@ -42,10 +42,15 @@ case "$CMD" in
     GROUND_PID=$!
     trap 'kill $GROUND_PID 2>/dev/null' EXIT
     for _ in $(seq 1 40); do curl -s -o /dev/null "http://localhost:$PORT/" && break; sleep 0.25; done
-    echo "Trạm mặt đất: http://localhost:$PORT  (mở trên trình duyệt, rồi bấm Enter để bắt đầu chuyến bay)"
+    LIVE=8001
+    echo "Màn hình điều phối: http://localhost:$PORT/?video=http://localhost:$LIVE/"
+    echo "(mở trên trình duyệt, rồi bấm Enter để bắt đầu chuyến bay)"
     read -r _
-    $PY -m edge.main --config "$CFG" --replay "$CACHE/detections.jsonl" --device-profile "$DEV" --realtime --show \
-        --ground-url "http://localhost:$PORT" --output "runs/edge/demo_bao_ve/$NAME" --save-video --drain-s 15 "${OUTAGE[@]}"
+    # Drone gửi trạng thái mỗi giây (vị trí, vùng camera nhìn, cảnh báo đang chờ) qua cùng giả lập mất sóng; video đã vẽ
+    # phát ở cổng $LIVE để trang điều phối nhúng (drone thật không gửi video).
+    $PY -m edge.main --config "$CFG" --replay "$CACHE/detections.jsonl" --device-profile "$DEV" --realtime \
+        --ground-url "http://localhost:$PORT" --state-every-s 1 --live-port "$LIVE" \
+        --output "runs/edge/demo_bao_ve/$NAME" --save-video --drain-s 15 "${OUTAGE[@]}"
     echo "Xong chuyến bay. Trạm mặt đất vẫn chạy để xem bản đồ; Ctrl+C để tắt."
     wait $GROUND_PID
     ;;

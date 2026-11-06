@@ -115,6 +115,16 @@ def gps_to_pixel(lat: float, lon: float, tel: Telemetry, cam: Camera) -> tuple[f
     return cam.width / 2.0 + right * scale, cam.height / 2.0 - forward * scale
 
 
+def footprint(tel: Telemetry, cam: Camera) -> list[tuple[float, float]]:
+    """Vùng mặt đất camera đang nhìn: (lat, lon) của bốn góc ảnh theo thứ tự trên trái, trên phải, dưới phải, dưới trái.
+
+    Thứ tự góc cố định nên mọi vùng có cùng chiều quay; trạm mặt đất tô hợp các vùng bằng luật nonzero mà không đậm
+    dần ở chỗ chồng nhau.
+    """
+    corners = ((0.0, 0.0), (float(cam.width), 0.0), (float(cam.width), float(cam.height)), (0.0, float(cam.height)))
+    return [pixel_to_gps(u, v, tel, cam) for u, v in corners]
+
+
 def locate(det: Detection, tel: Telemetry, cam: Camera) -> Detection:
     """Điền lat/lon cho phát hiện, lấy tâm đáy box (chân người đứng; gần trùng tâm khi nhìn từ trên)."""
     x1, _, x2, y2 = det.box_px
