@@ -63,6 +63,7 @@
   .actions a { color: var(--accent); font-size: 12px; align-self: center; margin-left: 4px; }
   .chip.truth { border-color: var(--ok); }
   .fa { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; }
+  .grp { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: #ffd479; color: #0d1117; font-size: 11px; font-weight: 700; }
   .ok-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--ok); color: #0d1117; font-size: 11px; font-weight: 700; }
   .drone { filter: drop-shadow(0 0 4px #000); transition: transform .25s linear; }
   #side h2 { margin: 2px 2px 0; }
@@ -313,7 +314,8 @@
       ? `<button onclick='update(${id}, {tag: "water"})'>Dưới nước</button><button onclick='update(${id}, {tag: "roof"})'>Trên mái</button>`
         + `<button onclick='update(${id}, {status: "resolved"})'>Đã cứu</button><button onclick='update(${id}, {status: "false_alarm"})'>Báo nhầm</button>`
       : `<button onclick='update(${id}, {status: "open"})'>Mở lại</button>`;
-    return `<b>Sự cố #${id}</b> · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")}<br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.map(esc).join(", ")}`
+    return `<b>Sự cố #${id}</b> · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")}`
+      + ((inc.group_size || 1) > 1 ? ` · <b>nhóm khoảng ${inc.group_size} người</b> (thấy cùng lúc trong 5 m)` : "") + `<br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.map(esc).join(", ")}`
       + ` · thấy lần đầu ở giây ${fmt(inc.first_t, 0)} của chuyến bay<br>`
       + `Vùng tìm (95%): bán kính ${fmt(R95 * inc.position_error_m)} m · độ tin cậy cao nhất ${fmt(inc.max_confidence, 2)}`
       + `<div class="why">${inc.priority_reasons.map(esc).join("; ")}</div>`
@@ -351,7 +353,8 @@
       item.className = "item" + (inc.status === "open" ? "" : " closed") + (isNew ? " fresh" : "");
       item.style.setProperty("--c", c);
       const thumb = a ? `<img class="thumb" src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" alt="">` : '<div class="thumb">chưa có ảnh</div>';
-      item.innerHTML = `${thumb}<div><div class="t1">#${key} · ưu tiên ${fmt(inc.priority, 2)}</div>`
+      const group = (inc.group_size || 1) > 1 ? ` <span class="grp">nhóm ~${inc.group_size} người</span>` : "";
+      item.innerHTML = `${thumb}<div><div class="t1">#${key} · ưu tiên ${fmt(inc.priority, 2)}${group}</div>`
         + `<div class="t2">giây ${fmt(inc.first_t, 0)} · ${inc.n_alerts} cảnh báo · ${inc.uav_ids.length} drone · ±${fmt(R95 * inc.position_error_m)} m</div>`
         + `<div class="why">${inc.priority_reasons.map(esc).join("; ")}</div></div>`;
       item.onclick = () => { follow = false; followControl.button.classList.remove("on"); map.setView([inc.lat, inc.lon], 19); markers[key].openPopup(); };

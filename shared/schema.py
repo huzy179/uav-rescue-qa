@@ -10,6 +10,9 @@ ID_PATTERN = r"^[A-Za-z0-9_.-]{1,64}$"
 # Sai số mặt đất hai chiều, mỗi trục Gauss σ: P(r ≤ kσ) = 1 − exp(−k²/2). Vùng chứa 95 % có bán kính √(−2 ln 0,05)·σ
 # ≈ 2,448σ; position_error_m của cảnh báo là 1σ (docs/results/rq3_geoerr.md). Dùng chung cho edge, eval và trạm.
 R95_FACTOR = 2.4477468306808166
+# Bán kính đếm người cùng nhóm khi xác nhận; bằng bán kính trạm gộp cảnh báo thành sự cố (ground/incidents.py), để
+# "số người ước tính" của một sự cố khớp với những người bị gộp vào nó.
+GROUP_RADIUS_M = 5.0
 
 
 class Telemetry(BaseModel):
@@ -46,6 +49,7 @@ class Confirmation(BaseModel):
     confidence: float  # conf trung bình của các lần thấy đó
     frame_id: int  # khung của lần thấy cuối, dùng để cắt ảnh gửi kèm cảnh báo
     box_px: Box
+    group_size: int = 1  # số phát hiện cùng khung trong GROUP_RADIUS_M quanh cụm (kể cả cụm): ước tính số người ở đó
 
 
 class Alert(BaseModel):
@@ -64,6 +68,7 @@ class Alert(BaseModel):
     frames_confirmed: int
     box_px: tuple[int, int, int, int]
     model: str
+    group_size: int = 1  # ước tính số người quanh vị trí này (Confirmation.group_size); trường mới, mặc định 1
 
 
 class AlertCrop(BaseModel):

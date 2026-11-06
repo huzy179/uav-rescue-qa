@@ -146,3 +146,20 @@ def test_bo_nho_khong_chan_nguoi_o_xa() -> None:
     confirmer = GeoConfirmer(radius_m=3.0, n_confirm=2, suppress_s=60.0)
     confirmer.update([det(0, 0.0), det(0, 20.0)], 0.0)
     assert len(confirmer.update([det(1, 0.0), det(1, 20.0)], 0.5)) == 2
+
+
+def test_group_size_counts_neighbours_in_same_frame() -> None:
+    """Ba người bơi sát nhau (cách 2 m) và một người ở xa 30 m, cùng thấy 3 khung: mỗi người là một cụm riêng
+    (ghép một-một), cụm trong nhóm có group_size 3, người ở xa có 1."""
+    from edge.confirm import GeoConfirmer
+    from edge.georef import offset_gps
+    from shared.schema import Detection
+
+    spots = [offset_gps(21.0, 105.8, 0.0, e) for e in (0.0, 2.0, 4.0, 30.0)]
+    confirmer = GeoConfirmer(radius_m=1.0, n_confirm=3)
+    confirmed = []
+    for k in range(3):
+        dets = [Detection(frame_id=k, t=k * 0.5, box_px=(0, 0, 5, 5), conf=0.8, lat=lat, lon=lon) for lat, lon in spots]
+        confirmed += confirmer.update(dets, k * 0.5)
+    sizes = sorted(c.group_size for c in confirmed)
+    assert sizes == [1, 3, 3, 3]

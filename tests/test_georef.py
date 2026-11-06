@@ -91,3 +91,49 @@ def test_footprint_corners_round_trip() -> None:
     assert pixels == [pytest.approx(p, abs=0.01) for p in [(0, 0), (3840, 0), (3840, 2160), (0, 2160)]]
     north, east = ground_offset_m(*corners[0], *corners[1])
     assert math.hypot(north, east) == pytest.approx(100.0, rel=1e-4)
+
+
+def tilted(yaw: float, pitch: float) -> Telemetry:
+    return Telemetry(t=0.0, lat=21.0, lon=105.8, alt_agl_m=50.0, yaw_deg=yaw, pitch_deg=pitch)
+
+
+@pytest.mark.parametrize("pitch", [-90.0, -75.0, -60.0, -45.0])
+@pytest.mark.parametrize("yaw", [0.0, 37.0, 200.0])
+@pytest.mark.parametrize("uv", [(0.0, 2159.0), (1920.0, 1080.0), (3839.0, 1500.0), (800.5, 1200.25)])
+def test_round_trip_tilted(pitch: float, yaw: float, uv: tuple[float, float]) -> None:
+    """Camera nghiêng: pixel → GPS → pixel vẫn về đúng điểm cũ."""
+    lat, lon = pixel_to_gps(*uv, tilted(yaw, pitch), CAM)
+    assert gps_to_pixel(lat, lon, tilted(yaw, pitch), CAM) == pytest.approx(uv, abs=0.01)
+
+
+def test_tilted_hand_computed() -> None:
+    """Nghiêng 30° về phía trước (pitch −60°), hướng Bắc, cao 50 m: tâm ảnh nằm phía trước 50·tan30° = 28,868 m;
+    pixel thấp hơn tâm f·tan30° (tia thẳng đứng) rơi đúng xuống điểm dưới UAV."""
+    tel = tilted(0.0, -60.0)
+    north, east = ground_offset_m(21.0, 105.8, *pixel_to_gps(1920.0, 1080.0, tel, CAM))
+    assert (north, east) == pytest.approx((50.0 * math.tan(math.radians(30.0)), 0.0), abs=1e-3)
+    v_nadir = 1080.0 + CAM.f_px * math.tan(math.radians(30.0))
+    assert ground_offset_m(21.0, 105.8, *pixel_to_gps(1920.0, v_nadir, tel, CAM)) == pytest.approx((0.0, 0.0), abs=1e-3)
+
+
+def test_above_horizon_and_footprint_when_tilted() -> None:
+    """Nghiêng 80°: mép trên ảnh ở trên chân trời; footprint cắt ở 10 lần độ cao và là hình thang (mép xa rộng hơn)."""
+    from edge.georef import FOOTPRINT_MAX_RANGE, footprint
+
+    tel = tilted(0.0, -10.0)
+    with pytest.raises(ValueError, match="chân trời"):
+        pixel_to_gps(1920.0, 0.0, tel, CAM)
+    corners = [ground_offset_m(21.0, 105.8, lat, lon) for lat, lon in footprint(tel, CAM)]
+    assert corners[0][0] == pytest.approx(FOOTPRINT_MAX_RANGE * 50.0, rel=1e-3)
+    far_width = corners[1][1] - corners[0][1]
+    near_width = corners[2][1] - corners[3][1]
+    assert far_width > near_width > 0
+
+
+def test_spread_metric_is_robust_median() -> None:
+    """Bốn điểm trùng nhau và một điểm lệch 100 m: trung vị khoảng cách vẫn là 0."""
+    from edge.georef import offset_gps
+    from tools.eval_georef_pitch import spread_m
+
+    points = [(21.0, 105.8)] * 4 + [offset_gps(21.0, 105.8, 100.0, 0.0)]
+    assert spread_m(points) == pytest.approx(0.0, abs=1e-6)

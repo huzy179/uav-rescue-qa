@@ -41,7 +41,7 @@ Phát hiện người nhỏ trong ảnh UAV vùng lũ chính xác tới mức n�
 | Mã | Câu hỏi con | Trả lời bằng | Khâu | Trạng thái | Nguồn |
 |---|---|---|---|---|---|
 | RQ1a | Người nhỏ tới đâu thì bị bỏ sót? | Recall theo nhóm kích thước; khảo sát recall theo số pixel trên người (E6) | Phát hiện người | Có trên VisDrone và SeaDronesSee (E6 thử); tập lũ chờ khoá | `visdrone_E2.md`, `e6_sds_pilot.md` |
-| RQ1b | Dữ liệu huấn luyện nào giúp: ảnh drone đô thị, người dưới nước, ảnh thảm hoạ ghép người? | So E2, E2c, E2e trên cùng các tập | Phát hiện người | Có (E2, E2c); E2e chờ phiên 2 | `visdrone_E2.md`, `E2c.md`, `E2e.md` |
+| RQ1b | Dữ liệu huấn luyện nào giúp: ảnh drone đô thị, người dưới nước, ảnh thảm hoạ ghép người? | So E2, E2c, E2e trên cùng các tập | Phát hiện người | Có (E2, E2c, E2e: thêm C2A kém ở người nhỏ, không hơn có ý nghĩa ở người to) | `visdrone_E2.md`, `E2c.md`, `E2e.md` |
 | RQ1c | Cắt ô và nhánh phát hiện P2 giúp người nhỏ bao nhiêu? | Có và không cắt ô (E4); có và không nhánh P2 (E3) | Phát hiện người | Có | `visdrone_baseline.md`, `visdrone_tiled_vs_sahi.md`, `E3.md` |
 | RQ1d | Thu nhỏ theo độ cao bay giúp bao nhiêu? | Cắt ô có và không thu nhỏ trên SeaDronesSee 4K (có độ cao thật) | Phát hiện người | Có, sơ bộ (một seed, một tập) | `scale_by_altitude.md` |
 | RQ1e | Nhiễu riêng của cảnh lũ (loá, vật trôi, nhoè, thời tiết) làm mô hình kém đi bao nhiêu? | Recall theo thẻ ảnh trên tập lũ | Phát hiện người | Chờ tập lũ | `LABELING.md` |
@@ -440,7 +440,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | Định vị giả định camera nhìn thẳng xuống | Trung bình | Mô phỏng định lượng sai số khi camera nghiêng 1–3°; nêu trong giới hạn |
 | Ống kính góc rộng có méo ở mép ảnh, chưa hiệu chỉnh | Trung bình | Nêu trong giới hạn; ước lượng nếu có thông số ống kính |
 | RQ3 dựa trên mô phỏng | Trung bình | Ghi rõ là mô phỏng; đã kiểm chứng sơ bộ trên video thật SeaDronesSee (`sds_mot_confirm.md`); nếu kịp, chạy pipeline trên video lũ thật để minh hoạ |
-| Mô hình chính (E2c) yếu với người to | Trung bình | Thu nhỏ khung theo độ cao (`scale_by_altitude.md`); hoặc thêm dữ liệu người to khi huấn luyện (`e6_sds_pilot.md`) |
+| Mô hình chính (E2c) yếu với người to | Trung bình | Thu nhỏ khung theo độ cao (`scale_by_altitude.md`); thêm toàn bộ C2A (E2e) không giúp có ý nghĩa và làm kém người nhỏ (`E2e.md`); cách khác ở `CAI_TIEN.md` mục 1.1 |
 | E2c, E3 mới có một seed | Trung bình | 3 seed cho cấu hình cuối (ROADMAP 1.3, tuần 14–20/11) |
 | Video lũ có bản quyền; C2A không ghi giấy phép | Cần hỏi | Chỉ công bố nhãn và nguồn; hỏi thầy (quyết định #12) |
 | Hạn mức GPU Kaggle | Thấp | Ngân sách theo tuần (ROADMAP 1.4); máy Windows nếu có GPU NVIDIA |
@@ -463,7 +463,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 
 ---
 
-## 8. Trạng thái tổng hợp (6/11/2026)
+## 8. Trạng thái tổng hợp (7/11/2026)
 
 | Bước | Trạng thái |
 |---|---|
@@ -474,7 +474,8 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 5. Cách đo | Xong; thêm chấm khối xác nhận theo track trên video thật (`eval/track_confirm_eval.py`) |
 | 6. E0, E1, E4 | Xong |
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |
-| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; **E3 (P2) xong 28/10**: người dưới 8 px chỉ +0,012–0,013 AP50, kém hơn ở người to, không đáng chi phí; giữ E2c (`E3.md`); E2d (+ HydroVigilance) có cấu hình; **E2e (E2c + C2A): phiên 1 xong 33/55 epoch** (19,1 phút/epoch; mAP50 val ngang E2c ở cùng epoch, `E2e.md`), phiên 2 chờ chạy (quyết định #14); **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
+| Cải thiện | `docs/CAI_TIEN.md` (7/11): mỗi điểm yếu đã đo kèm cách sửa, chi phí, cách kiểm chứng, trạng thái. Mới 7/11: số người ước tính mỗi sự cố (`group_size`); định vị theo góc gimbal (`--use-pitch`, tuỳ chọn: tốt hơn khi drone di chuyển với camera nghiêng vừa phải, tính chung chưa tốt hơn, `georef_pitch.md`) |
+| 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; **E3 (P2) xong 28/10**: người dưới 8 px chỉ +0,012–0,013 AP50, kém hơn ở người to, không đáng chi phí; giữ E2c (`E3.md`); E2d (+ HydroVigilance) có cấu hình; **E2e (E2c + C2A) xong 7/11, kết quả âm**: kém E2c có ý nghĩa ở người nhỏ (VisDrone val < 8 px −0,053 AP50, test-dev tất cả −0,041), tốt hơn trên AFO (+0,057), không hơn có ý nghĩa trên SeaDronesSee (+0,041, khoảng tin cậy −0,167 đến +0,167); giữ E2c (`E2e.md`); **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
 | 9. Pipeline UAV | Xong; demo trực tiếp `scripts/live_demo.py` |
 | 10. Trạm mặt đất | Xong; bản đồ Esri (ô OpenStreetMap không tải được); gộp cảnh báo thành sự cố, bán kính 5 m (`alert_memory.md`), rộng hơn khi hai drone khác nhau; xếp ưu tiên có lý do, người vận hành gắn thẻ và đóng sự cố; demo hai drone |
 | 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`); quét độ cao với recall theo cỡ người (`rq3_altitude.md`); **6/11 sai số vị trí** (`rq3_geoerr.md`: GPS là nguồn chính; vòng 1σ chỉ chứa 0,278 số người khi GPS σ 3 m nên bản đồ vẽ vùng 95%; lệch hướng 5° ở 100 m gây tách nhầm) và **mạng** (`rq3_network.md`: thêm thăm dò đường truyền, không mất cảnh báo nào, độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s) |

@@ -38,12 +38,18 @@ Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặ
 
 **Cập nhật 6/11:** E2e phiên 1 xong trên Kaggle: 33/55 epoch, 19,1 phút mỗi epoch (E2c: 10,0 phút), mAP50 val ngang E2c ở cùng epoch (`docs/results/E2e.md`). Phiên 2 (22 epoch, khoảng 7 giờ) chạy tiếp bằng `MODE = "resume"`.
 
+**Cập nhật 7/11 (E2e, cải thiện):**
+- **E2e xong, kết quả âm** (`docs/results/E2e.md`): phiên 2 chạy tiếp đúng từ epoch 34 (55 epoch liên tục). So với E2c: kém có ý nghĩa ở người nhỏ (VisDrone val tất cả −0,029 AP50, < 8 px −0,053; test-dev −0,041), tốt hơn trên AFO (+0,057), SeaDronesSee +0,041 không có ý nghĩa. **Giữ E2c**; quyết định #14 khép lại. `E2e_flood.yaml` không chạy trên tập lũ trừ khi cô yêu cầu (mỗi cấu hình trên tập lũ chạy một lần).
+- **`docs/CAI_TIEN.md`**: mỗi điểm yếu đã đo kèm cách sửa, chi phí, cách kiểm chứng, trạng thái, và thứ tự nên làm nếu còn giờ.
+- **Số người ước tính mỗi sự cố** (`group_size`): UAV đếm phát hiện cùng khung trong 5 m khi xác nhận; trạm và bản đồ hiện "nhóm khoảng N người", GPX ghi kèm.
+- **Định vị theo góc gimbal** (`--use-pitch`, TECHNICAL 8.3; tuỳ chọn, mặc định tắt): kiểm chứng bằng độ tản vị trí trên track SeaDronesSee (`georef_pitch.md`): tốt hơn rõ khi drone di chuyển với camera nghiêng vừa phải, kém hơn khi camera gần chân trời hoặc drone đứng yên; tính chung chưa tốt hơn.
+
 **Cập nhật 7/11 (sân thử):** tab **Sân thử** của `python -m console` (TECHNICAL 11.4): chỉnh tham số chuyến bay, mô hình, thiết bị, mạng hoặc chọn một trong tám câu hỏi "nếu… thì sao" dựng sẵn; một lần chạy sinh kịch bản, xoá trạm (`POST /api/reset`), nạp đáp án, bay và gửi về trạm, chấm bằng `eval/rq3_metrics.py`; bảng so sánh các lần chạy, kết quả ở `runs/sandbox/`. Dùng để trả lời câu hỏi của hội đồng tại chỗ (DEMO_BAO_VE). `--link-probe-s 0` tắt thăm dò khi file cấu hình đã bật.
 
 **Cập nhật 6/11 (RQ3c, RQ3d, mô phỏng):**
 - **Sai số vị trí** (`rq3_geoerr.md`, `rq3_geoerr.yaml`): GPS là nguồn sai số chính; khi GPS σ 3 m chỉ 0,278 số người nằm trong bán kính 1σ mà cảnh báo ghi, vùng 95% chứa 1,000. Bản đồ trạm giờ vẽ **vùng tìm 95%** (2,448 × 1σ, `R95_FACTOR`); trường `position_error_m` vẫn là 1σ. Lệch hướng 5° ở 100 m gây tách nhầm 5,333 mỗi kịch bản.
 - **Mạng** (`rq3_network.md`, `rq3_network.yaml`): thêm **thăm dò đường truyền** (`--link-probe-s`; dòng lệnh mặc định tắt, `configs/edge.yaml` bật từ 6/11): không mất cảnh báo nào; độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s. Quyết định #17.
-- Phiên 2 của E2e đang chạy trên Kaggle (dataset `floodeye-e2e-resume`).
+- Phiên 2 của E2e chạy trên Kaggle (dataset `floodeye-e2e-resume`); xong 7/11.
 - **Màn hình điều phối cho demo:** drone gửi trạng thái mỗi giây (`--state-every-s`, `edge/status.py`), video xem trực tiếp (`--live-port`); bản đồ hiện drone, vùng camera đang nhìn, vùng đã quét, mất liên lạc và cảnh báo còn kẹt trên drone. Giới hạn: các đoạn SeaDronesSee drone đi tối đa khoảng 100 m, và đoạn nào drone di chuyển thì camera nghiêng 20–78° (phép chiếu giả định nhìn thẳng xuống), nên phần "quét vùng" dùng **chuyến bay mô phỏng có ảnh tổng hợp** (`configs/demo/hotay_quet*.yaml`, `sim/render.py`); đoạn đường bay lỡ khi mất sóng được gửi bù (`trail`) để vùng đã quét không bị thủng.
 - Quyết định #17 chốt: bật thăm dò đường truyền.
 - **Đối chiếu đáp án trên bản đồ** (`tools/make_truth_layer.py`, `POST /api/truth`, TECHNICAL 12.6): người thật hiện theo hai mức, được cảnh báo riêng và nằm trong vùng tìm 95%, cùng bỏ sót và sự cố báo nhầm. Trên SDS v21 số "cảnh báo riêng" thấp hơn hẳn số "trong vùng tìm" vì người bơi theo nhóm bị gộp thành một sự cố. Số trên màn hình demo là minh hoạ, không ghi vào kết quả.
@@ -107,7 +113,7 @@ Mỗi lần huấn luyện ở 1280 khoảng 8–10 giờ T4 (E2 lượt 1, 60 e
 | 21–23/10 | E2 lượt 1 | 8 |
 | 24–30/10 | E2 lượt 2 (thêm FinlandProper); thực tế: E3 | 10 |
 | 31/10–6/11 | ~~E3 (P2)~~ đã chạy trước (hai phiên); giờ trống: E2e (E2c + C2A, quyết định #14), phiên 1. Tập train gấp khoảng 1,66 lần E2c nên một phiên 12 giờ không đủ 55 epoch; phần còn lại chạy tiếp (`resume`) tuần sau | 10 |
-| 7–13/11 | E2e phiên 2 (nếu cần); E5 (YOLO11s); xuất TensorRT, đo RQ2 | 6 + 9 + 2 |
+| 7–13/11 | ~~E2e phiên 2~~ (xong 7/11); E5 (YOLO11s); xuất TensorRT, đo RQ2 | 6 + 9 + 2 |
 | 14–20/11 | 2 seed thêm cho cấu hình cuối | 20 |
 
 Không tuần nào vượt hạn mức nếu không chạy lại. Lần chạy hỏng thì đẩy seed sang Colab (như đề cương).
@@ -277,7 +283,7 @@ Câu hỏi con của RQ1–RQ3 (RQ1a…RQ3e), trả lời bằng thí nghiệm n
 |---|---|---|
 | E0 | YOLO26s COCO, 640 | Đã có |
 | E1 | 1280 | Đã có |
-| E2 | Fine-tune (VisDrone; FinlandProper tạm bỏ) | Xong: E2 (VisDrone), **E2c (+ AFO), mô hình chính**; E2d (+ HydroVigilance) có cấu hình; E2e (E2c + C2A) phiên 1 xong 33/55 epoch, phiên 2 chờ chạy (#14, `E2e.md`) |
+| E2 | Fine-tune (VisDrone; FinlandProper tạm bỏ) | Xong: E2 (VisDrone), **E2c (+ AFO), mô hình chính**; E2d (+ HydroVigilance) có cấu hình; E2e (E2c + C2A) xong 7/11, kết quả âm: kém E2c ở người nhỏ, không hơn có ý nghĩa ở người to (#14, `E2e.md`) |
 | E3 | E2c + đầu P2 | Xong 28/10, không đáng chi phí (`docs/results/E3.md`) |
 | E4 | E2c + cắt ô | Xong trên VisDrone và SDS; thêm biến thể thu nhỏ theo độ cao (`--target-person-px`), chỉ đánh giá trên SDS (#13); trên tập lũ chờ nhãn, chỉ cắt ô |
 | E5 | E2c với YOLO11s | Có cấu hình (`E5_s0.yaml`, `E5_<tập>.yaml`), chưa huấn luyện |

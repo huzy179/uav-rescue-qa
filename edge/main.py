@@ -27,7 +27,7 @@ from edge.georef import (
 from edge.pacing import RealtimePacer
 from edge.sampler import iter_timed_frames, views_fps
 from edge.status import LiveView, StatusReporter
-from edge.telemetry import SampledTelemetry, TelemetrySource
+from edge.telemetry import NadirTelemetry, SampledTelemetry, TelemetrySource
 from eval.draw import draw_boxes
 from shared.config import parse_args_with_config
 from shared.provenance import write_run_config
@@ -91,6 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--link-probe-s", type=float, default=None, help="Gửi cảnh báo: khi mọi gói đang chờ gửi lại, cứ mỗi số giây này thử một gói toạ độ; gửi được thì gửi ngay mọi gói đang chờ (mặc định tắt; 0 để tắt khi file cấu hình đã bật)")
     parser.add_argument("--state-every-s", type=float, default=None, help="Gửi trạng thái drone (vị trí, vùng camera nhìn, cảnh báo đang chờ) về trạm mỗi số giây này, qua cùng giả lập mạng; mặc định tắt (edge/status.py)")
     parser.add_argument("--simulated-flight", action="store_true", help="Nguồn là chuyến bay mô phỏng (sim/make_rq3.py --render): ghi 'ảnh tổng hợp' lên video và báo trạm telemetry không phải thật")
+    parser.add_argument("--use-pitch", action="store_true", help="Định vị theo góc nghiêng gimbal trong telemetry (pitch_deg); mặc định giả định nhìn thẳng xuống như mọi kết quả trước 7/11 (TECHNICAL 8.3)")
     parser.add_argument("--live-port", type=int, default=None, help="Demo: phát video đã vẽ dạng MJPEG ở cổng này để trang bản đồ nhúng (http://localhost:<cổng>/); drone thật không gửi video")
     parser.add_argument("--drain-s", type=float, default=60.0, help="Sau khung cuối, tiếp tục gửi bù thêm số giây này")
     parser.add_argument("--seed", type=int, default=0, help="Seed cho giả lập mạng và nhiễu thời gian chờ gửi lại")
@@ -207,6 +208,8 @@ def main() -> None:
         telemetry = SampledTelemetry.from_srt(args.telemetry, args.alt_offset_m, args.yaw_deg)
     else:
         telemetry = SampledTelemetry.from_csv(args.telemetry)
+    if not args.use_pitch:
+        telemetry = NadirTelemetry(telemetry)
     detector: Detector = (
         ReplayDetector(args.replay)
         if args.replay

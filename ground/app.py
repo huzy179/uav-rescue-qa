@@ -115,6 +115,10 @@ def create_app(
             db.execute("ALTER TABLE incidents ADD COLUMN status TEXT NOT NULL DEFAULT 'open'")
         if "tag" not in columns:
             db.execute("ALTER TABLE incidents ADD COLUMN tag TEXT")
+        if "group_size" not in columns:  # file cũ, trước khi có ước tính số người
+            db.execute("ALTER TABLE incidents ADD COLUMN group_size INTEGER NOT NULL DEFAULT 1")
+        if "group_size" not in {row[1] for row in db.execute("PRAGMA table_info(alerts)")}:
+            db.execute("ALTER TABLE alerts ADD COLUMN group_size INTEGER NOT NULL DEFAULT 1")
         db.execute("CREATE TABLE IF NOT EXISTS crops (alert_id TEXT PRIMARY KEY, jpeg BLOB NOT NULL, received_at TEXT NOT NULL)")
 
     app = FastAPI(title="FloodEye – trạm mặt đất")
@@ -137,10 +141,11 @@ def create_app(
             db.execute("BEGIN IMMEDIATE")
             inserted = db.execute(
                 "INSERT OR IGNORE INTO alerts (alert_id, uav_id, t, lat, lon, position_error_m, altitude_m, cluster_id,"
-                " confidence, frames_confirmed, model, received_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " confidence, frames_confirmed, model, received_at, group_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     alert.alert_id, alert.uav_id, alert.t, alert.lat, alert.lon, alert.position_error_m,
                     alert.altitude_m, alert.cluster_id, alert.confidence, alert.frames_confirmed, alert.model, now_iso(),
+                    alert.group_size,
                 ),
             ).rowcount
             if inserted:
@@ -161,9 +166,9 @@ def create_app(
         )
         if incident_id is None:
             incident_id = db.execute(
-                "INSERT INTO incidents (lat, lon, position_error_m, first_t, last_t, n_alerts, uav_ids)"
-                " VALUES (?, ?, ?, ?, ?, 1, ?)",
-                (alert.lat, alert.lon, alert.position_error_m, alert.t, alert.t, alert.uav_id),
+                "INSERT INTO incidents (lat, lon, position_error_m, first_t, last_t, n_alerts, uav_ids, group_size)"
+                " VALUES (?, ?, ?, ?, ?, 1, ?, ?)",
+                (alert.lat, alert.lon, alert.position_error_m, alert.t, alert.t, alert.uav_id, alert.group_size),
             ).lastrowid
         else:
             inc = next(c for c in candidates if c["incident_id"] == incident_id)
@@ -171,8 +176,9 @@ def create_app(
             uavs = sorted(set(inc["uav_ids"].split(",")) | {alert.uav_id})
             db.execute(
                 "UPDATE incidents SET lat = ?, lon = ?, position_error_m = ?, first_t = MIN(first_t, ?),"
-                " last_t = MAX(last_t, ?), n_alerts = n_alerts + 1, uav_ids = ? WHERE incident_id = ?",
-                (lat, lon, error, alert.t, alert.t, ",".join(uavs), incident_id),
+                " last_t = MAX(last_t, ?), n_alerts = n_alerts + 1, uav_ids = ?, group_size = MAX(group_size, ?)"
+                " WHERE incident_id = ?",
+                (lat, lon, error, alert.t, alert.t, ",".join(uavs), alert.group_size, incident_id),
             )
         db.execute("UPDATE alerts SET incident_id = ? WHERE alert_id = ?", (incident_id, alert.alert_id))
 
@@ -231,7 +237,8 @@ def create_app(
         points = []
         for inc in rows:
             desc = (f"Ưu tiên {vn(inc['priority'], 2)}; {'; '.join(inc['priority_reasons'])}; "
-                    f"vùng tìm 95% bán kính {vn(R95_FACTOR * inc['position_error_m'], 1)} m; {inc['n_alerts']} cảnh báo")
+                    f"vùng tìm 95% bán kính {vn(R95_FACTOR * inc['position_error_m'], 1)} m; {inc['n_alerts']} cảnh báo"
+                    + (f"; nhóm khoảng {inc['group_size']} người" if inc.get("group_size", 1) > 1 else ""))
             points.append(
                 f'  <wpt lat="{inc["lat"]:.7f}" lon="{inc["lon"]:.7f}"><name>FE-{inc["incident_id"]}</name>'
                 f"<desc>{escape(desc)}</desc><sym>Flag, Red</sym></wpt>"

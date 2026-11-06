@@ -628,7 +628,7 @@ Làm ngược ba bước trên. Hàm ngược có hai công dụng:
 - **Kiểm thử:** pixel → GPS → pixel phải ra đúng điểm cũ (sai số dưới 0,01 px).
 - **Giả lập:** đặt "người thật" tại toạ độ cố định trên mặt nước; với mỗi khung của chuyến bay giả lập, hàm ngược cho biết người đó ở pixel nào (hoặc nằm ngoài khung). Đó là nhãn theo thời gian cho RQ3 (mục 15.5), và là cách bù chuyển động camera cho `bytetrack_cmc` (mục 9.3).
 
-### 8.3. Khi camera nghiêng [Thiết kế mở rộng]
+### 8.3. Khi camera nghiêng [Đã có, tuỳ chọn]
 
 Đề tài giả định nhìn thẳng xuống, nhưng cần định lượng sai số khi giả định sai. Tổng quát: tia từ tâm camera qua pixel `(u, v)` có hướng `d_cam = ((u − c_x)/f, (v − c_y)/f, 1)` trong hệ camera. Xoay bằng ma trận `R = R_yaw · R_pitch · R_roll` sang hệ thế giới, rồi giao với mặt phẳng `z = 0`:
 
@@ -637,6 +637,8 @@ P = C + λ · R · d_cam,     λ = −C_z / (R · d_cam)_z
 ```
 
 Với camera nadir, R chỉ còn phép xoay quanh trục đứng và công thức thu về mục 8.1.
+
+**[Đã có, tuỳ chọn] (7/11)** `edge/georef.py`: `pixel_to_gps`, `gps_to_pixel`, `footprint`, `position_error_m` dùng `tel.pitch_deg` (−90° là nhìn thẳng xuống). Camera nghiêng về phía trước góc α = 90° + pitch; với x = (u − c_x)/f, y = (v − c_y)/f, điểm mặt nước ở phía trước h·(s − y·c)/(c + y·s), bên phải h·x/(c + y·s) (c = cos α, s = sin α); hàm ngược giải trực tiếp, test đi một vòng ở pitch −90°, −75°, −60°, −45° và ví dụ tính tay (`tests/test_georef.py`). Pixel trên chân trời báo lỗi; vùng camera nhìn cắt ở 10 lần độ cao phía trước. Bỏ qua roll. **Mặc định tắt**: `edge/main.py` và `tools/make_truth_layer.py` bọc telemetry bằng `NadirTelemetry` (ép pitch −90°) trừ khi có `--use-pitch`, nên mọi kết quả trước 7/11 không đổi. Kiểm chứng trên track SeaDronesSee (`results/georef_pitch.md`): tốt hơn rõ khi drone di chuyển với camera nghiêng vừa phải, kém hơn khi camera gần chân trời hoặc drone đứng yên; tính chung chưa tốt hơn, nên chưa bật mặc định (hướng kiểm tra tiếp: `CAI_TIEN.md` mục 3.6).
 
 ### 8.4. Lan truyền sai số
 
@@ -733,7 +735,7 @@ Tham số và cách chọn:
 | `T_win` | Cửa sổ đếm | Bằng `T_dwell` ở độ cao đang bay |
 | `T_exp` | Thời gian xoá cụm | Lớn hơn `T_dwell` một chút |
 
-Rủi ro: hai người cách nhau dưới `r` (một gia đình trên mái nhà) bị gộp thành một cảnh báo. RQ3 đo cả **gộp nhầm** và **tách nhầm** theo `r`. Trong cứu hộ, gộp nhầm ít nguy hiểm hơn bỏ sót, vì đội cứu hộ tới nơi vẫn thấy cả nhóm, nhưng sẽ làm sai số đếm người; trạm mặt đất có thể hiển thị "có thể nhiều người" khi cụm có nhiều box gần nhau trong cùng khung.
+Rủi ro: hai người cách nhau dưới `r` (một gia đình trên mái nhà) bị gộp thành một cảnh báo. RQ3 đo cả **gộp nhầm** và **tách nhầm** theo `r`. Trong cứu hộ, gộp nhầm ít nguy hiểm hơn bỏ sót, vì đội cứu hộ tới nơi vẫn thấy cả nhóm, nhưng sẽ làm sai số đếm người; trạm mặt đất có thể hiển thị "có thể nhiều người" khi cụm có nhiều box gần nhau trong cùng khung. **[Đã có] (7/11)** `group_size`: khi xác nhận, đếm số phát hiện của khung đó trong 5 m quanh cụm (`with_group_sizes`, `GROUP_RADIUS_M` bằng bán kính gộp sự cố của trạm); cảnh báo mang trường này, sự cố giữ số lớn nhất, bản đồ hiện "nhóm khoảng N người". Không cộng qua các sự cố (đếm thừa khi một nhóm nằm trong vài sự cố); `CAI_TIEN.md` mục 3.5.
 
 ### 9.5. Lựa chọn conf cho từng tầng
 

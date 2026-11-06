@@ -10,6 +10,7 @@ import numpy as np
 from shared.schema import R95_FACTOR, Detection, Telemetry  # noqa: F401 (R95_FACTOR dùng lại từ đây)
 
 EARTH_RADIUS_M = 6_378_137.0
+FOOTPRINT_MAX_RANGE = 10.0  # vùng camera nhìn khi nghiêng: cắt ở 10 lần độ cao phía trước
 
 
 @dataclass(frozen=True)
@@ -80,7 +81,8 @@ def position_error_m(u: float, v: float, tel: Telemetry, cam: Camera, model: Err
     """
     h = tel.alt_agl_m
     gsd = h / cam.f_px
-    d = math.hypot(u - cam.width / 2.0, v - cam.height / 2.0) * gsd
+    # d: khoảng cách mặt đất thật (đúng cả khi camera nghiêng); camera nhìn thẳng xuống thì bằng khoảng cách pixel × GSD.
+    d = math.hypot(*_ground_offset(u, v, tel, cam))
     parts = (
         model.gps_sigma_m,
         d * model.alt_sigma_m / h,
@@ -91,11 +93,34 @@ def position_error_m(u: float, v: float, tel: Telemetry, cam: Camera, model: Err
     return math.sqrt(sum(p * p for p in parts))
 
 
+def _tilt(tel: Telemetry) -> float:
+    """Góc nghiêng của trục quang về phía trước so với phương thẳng đứng (radian): pitch −90° (nhìn thẳng xuống) là 0."""
+    return math.radians(90.0 + tel.pitch_deg)
+
+
+def _ground_offset(u: float, v: float, tel: Telemetry, cam: Camera) -> tuple[float, float]:
+    """(phía trước, bên phải) tính bằng mét từ điểm ngay dưới UAV tới điểm mặt đất của pixel (u, v).
+
+    Tia qua pixel trong hệ camera là (x, y, 1) với x = (u − c_x)/f, y = (v − c_y)/f. Camera nghiêng về phía trước một
+    góc α so với nhìn thẳng xuống (TECHNICAL 8.3), nên thành phần phía trước của tia là s − y·c, thành phần hướng xuống
+    là c + y·s (c = cos α, s = sin α), bên phải là x; giao với mặt nước ở độ sâu h. α = 0 thu về công thức nadir (8.1).
+    Pixel ở trên đường chân trời không chạm mặt nước: ValueError.
+    """
+    x = (u - cam.width / 2.0) / cam.f_px
+    y = (v - cam.height / 2.0) / cam.f_px
+    alpha = _tilt(tel)
+    c, s = math.cos(alpha), math.sin(alpha)
+    down = c + y * s
+    if down <= 1e-6:
+        raise ValueError(f"Pixel ({u:.0f}, {v:.0f}) ở trên đường chân trời (camera nghiêng {math.degrees(alpha):.0f}°)")
+    h = tel.alt_agl_m
+    return h * (s - y * c) / down, h * x / down
+
+
 def pixel_to_gps(u: float, v: float, tel: Telemetry, cam: Camera) -> tuple[float, float]:
-    """Pixel (u sang phải, v xuống dưới) → (lat, lon) của điểm trên mặt đất."""
-    scale = tel.alt_agl_m / cam.f_px
-    forward = -(v - cam.height / 2.0) * scale
-    right = (u - cam.width / 2.0) * scale
+    """Pixel (u sang phải, v xuống dưới) → (lat, lon) của điểm trên mặt đất (mặt nước phẳng; tính cả góc nghiêng
+    của camera trong tel.pitch_deg; pitch −90° là nhìn thẳng xuống)."""
+    forward, right = _ground_offset(u, v, tel, cam)
     yaw = math.radians(tel.yaw_deg)
     north = forward * math.cos(yaw) - right * math.sin(yaw)
     east = forward * math.sin(yaw) + right * math.cos(yaw)
@@ -103,13 +128,19 @@ def pixel_to_gps(u: float, v: float, tel: Telemetry, cam: Camera) -> tuple[float
 
 
 def gps_to_pixel(lat: float, lon: float, tel: Telemetry, cam: Camera) -> tuple[float, float]:
-    """(lat, lon) → pixel (u, v); kết quả có thể nằm ngoài khung ảnh."""
+    """(lat, lon) → pixel (u, v); kết quả có thể nằm ngoài khung ảnh; điểm ở phía sau camera trả về (nan, nan)."""
     north, east = ground_offset_m(tel.lat, tel.lon, lat, lon)
     yaw = math.radians(tel.yaw_deg)
-    forward = north * math.cos(yaw) + east * math.sin(yaw)
-    right = -north * math.sin(yaw) + east * math.cos(yaw)
-    scale = cam.f_px / tel.alt_agl_m
-    return cam.width / 2.0 + right * scale, cam.height / 2.0 - forward * scale
+    a = (north * math.cos(yaw) + east * math.sin(yaw)) / tel.alt_agl_m  # phía trước / h
+    r = (-north * math.sin(yaw) + east * math.cos(yaw)) / tel.alt_agl_m  # bên phải / h
+    alpha = _tilt(tel)
+    c, s = math.cos(alpha), math.sin(alpha)
+    if c + a * s <= 1e-9:
+        return math.nan, math.nan
+    # Giải ngược _ground_offset: a = (s − y·c)/(c + y·s) và r = x/(c + y·s).
+    y = (s - a * c) / (c + a * s)
+    x = r * (c + y * s)
+    return cam.width / 2.0 + x * cam.f_px, cam.height / 2.0 + y * cam.f_px
 
 
 def footprint(tel: Telemetry, cam: Camera) -> list[tuple[float, float]]:
@@ -118,7 +149,15 @@ def footprint(tel: Telemetry, cam: Camera) -> list[tuple[float, float]]:
     Thứ tự góc cố định nên mọi vùng có cùng chiều quay; trạm mặt đất tô hợp các vùng bằng luật nonzero mà không đậm
     dần ở chỗ chồng nhau.
     """
-    corners = ((0.0, 0.0), (float(cam.width), 0.0), (float(cam.width), float(cam.height)), (0.0, float(cam.height)))
+    top = 0.0
+    alpha = _tilt(tel)
+    if alpha > 1e-9:
+        # Camera nghiêng: mép trên ảnh có thể ở xa hoặc trên chân trời; cắt vùng ở FOOTPRINT_MAX_RANGE × độ cao.
+        a = FOOTPRINT_MAX_RANGE
+        c, s = math.cos(alpha), math.sin(alpha)
+        y_far = (s - a * c) / (c + a * s)
+        top = min(max(0.0, cam.height / 2.0 + y_far * cam.f_px), float(cam.height) - 1.0)
+    corners = ((0.0, top), (float(cam.width), top), (float(cam.width), float(cam.height)), (0.0, float(cam.height)))
     return [pixel_to_gps(u, v, tel, cam) for u, v in corners]
 
 
@@ -133,7 +172,8 @@ def frame_motion(tel_prev: Telemetry, tel_cur: Telemetry, cam: Camera) -> np.nda
     """Phép biến đổi affine 2×3 đưa pixel của khung trước về vị trí của cùng điểm mặt đất trong khung này.
 
     Lấy 4 góc ảnh: pixel → GPS bằng telemetry khung trước, rồi GPS → pixel bằng telemetry khung này, và khớp affine
-    bình phương tối thiểu. Với camera nadir, phép này là dịch + xoay (đổi hướng) + co giãn (đổi độ cao), nên khớp đúng.
+    bình phương tối thiểu. Với camera nadir, phép này là dịch + xoay (đổi hướng) + co giãn (đổi độ cao), nên khớp đúng;
+    camera nghiêng thì đúng là phép chiếu phối cảnh, affine chỉ xấp xỉ.
     Dùng để bù chuyển động camera cho bytetrack_cmc (TECHNICAL mục 9.3).
     """
     corners = [(0.0, 0.0), (cam.width, 0.0), (0.0, cam.height), (cam.width, cam.height)]

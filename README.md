@@ -67,6 +67,8 @@ FLOODEYE_GROUND_DB=runs/ground/ground.sqlite .venv/bin/python -m uvicorn --facto
     --n-confirm 5 --output runs/edge/demo_n5
 ```
 
+Camera nghiêng (gimbal không nhìn thẳng xuống): thêm `--use-pitch` để định vị theo `pitch_deg` trong telemetry (TECHNICAL 8.3; tuỳ chọn, kiểm chứng ở `docs/results/georef_pitch.md`, `tools/eval_georef_pitch.py`). Điểm yếu đã đo và cách cải thiện: `docs/CAI_TIEN.md`.
+
 Có file `.SRT` mới thì kiểm tra trước bộ đọc có hiểu định dạng không: `.venv/bin/python -m edge.telemetry DJI_0001.SRT`. Khi chạy với telemetry giả lập, video có dòng chữ "TELEMETRY GIA LAP" và `run_config.json` ghi `telemetry_source`.
 
 Demo hai drone: `scripts/demo_multi.sh` (đoạn SeaDronesSee có telemetry thật; drone thứ hai phát lại cùng đoạn với GPS dời thêm vài mét). Trạm gộp cảnh báo của hai drone thành một sự cố và xếp sự cố theo ưu tiên; bấm một chấm trên bản đồ để gắn thẻ "dưới nước", "trên mái", hoặc đóng sự cố ("đã cứu", "báo nhầm"). API: `PATCH /api/incidents/<id>` với `{"tag": "water"}` hay `{"status": "resolved"}`.

@@ -28,7 +28,7 @@ from typing import Any
 import yaml
 
 from edge.georef import Camera, pixel_to_gps
-from edge.telemetry import SampledTelemetry
+from edge.telemetry import NadirTelemetry, SampledTelemetry
 from sim.scenario import Person
 
 
@@ -57,11 +57,12 @@ def from_rq3(truth: dict[str, Any], step_s: float) -> list[dict[str, Any]]:
     return out
 
 
-def from_sds(folder: Path, cam_cfg: dict[str, Any], step_s: float) -> list[dict[str, Any]]:
+def from_sds(folder: Path, cam_cfg: dict[str, Any], step_s: float, use_pitch: bool = False) -> list[dict[str, Any]]:
     """Mỗi track_id là một người; vị trí là tâm đáy box chiếu xuống mặt đất theo telemetry của khung."""
     info = json.loads((folder / "info.json").read_text(encoding="utf-8"))
     truth = json.loads((folder / "truth.json").read_text(encoding="utf-8"))
     telemetry = SampledTelemetry.from_csv(folder / "telemetry.csv")
+    telemetry = telemetry if use_pitch else NadirTelemetry(telemetry)  # cùng giả định với pipeline (--use-pitch)
     cam = Camera.from_fov(cam_cfg.get("fov_deg", 82.0), cam_cfg.get("fov_type", "diagonal"), info["width"], info["height"])
     fps = float(cam_cfg.get("source_fps", 30.0))
     points: dict[int, list[tuple[float, float, float]]] = {}
@@ -86,6 +87,7 @@ def main() -> None:
     source.add_argument("--sds", type=Path, help="Thư mục một đoạn SeaDronesSee-MOT đã chuyển (truth.json, telemetry.csv, info.json)")
     parser.add_argument("--config", type=Path, default=None, help="Với --sds: cấu hình demo để lấy fov_deg, fov_type, source_fps")
     parser.add_argument("--step-s", type=float, default=1.0, help="Lấy mẫu đường đi của mỗi người (giây)")
+    parser.add_argument("--use-pitch", action="store_true", help="Với --sds: chiếu theo góc nghiêng gimbal, như edge/main.py --use-pitch")
     parser.add_argument("--min-span-s", type=float, default=1.0, help="Bỏ người có mặt trong khung ít hơn số giây này")
     parser.add_argument("--output", type=Path, required=True, help="File JSON ghi ra")
     args = parser.parse_args()
@@ -94,7 +96,7 @@ def main() -> None:
         layer = {"source": str(args.rq3), "note": "Mô phỏng: vị trí thật của người trong kịch bản", "people": people}
     else:
         cfg = yaml.safe_load(args.config.read_text(encoding="utf-8")) if args.config else {}
-        people = from_sds(args.sds, cfg, args.step_s)
+        people = from_sds(args.sds, cfg, args.step_s, args.use_pitch or bool(cfg.get("use_pitch")))
         layer = {"source": str(args.sds), "note": "Nhãn SeaDronesSee chiếu xuống mặt đất bằng telemetry của drone", "people": people}
     n_all = len(layer["people"])
     layer["people"] = [p for p in layer["people"] if p["t_out"] - p["t_in"] >= args.min_span_s]

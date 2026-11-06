@@ -9,7 +9,7 @@ import numpy as np
 
 from edge.detector import Tracker
 from edge.georef import ground_distance_m
-from shared.schema import Confirmation, Detection
+from shared.schema import GROUP_RADIUS_M, Confirmation, Detection
 
 
 class Confirmer(Protocol):
@@ -96,6 +96,19 @@ def _newly_confirmed(
     return confirmed
 
 
+def with_group_sizes(confirmed: list[Confirmation], located: list[Detection], radius_m: float = GROUP_RADIUS_M) -> list[Confirmation]:
+    """Điền group_size: số phát hiện của khung hiện tại nằm trong radius_m quanh mỗi xác nhận (ít nhất 1).
+
+    Người bơi sát nhau vẫn là các cụm riêng trên UAV (ghép một-một), nhưng trạm gộp cảnh báo trong 5 m thành một sự
+    cố; con số này giữ lại thông tin "ở đây có mấy người" để đội cứu hộ mang đủ phao, xuồng (docs/CAI_TIEN.md).
+    """
+    out = []
+    for c in confirmed:
+        n = sum(1 for d in located if d.lat is not None and d.lon is not None and ground_distance_m(c.lat, c.lon, d.lat, d.lon) <= radius_m)
+        out.append(c.model_copy(update={"group_size": max(1, n)}))
+    return out
+
+
 class GeoConfirmer:
     """Gom phát hiện theo vị trí mặt đất (chiến lược `geo`, TECHNICAL mục 9.4).
 
@@ -140,7 +153,7 @@ class GeoConfirmer:
                 self._clusters.append(cluster)
                 self._next_id += 1
 
-        return _newly_confirmed(self._clusters, t, self.n_confirm, self.window_s, self.memory)
+        return with_group_sizes(_newly_confirmed(self._clusters, t, self.n_confirm, self.window_s, self.memory), located)
 
 
 class TrackConfirmer:
@@ -186,4 +199,5 @@ class TrackConfirmer:
                 cluster = self._tracks[track_id] = _Cluster(track_id, det.lat, det.lon, 0.0, det)
             cluster.add(det)
         self._tracks = {k: c for k, c in self._tracks.items() if t - c.last.t <= self.expire_s}
-        return _newly_confirmed(list(self._tracks.values()), t, self.n_confirm, self.window_s, self.memory)
+        confirmed = _newly_confirmed(list(self._tracks.values()), t, self.n_confirm, self.window_s, self.memory)
+        return with_group_sizes(confirmed, [d for d in dets if d.lat is not None])

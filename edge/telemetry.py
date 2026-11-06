@@ -135,3 +135,14 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+class NadirTelemetry:
+    """Bọc một nguồn telemetry, ép pitch về −90° (nhìn thẳng xuống): giữ hành vi cũ của phép chiếu khi chưa bật
+    --use-pitch, vì mọi kết quả trước 7/11 tính với giả định camera nhìn thẳng xuống (TECHNICAL 8.3)."""
+
+    def __init__(self, inner: TelemetrySource) -> None:
+        self.inner = inner
+
+    def at(self, t: float) -> Telemetry:
+        return self.inner.at(t).model_copy(update={"pitch_deg": -90.0, "roll_deg": 0.0})

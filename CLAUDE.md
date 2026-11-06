@@ -11,6 +11,7 @@
 - [docs/THUAT_NGU.md](docs/THUAT_NGU.md): thuật ngữ và ký hiệu chuẩn; tài liệu mới dùng đúng tên trong đó.
 - [docs/DAN_Y_LUAN_VAN.md](docs/DAN_Y_LUAN_VAN.md): dàn ý sáu chương, mỗi mục dùng kết quả nào, đã có hay còn chờ.
 - [docs/DEMO_BAO_VE.md](docs/DEMO_BAO_VE.md): kịch bản demo bảo vệ, chuẩn bị, câu hỏi dễ gặp.
+- [docs/CAI_TIEN.md](docs/CAI_TIEN.md): điểm yếu đã đo và cách cải thiện (bằng chứng, cách sửa, chi phí, kiểm chứng, trạng thái); cải thiện mới thì thêm một dòng ở đây.
 - [README.md](README.md): cài đặt, dữ liệu, lệnh chạy, định dạng file kết quả.
 - [docs/LABELING.md](docs/LABELING.md): gán nhãn và khoá tập test lũ. [docs/results/](docs/results/): mỗi kết quả đã đo một file.
 

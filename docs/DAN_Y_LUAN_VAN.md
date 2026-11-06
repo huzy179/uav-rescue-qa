@@ -61,7 +61,7 @@ Theo ba câu hỏi; mỗi câu hỏi con một tiểu mục ngắn: bảng, hìn
 | Mục | Câu hỏi con | Kết quả | Trạng thái |
 |---|---|---|---|
 | 5.1 Câu hỏi 1 | RQ1a cỡ người và bỏ sót | `visdrone_E2.md`, `e6_sds_pilot.md`; tập lũ | Có một phần; tập lũ **Chờ** |
-| | RQ1b dữ liệu huấn luyện | `visdrone_E2.md`, `E2c.md`, `afo_E1_E2.md`, `E2e.md` | Có; E2e **Chờ** phiên 2 |
+| | RQ1b dữ liệu huấn luyện | `visdrone_E2.md`, `E2c.md`, `afo_E1_E2.md`, `E2e.md` (kết quả âm: thêm người to làm kém người nhỏ) | Có |
 | | RQ1c cắt ô, nhánh P2 | `visdrone_baseline.md`, `visdrone_tiled_vs_sahi.md`, `E3.md` | Có |
 | | RQ1d thu nhỏ theo độ cao | `scale_by_altitude.md` | Có, sơ bộ |
 | | RQ1e nhiễu của cảnh lũ | recall theo thẻ ảnh trên tập lũ | **Chờ** tập lũ |
@@ -83,12 +83,12 @@ Theo ba câu hỏi; mỗi câu hỏi con một tiểu mục ngắn: bảng, hìn
 |---|---|---|---|
 | 6.1 Trả lời ba câu hỏi | Mỗi câu một đoạn, dẫn số chính | Chương 5 | Viết sau chương 5 |
 | 6.2 Giới hạn | Tập lũ nhỏ (188 khung, 9 cụm), không bay thật, không có Jetson, video lũ không có độ cao, một seed cho phần lớn thí nghiệm | TECHNICAL mục 17, TONG_QUAN mục 6 | Viết |
-| 6.3 Hướng phát triển | Đo trên Jetson thật; nhiều drone phối hợp; phân biệt người cần cứu gấp; ảnh nhiệt | DEMO_BAO_VE (câu hỏi dễ gặp), TONG_QUAN mục 6 | Viết |
+| 6.3 Hướng phát triển | Đo trên Jetson thật; nhiều drone phối hợp; phân biệt người cần cứu gấp; ảnh nhiệt; các mục "Đề xuất" của `CAI_TIEN.md` | DEMO_BAO_VE (câu hỏi dễ gặp), TONG_QUAN mục 6, `CAI_TIEN.md` | Viết |
 
 ## Việc còn thiếu để viết đủ
 
 1. Gán và khoá tập ảnh lũ (11/11), rồi chấm mọi mô hình: mở khoá RQ1a (phần lũ), RQ1e, RQ1f, mục 5.5.
-2. E2e phiên 2, rồi chấm trên SeaDronesSee: hoàn tất RQ1b.
+2. ~~E2e phiên 2, rồi chấm trên SeaDronesSee~~ (xong 7/11, `E2e.md`): RQ1b đủ.
 3. Chạy RQ2 trên T4: RQ2a, RQ2b; sau đó hiệu chỉnh giả lập thiết bị: RQ2c.
 4. ~~Một lần chạy tổng hợp sai số GPS và mất sóng thành bảng: RQ3c, RQ3d~~ (xong 6/11, `rq3_geoerr.md`, `rq3_network.md`).
 5. Ba seed cho mô hình cuối (tuần 14–20/11) nếu còn giờ GPU; không đủ thì ghi một seed vào giới hạn.

@@ -167,3 +167,15 @@ def test_incidents_gpx_lists_open_incidents(tmp_path: Path) -> None:
     (wpt,) = ET.fromstring(response.content).findall("g:wpt", ns)
     assert float(wpt.get("lat")) == 21.0 and float(wpt.get("lon")) == 105.8
     assert wpt.find("g:name", ns).text.startswith("FE-") and "vùng tìm 95%" in wpt.find("g:desc", ns).text
+
+
+def test_incident_keeps_largest_group_size(tmp_path: Path) -> None:
+    client = TestClient(create_app(tmp_path / "g.sqlite"))
+    for seq, group in ((1, 2), (2, 4), (3, 1)):
+        body = {"alert_id": f"uav1-{seq}", "uav_id": "uav1", "t": 3.0 + seq, "lat": 21.0, "lon": 105.8, "position_error_m": 2.0,
+                "altitude_m": 50.0, "cluster_id": seq, "confidence": 0.6, "frames_confirmed": 3, "box_px": [0, 0, 10, 10],
+                "model": "m.pt", "group_size": group}
+        assert client.post("/api/alerts", json=body).status_code == 200
+    (inc,) = client.get("/api/incidents").json()
+    assert inc["group_size"] == 4 and inc["n_alerts"] == 3
+    assert "nhóm khoảng 4 người" in client.get("/api/incidents.gpx").text

@@ -90,6 +90,7 @@ def make_alert(
         frames_confirmed=c.frames_seen,
         box_px=(int(c.box_px[0]), int(c.box_px[1]), int(c.box_px[2]), int(c.box_px[3])),
         model=model,
+        group_size=c.group_size,
     )
 
 

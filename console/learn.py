@@ -16,7 +16,7 @@ OVERVIEW = ROOT / "docs" / "TONG_QUAN.md"
 # Thứ tự hiện trong danh sách tài liệu: đọc từ tổng quan tới chi tiết.
 DOC_ORDER = [
     "docs/TONG_QUAN.md", "docs/THUAT_TOAN.md", "docs/THUAT_NGU.md", "docs/ROADMAP.md", "docs/TECHNICAL.md",
-    "docs/LABELING.md", "docs/DAN_Y_LUAN_VAN.md", "docs/DEMO_BAO_VE.md", "README.md",
+    "docs/LABELING.md", "docs/DAN_Y_LUAN_VAN.md", "docs/DEMO_BAO_VE.md", "docs/CAI_TIEN.md", "README.md",
 ]
 SOURCE_DIRS = ("edge", "ground", "shared", "eval", "sim", "scripts", "tools", "training", "console", "configs", "tests")
 SOURCE_SUFFIXES = {".py", ".sh", ".yaml", ".yml", ".html", ".toml", ".md"}
@@ -49,6 +49,7 @@ STAGES: list[dict[str, Any]] = [
         "quiz": [
             {"q": 'Mô hình chính hiện nay (E2c) là gì?', "a": 'YOLO26s tinh chỉnh trên VisDrone (ảnh drone đô thị) cộng AFO (người dưới nước).', "doc": 'docs/results/E2c.md'},
             {"q": 'Vì sao phải thêm AFO sau lần tinh chỉnh đầu?', "a": 'Chỉ học VisDrone thì mô hình kém hơn cả mô hình nền với người dưới nước: AP50 trên AFO test tụt từ 0,147 xuống 0,103. Thêm AFO thì lên 0,568.', "doc": 'docs/results/E2c.md'},
+            {"q": 'Thêm ảnh có người cỡ to (C2A, thí nghiệm E2e) có giúp không?', "a": 'Không như mong đợi: kém mô hình chính rõ ở người nhỏ (VisDrone val dưới 8 px giảm 0,053 AP50), còn trên SeaDronesSee tăng 0,041 nhưng không có ý nghĩa thống kê. Vẫn giữ E2c; người to xử lý bằng thu nhỏ theo độ cao.', "doc": 'docs/results/E2e.md'},
             {"q": 'Thu nhỏ theo độ cao bay sửa được điểm yếu nào?', "a": 'Mô hình chính giỏi người nhỏ nhưng kém người to (bay thấp). Thu nhỏ khung để người về cỡ mô hình làm tốt: trên SeaDronesSee 4K, AP50 từ 0,235 lên 0,531.', "doc": 'docs/results/scale_by_altitude.md'},
         ],
         "metrics": [
@@ -62,6 +63,7 @@ STAGES: list[dict[str, Any]] = [
         "results": [
             ("Tinh chỉnh trên VisDrone: AP50 trên VisDrone val từ 0,497 lên 0,758; người dưới 8 px từ 0,167 lên 0,554", "docs/results/visdrone_E2.md"),
             ("Thêm AFO (mô hình chính E2c): người dưới nước, AP50 trên AFO test từ 0,103 lên 0,568", "docs/results/E2c.md"),
+            ("Thêm C2A (E2e), kết quả âm: VisDrone val từ 0,747 xuống 0,718, người dưới 8 px từ 0,546 xuống 0,492; SeaDronesSee không hơn có ý nghĩa", "docs/results/E2e.md"),
             ("Thu nhỏ theo độ cao bay rồi cắt ô: SeaDronesSee 4K, AP50 từ 0,235 lên 0,531", "docs/results/scale_by_altitude.md"),
             ("Nhánh phát hiện P2: người dưới 8 px chỉ thêm 0,012–0,013 AP50, không đáng chi phí", "docs/results/E3.md"),
         ],
