@@ -88,7 +88,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ground-url", default=None, help="Địa chỉ trạm mặt đất; không có thì dùng transport giả luôn ack")
     parser.add_argument("--net-loss", type=float, default=0.0, help="Giả lập: xác suất mất mỗi lần gửi")
     parser.add_argument("--net-outage", type=float, nargs=2, action="append", default=None, metavar=("START", "END"), help="Giả lập: khoảng mất sóng (giây), lặp được")
-    parser.add_argument("--link-probe-s", type=float, default=None, help="Gửi cảnh báo: khi mọi gói đang chờ gửi lại, cứ mỗi số giây này thử một gói toạ độ; gửi được thì gửi ngay mọi gói đang chờ (mặc định tắt)")
+    parser.add_argument("--link-probe-s", type=float, default=None, help="Gửi cảnh báo: khi mọi gói đang chờ gửi lại, cứ mỗi số giây này thử một gói toạ độ; gửi được thì gửi ngay mọi gói đang chờ (mặc định tắt; 0 để tắt khi file cấu hình đã bật)")
     parser.add_argument("--state-every-s", type=float, default=None, help="Gửi trạng thái drone (vị trí, vùng camera nhìn, cảnh báo đang chờ) về trạm mỗi số giây này, qua cùng giả lập mạng; mặc định tắt (edge/status.py)")
     parser.add_argument("--simulated-flight", action="store_true", help="Nguồn là chuyến bay mô phỏng (sim/make_rq3.py --render): ghi 'ảnh tổng hợp' lên video và báo trạm telemetry không phải thật")
     parser.add_argument("--live-port", type=int, default=None, help="Demo: phát video đã vẽ dạng MJPEG ở cổng này để trang bản đồ nhúng (http://localhost:<cổng>/); drone thật không gửi video")

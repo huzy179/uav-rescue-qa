@@ -38,6 +38,8 @@ Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặ
 
 **Cập nhật 6/11:** E2e phiên 1 xong trên Kaggle: 33/55 epoch, 19,1 phút mỗi epoch (E2c: 10,0 phút), mAP50 val ngang E2c ở cùng epoch (`docs/results/E2e.md`). Phiên 2 (22 epoch, khoảng 7 giờ) chạy tiếp bằng `MODE = "resume"`.
 
+**Cập nhật 7/11 (sân thử):** tab **Sân thử** của `python -m console` (TECHNICAL 11.4): chỉnh tham số chuyến bay, mô hình, thiết bị, mạng hoặc chọn một trong tám câu hỏi "nếu… thì sao" dựng sẵn; một lần chạy sinh kịch bản, xoá trạm (`POST /api/reset`), nạp đáp án, bay và gửi về trạm, chấm bằng `eval/rq3_metrics.py`; bảng so sánh các lần chạy, kết quả ở `runs/sandbox/`. Dùng để trả lời câu hỏi của hội đồng tại chỗ (DEMO_BAO_VE). `--link-probe-s 0` tắt thăm dò khi file cấu hình đã bật.
+
 **Cập nhật 6/11 (RQ3c, RQ3d, mô phỏng):**
 - **Sai số vị trí** (`rq3_geoerr.md`, `rq3_geoerr.yaml`): GPS là nguồn sai số chính; khi GPS σ 3 m chỉ 0,278 số người nằm trong bán kính 1σ mà cảnh báo ghi, vùng 95% chứa 1,000. Bản đồ trạm giờ vẽ **vùng tìm 95%** (2,448 × 1σ, `R95_FACTOR`); trường `position_error_m` vẫn là 1σ. Lệch hướng 5° ở 100 m gây tách nhầm 5,333 mỗi kịch bản.
 - **Mạng** (`rq3_network.md`, `rq3_network.yaml`): thêm **thăm dò đường truyền** (`--link-probe-s`; dòng lệnh mặc định tắt, `configs/edge.yaml` bật từ 6/11): không mất cảnh báo nào; độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s. Quyết định #17.

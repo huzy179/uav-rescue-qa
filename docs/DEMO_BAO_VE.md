@@ -8,6 +8,7 @@ Mục tiêu: hội đồng thấy bài toán khó ở đâu, hệ thống chạy
 |---|---|
 | Phát hiện cho mọi khung (một lần, cần GPU) | `scripts/demo_bao_ve.sh chuan-bi sds_v21_goc` và `... chuan-bi sds_v21_px10` |
 | Chuyến quét mô phỏng (một lần, không cần GPU, khoảng 20 giây) | `scripts/demo_bao_ve.sh chuan-bi hotay_quet` |
+| Sân thử cho phần hỏi đáp | Mở `python -m console`, tab Sân thử; chạy trước mặc định và hai câu hỏi hay gặp để bảng so sánh có sẵn vài dòng; diễn tập một lần bấm câu hỏi rồi Chạy với tốc độ phát 0 (khoảng 15 giây) |
 | Lớp đáp án | `chuan-bi` tự sinh `truth_layer.json` (nhãn SDS hoặc đáp án mô phỏng), `chay` tự nạp vào trạm; nếu đã chạy `chuan-bi` SDS trước 6/11 thì chạy `tools/make_truth_layer.py --sds ...` (lệnh trong README) |
 | Hiệu chỉnh hồ sơ thiết bị sau RQ2 | `tools/fit_device_profile.py` (TECHNICAL 14.6); khi còn `calibrated: false` thì nói rõ là ước lượng chưa hiệu chỉnh |
 | Giữ ô bản đồ vùng bay | Diễn tập ít nhất một lần **khi có mạng**, phóng to thu nhỏ quanh vùng bay; ô đã xem nằm trong `runs/ground/tiles` |
@@ -34,6 +35,10 @@ Mục tiêu: hội đồng thấy bài toán khó ở đâu, hệ thống chạy
 - Không đưa số nào không có trong `docs/results/` hoặc không đọc được từ `runs/`.
 - Không nói video demo là tập test lũ: đoạn SDS v21 thuộc tập val của SeaDronesSee.
 - Không trình bày chuyến quét Hồ Tây như số liệu: ảnh tổng hợp, telemetry mô phỏng, phát hiện giả; toạ độ đặt trên Hồ Tây chỉ để bản đồ nền là mặt nước.
+
+## Trả lời câu hỏi "nếu… thì sao" ngay tại chỗ
+
+Khi hội đồng hỏi về điều kiện khác (bay cao hơn, mô hình chưa tinh chỉnh, mất sóng lâu, GPS kém, thiết bị yếu, bay nhanh), mở tab **Sân thử**, bấm câu hỏi tương ứng (hoặc chỉnh tham số), đặt tốc độ phát 0 để chạy nhanh, bấm Chạy, rồi so dòng mới với dòng mặc định trong bảng. Nói rõ: mô phỏng, một seed, phát hiện giả theo recall đo được; số chính thức nhiều seed ở `docs/results/` (`rq3_*.md`).
 
 ## Câu hỏi dễ gặp
 

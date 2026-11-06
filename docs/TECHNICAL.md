@@ -880,6 +880,10 @@ Hai cách dùng:
 1. **Chỉ telemetry:** gắn telemetry giả lập vào video thật không có telemetry (video lũ). Nhãn người lấy từ nhãn có sẵn.
 2. **Hoàn toàn giả lập cho RQ3:** sinh chuỗi phát hiện giả theo recall và tỉ lệ báo nhầm đo được ở RQ1 (ví dụ mỗi người thật được phát hiện với xác suất `r(kích thước)`, cộng báo nhầm theo phân phối Poisson). Cho phép quét rất nhiều kịch bản và đối chiếu với công thức nhị thức. Phải ghi rõ là mô phỏng.
 
+### 11.4. Sân thử mô phỏng trên giao diện [Đã có]
+
+Tab "Sân thử" của `python -m console` (`console/sandbox.py`, `console/sandbox_run.py`, `console/sandbox.js`): chỉnh độ cao, tốc độ, đường bay, thời gian bay, số người, mô hình (recall theo cỡ người của E1 hoặc E2c), thu nhỏ theo độ cao, số khung xử lý mỗi giây, thiết bị giả lập, nhiễu GPS, lệch la bàn, mất gói, khoảng mất sóng, thăm dò đường truyền, ảnh tổng hợp, tốc độ phát; tám câu hỏi "nếu… thì sao" hay gặp ở buổi bảo vệ là các bộ thay đổi dựng sẵn so với mặc định. Một lần chạy là một tiến trình con: sinh kịch bản (`sim/make_rq3.py`, ảnh 1080p, 8 khung/giây, đặt trên mặt Hồ Tây), lớp đáp án, xoá trạm mặt đất (`POST /api/reset?confirm=true`) và nạp đáp án, chạy `edge/main.py` gửi về trạm (xem trực tiếp ở màn hình điều phối, có video khi vẽ ảnh và phát theo thời gian thực), chấm bằng `eval/rq3_metrics.py`. Mọi thứ ghi vào `runs/sandbox/<mã>/` kèm đúng các lệnh (`commands.txt`); bảng so sánh chỉ hiện tham số khác nhau giữa các lần và chỉ số đọc từ `rq3_metrics.json`. Mỗi lần một seed: để thấy xu hướng khi trả lời câu hỏi tại chỗ, không thay bảng nhiều seed trong `docs/results/`. Tham số giới hạn bằng Pydantic, thiết bị chỉ chọn trong `configs/devices/`; mỗi lúc chạy một lần (dùng chung cổng video và trạm).
+
 ---
 
 ## 12. Trạm mặt đất

@@ -337,6 +337,21 @@ def create_app(
 
     truth: dict[str, Any] = {}
 
+    @app.post("/api/reset")
+    def reset(confirm: bool = False) -> dict[str, bool]:
+        """Xoá mọi cảnh báo, ảnh cắt, sự cố, trạng thái drone và lớp đáp án, để bắt đầu một lần chạy mới (sân thử của
+        console, demo). Cần ?confirm=true để không xoá nhầm."""
+        if not confirm:
+            raise HTTPException(400, "Thêm ?confirm=true để xoá toàn bộ dữ liệu của trạm")
+        with sqlite3.connect(db_path) as db:
+            db.execute("DELETE FROM crops")
+            db.execute("DELETE FROM alerts")
+            db.execute("DELETE FROM incidents")
+        with uav_lock:
+            uavs.clear()
+        truth.clear()
+        return {"reset": True}
+
     @app.post("/api/truth")
     def post_truth(layer: TruthLayer) -> dict[str, int]:
         """Nạp lớp đáp án (thay lớp cũ)."""

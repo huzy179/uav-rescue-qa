@@ -14,7 +14,7 @@ sim/                giả lập chuyến bay và đường truyền mạng
 eval/               đánh giá AP/recall theo nhóm kích thước, báo cáo, biểu đồ
 tools/              chuyển nhãn bộ dữ liệu, thống kê
 scripts/            chạy baseline, SAHI, cắt ô, RQ2, demo, tính GSD, đo tốc độ
-console/            giao diện thử nghiệm: xem lỗi, chạy thử, trạm mặt đất (python -m console)
+console/            giao diện thử nghiệm: hiểu dự án, xem lỗi, chạy thử, sân thử mô phỏng, trạm mặt đất (python -m console)
 training/           huấn luyện (notebook Kaggle, yaml mô hình)
 tests/              kiểm thử, chạy không cần mô hình
 docker/             Dockerfile
@@ -32,6 +32,7 @@ data/, runs/        dữ liệu và kết quả chạy (không đưa lên git)
 - **Hiểu dự án** (tab mở đầu, nền tối mặc định, nút ☀ đổi sang sáng): bản đồ dự án (6 khâu từ camera tới bản đồ; bấm một khâu để xem ví dụ đời thường, làm gì, vì sao, kết quả đã có kèm thanh so sánh, câu hỏi tự kiểm tra, file chứa nó); mục Câu hỏi (ba câu hỏi nghiên cứu, 14 câu hỏi con kèm trạng thái và nguồn, đọc từ TONG_QUAN mục 1.3); thẻ ghi nhớ để ôn thuật ngữ; phím `/` để tìm; đọc mọi tài liệu trong `docs/` có mục lục; thuật ngữ trong `docs/THUAT_NGU.md` được gạch chân lần đầu trong mỗi mục, di chuột để xem giải thích, bấm để xem chỗ khác nhắc tới; ô tìm trong mọi tài liệu; bấm tên file để xem mã. Nội dung đọc thẳng từ `docs/`, sửa tài liệu là trang tự cập nhật (`console/learn.py`, `console/learn.js`).
 - **Xem lỗi**: chọn tập (VisDrone, AFO, SDS; tập lũ chỉ hiện sau khi khoá), lần chạy, IoU, ngưỡng conf, nhóm kích thước, thẻ ảnh. Danh sách ảnh xếp theo số người bị bỏ sót hoặc số báo nhầm; ảnh vẽ người được thấy (xanh), bị bỏ sót (đỏ, có vòng to để thấy người vài pixel), báo nhầm (cam), vùng bỏ qua (xám); lăn chuột để phóng, bấm một lỗi để phóng tới. Recall, precision khớp đúng `eval_by_size.csv` ở cùng ngưỡng. Nút **Xuất báo cáo lỗi** ghi bảng theo nhóm kích thước và ảnh cắt các lỗi tiêu biểu vào `runs/console/reports/` (Markdown cho luận văn, HTML để xem).
 - **Chạy thử**: chọn video demo hoặc đoạn SeaDronesSee có telemetry thật, trọng số, cắt ô hay toàn ảnh, thu nhỏ theo độ cao, chiến lược xác nhận, số lần nhìn mỗi người; xem từng khung đã vẽ, cảnh báo kèm ảnh cắt, thời gian từng chặng, lệnh tương đương; chọn "So với lần chạy" để xem hai lần chạy cạnh nhau. Kết quả ở `runs/console/<mã>/`. Video của tập test lũ cố ý không có trong danh sách nguồn.
+- **Sân thử**: chuyến bay mô phỏng với tham số chỉnh tay (độ cao, tốc độ, mô hình, thiết bị, GPS, mất sóng, thăm dò đường truyền…) hoặc một trong tám câu hỏi "nếu… thì sao" dựng sẵn; bấm Chạy để sinh kịch bản, bay và gửi về trạm (nút mở màn hình điều phối), chấm bằng `eval/rq3_metrics.py`; bảng so sánh các lần chạy. Mỗi lần chạy xoá dữ liệu cũ của trạm. Kết quả ở `runs/sandbox/<mã>/` (TECHNICAL 11.4). Cần `runs/e6_sds/eval/recall_by_pixels.csv`.
 - **Trạm mặt đất**: bản đồ sự cố.
 
 Danh sách tập và nguồn ở `configs/console.yaml`.

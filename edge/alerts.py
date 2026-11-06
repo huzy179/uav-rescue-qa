@@ -159,7 +159,7 @@ class Outbox:
             ).fetchone()
             probe = False
             if row is None:
-                if self.probe_s is None or now - self._last_send_t < self.probe_s:
+                if not self.probe_s or now - self._last_send_t < self.probe_s:  # None hoặc 0: tắt
                     break
                 row = self.db.execute(
                     """SELECT msg_id, alert_id, kind, payload, attempts FROM outbox
@@ -178,7 +178,7 @@ class Outbox:
                         "UPDATE outbox SET status = 'acked', attempts = ?, acked_t = ? WHERE msg_id = ?",
                         (attempts, now, msg_id),
                     )
-                    if self.probe_s is not None:
+                    if self.probe_s:
                         self.db.execute("UPDATE outbox SET next_try_t = ? WHERE status = 'pending' AND next_try_t > ?", (now, now))
                 elif probe:
                     self.db.execute("UPDATE outbox SET attempts = ? WHERE msg_id = ?", (attempts, msg_id))

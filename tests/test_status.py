@@ -96,3 +96,15 @@ def test_truth_layer_roundtrip(tmp_path: Path) -> None:
     got = client.get("/api/truth").json()
     assert got["people"][0]["id"] == 3 and got["r_match_m"] == 10.0
     assert client.post("/api/truth", json={"people": [{"id": 1}]}).status_code == 422
+
+
+def test_reset_clears_station(tmp_path: Path) -> None:
+    client = TestClient(create_app(tmp_path / "g.sqlite"))
+    reporter = StatusReporter(FakeTransport(), "uav1", 1.0)
+    reporter.maybe_send(0.0, tel(0), CAM)
+    client.post("/api/uav/state", json=json.loads(reporter.transport.received[0][1].payload))
+    client.post("/api/truth", json={"people": [{"id": 1, "t_in": 0, "t_out": 1, "track": [[0, 21.0, 105.8]]}]})
+    assert client.post("/api/reset").status_code == 400  # thiếu confirm
+    assert client.post("/api/reset?confirm=true").json() == {"reset": True}
+    assert client.get("/api/uavs").json() == [] and client.get("/api/truth").json() == {"people": []}
+    assert client.get("/api/incidents").json() == []

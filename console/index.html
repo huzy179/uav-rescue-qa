@@ -54,6 +54,32 @@
   .crops img { width: 140px; height: 140px; object-fit: cover; border-radius: 4px; background: #ddd; }
   pre { white-space: pre-wrap; font-size: 12px; background: #f1f3f6; padding: 8px; border-radius: 4px; }
   iframe { flex: 1; border: 0; }
+  /* Sân thử */
+  .sbside { width: 330px; }
+  .sbside h3, .sbmain h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin: 14px 0 6px; }
+  .sbpresets { display: flex; flex-direction: column; gap: 4px; }
+  .sbchip { text-align: left; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 13px; cursor: pointer; margin-top: 4px; }
+  .sbchip:hover { border-color: var(--accent); color: var(--accent); }
+  .sbfield { display: grid; grid-template-columns: 1fr 120px; align-items: center; gap: 6px; margin-top: 5px; }
+  .sbfield label { margin: 0; font-size: 13px; }
+  .sbfield.chk { grid-template-columns: 1fr auto; }
+  .sbfield select, .sbfield input[type=number], .sbfield input[type=text] { width: 100%; }
+  .sbmain { flex: 1; overflow: auto; padding: 4px 16px 24px; }
+  .sbcard { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 10px 12px; }
+  .sbhead { display: flex; align-items: center; gap: 10px; }
+  .sbstate { margin-left: auto; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; background: var(--accent); }
+  .sbstate.ok { background: var(--tp); } .sbstate.err { background: var(--fn); }
+  .sbrow { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .sbbtn { padding: 6px 12px; border-radius: 6px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; font-size: 13px; }
+  .sbgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; margin: 8px 0; }
+  .sbm { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; font-size: 12px; color: var(--muted); }
+  .sbm b { font-size: 18px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .sbtablewrap { overflow-x: auto; }
+  .sbtable { border-collapse: collapse; font-size: 12.5px; min-width: 100%; }
+  .sbtable th, .sbtable td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left; white-space: nowrap; }
+  .sbtable th.m, .sbtable td.m { text-align: right; font-variant-numeric: tabular-nums; }
+  .sbtable th { background: #eef1f5; position: sticky; top: 0; }
+  .sbtable tbody tr { cursor: pointer; } .sbtable tbody tr:hover { background: #f1f4f8; } .sbtable tr.on { background: #e3eefa; }
   .empty { padding: 24px; color: var(--muted); }
 </style>
 </head>
@@ -63,6 +89,7 @@
   <button class="tab on" data-page="learn">Hiểu dự án</button>
   <button class="tab" data-page="errors">Xem lỗi</button>
   <button class="tab" data-page="run">Chạy thử</button>
+  <button class="tab" data-page="sandbox">Sân thử</button>
   <button class="tab" data-page="ground">Trạm mặt đất</button>
 </header>
 <main>
@@ -146,6 +173,9 @@
     <div class="list" id="rList"></div>
     <div class="view"><div class="runview" id="rView"><div class="empty">Chọn một lần chạy, hoặc bấm Chạy.</div></div></div>
   </section>
+
+  <!-- ======================= Sân thử mô phỏng (console/sandbox.js) ======================= -->
+  <section class="page" id="page-sandbox"></section>
 
   <!-- ======================= Trạm mặt đất ======================= -->
   <section class="page" id="page-ground"><div class="empty" id="gEmpty">Trạm mặt đất không bật (chạy lại không có --no-ground).</div></section>
@@ -402,5 +432,6 @@ async function showRun() {
 })();
 </script>
 <script src="/static/learn.js"></script>
+<script src="/static/sandbox.js"></script>
 </body>
 </html>

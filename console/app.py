@@ -16,10 +16,11 @@ from console.errors import load_datasets, image_errors, list_runs, short_side, s
 from console.learn import asset_path, list_docs, load_glossary, project_map, read_doc, read_source, research_questions
 from console.report import ROOT as REPORTS, build_report
 from console.runs import RunManager, RunRequest, list_sources
+from console.sandbox import LIVE_PORT, SandboxManager, SandboxRequest, compare, list_devices
 from eval.metrics import SIZE_RANGES
 
 INDEX_HTML = Path(__file__).with_name("index.html")
-STATIC = {"learn.js": "text/javascript", "learn.css": "text/css"}
+STATIC = {"learn.js": "text/javascript", "learn.css": "text/css", "sandbox.js": "text/javascript"}
 
 
 class ReportRequest(BaseModel):
@@ -30,10 +31,13 @@ class ReportRequest(BaseModel):
     conf: float = 0.25
 
 
-def create_app(ground_url: str | None = None, runs_root: Path | None = None, reports_root: Path = REPORTS) -> FastAPI:
+def create_app(
+    ground_url: str | None = None, runs_root: Path | None = None, reports_root: Path = REPORTS, sandbox_root: Path | None = None,
+) -> FastAPI:
     """Tạo ứng dụng; ground_url là trạm mặt đất để nhúng và để lần chạy thử gửi cảnh báo tới (None: không có)."""
     app = FastAPI(title="FloodEye – giao diện thử nghiệm")
     manager = RunManager(runs_root) if runs_root is not None else RunManager()
+    sandbox = SandboxManager(sandbox_root) if sandbox_root is not None else SandboxManager()
 
     def dataset(name: str) -> Any:
         ds = load_datasets().get(name)
@@ -195,6 +199,34 @@ def create_app(ground_url: str | None = None, runs_root: Path | None = None, rep
         if not path.is_file():
             raise HTTPException(404, "Không có khung")
         return FileResponse(path)
+
+    # --- Sân thử mô phỏng ---------------------------------------------------------------------------------------
+
+    @app.get("/api/sandbox/options")
+    def sandbox_options() -> dict[str, Any]:
+        """Thiết bị chọn được, giá trị mặc định và giới hạn của từng tham số (để giao diện dựng form)."""
+        schema = SandboxRequest.model_json_schema()
+        return {"devices": list_devices(), "defaults": SandboxRequest().model_dump(), "fields": schema["properties"],
+                "ground_url": ground_url, "live_url": f"http://localhost:{LIVE_PORT}/"}
+
+    @app.post("/api/sandbox")
+    def sandbox_start(req: SandboxRequest) -> dict[str, str]:
+        try:
+            return {"id": sandbox.start(req, ground_url)}
+        except RuntimeError as error:
+            raise HTTPException(409, str(error)) from error
+
+    @app.get("/api/sandbox")
+    def sandbox_list() -> dict[str, Any]:
+        runs = sandbox.list()
+        return {"runs": runs, "compare": compare(runs), "running": sandbox.running()}
+
+    @app.get("/api/sandbox/{run_id}")
+    def sandbox_detail(run_id: str) -> dict[str, Any]:
+        rid = Path(run_id).name
+        if not (sandbox.root / rid / "request.json").is_file():
+            raise HTTPException(404, "Không có lần chạy này")
+        return sandbox.detail(rid)
 
     @app.get("/api/runs/{run_id}/crop/{alert_id}")
     def run_crop(run_id: str, alert_id: str) -> Response:
