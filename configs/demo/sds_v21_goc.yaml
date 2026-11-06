@@ -18,3 +18,4 @@ radius_m: 3.0
 n_confirm: 3
 window_s: 5.0
 expire_s: 6.0
+link_probe_s: 2.0  # thăm dò đường truyền mỗi 2 s (quyết định #17, docs/results/rq3_network.md)

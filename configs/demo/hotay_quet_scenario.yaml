@@ -1,0 +1,26 @@
+# Kịch bản cho demo "quét vùng": chuyến bay MÔ PHỎNG quét luống cày (sim/make_rq3.py --render), ảnh tổng hợp vùng ngập
+# (nước, mái nhà, cây, rác trôi, người trên mái và dưới nước; sim/render.py). Toạ độ đặt trên mặt Hồ Tây chỉ để bản đồ
+# nền là mặt nước; không phải vùng lũ thật. 50 m, 8 m/s, bốn đường 300 m (khoảng 3 phút), ảnh 1080p, 24 người đứng yên.
+# Phát hiện là detector giả với recall theo cỡ người của E2c đo trên SeaDronesSee (e6_sds_pilot.md), không phải chạy
+# mô hình trên ảnh tổng hợp. scripts/demo_bao_ve.sh chuan-bi hotay_quet sinh vào runs/edge/demo_cache/hotay_quet/.
+duration_s: 175
+fps: 8
+alt_m: 50
+speed_mps: 8
+yaw_deg: 0
+lat0: 21.0520
+lon0: 105.8150
+width: 1920
+height: 1080
+fov_deg: 82
+fov_type: diagonal
+pattern: zigzag
+leg_m: 300
+n_people: 24
+drift_mps: 0
+gps_sigma_m: 1.0
+recall_curve: runs/e6_sds/eval/recall_by_pixels.csv
+recall_model: E2c
+fp_per_frame: 0.3
+render: true
+seed: 0

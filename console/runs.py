@@ -90,7 +90,8 @@ def build_command(req: RunRequest, out: Path, sources: list[dict[str, Any]], gro
     if req.min_views:
         cmd += ["--min-views", str(req.min_views)]
     if req.send_to_ground and ground_url:
-        cmd += ["--ground-url", ground_url, "--uav-id", f"uav-{out.name[-4:]}"]
+        # Kèm trạng thái drone mỗi giây để tab Trạm mặt đất hiện drone, vùng camera nhìn và vùng đã quét.
+        cmd += ["--ground-url", ground_url, "--uav-id", f"uav-{out.name[-4:]}", "--state-every-s", "1"]
     return cmd
 
 

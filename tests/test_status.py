@@ -69,3 +69,20 @@ def test_live_view_serves_mjpeg() -> None:
         assert head.startswith(b"--frame\r\nContent-Type: image/jpeg") and b"\xff\xd8" in head
     finally:
         view.close()
+
+
+def test_trail_fills_coverage_gap_after_outage(tmp_path: Path) -> None:
+    """Mất sóng 10–20 s: gói 10…19 hỏng; gói 20 mang 10 điểm gửi bù, trạm có đủ 21 điểm đường bay từ 0 tới 20."""
+    client = TestClient(create_app(tmp_path / "g.sqlite"))
+
+    class Ground(FakeTransport):
+        def send(self, msg, now):  # noqa: ANN001
+            return client.post("/api/uav/state", json=json.loads(msg.payload)).json()["ack"] == msg.msg_id
+
+    reporter = StatusReporter(NetemTransport(Ground(), 0.0, [(10.0, 20.0)]), "uav1", 1.0)
+    for t in range(0, 21):
+        reporter.maybe_send(float(t), tel(t), CAM)
+    (uav,) = client.get("/api/uavs").json()
+    assert len(uav["track"]) == 21 and len(uav["footprints"]) == 21
+    assert uav["track"][10][0] == tel(10).lat and "trail" not in uav
+    assert reporter.unsent == []

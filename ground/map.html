@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FloodEye – trạm điều phối</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%27-8 -8 16 16%27%3E%3Cpath d=%27M0,-7 L5,6 L0,3 L-5,6 Z%27 fill=%27%2339c5e0%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/leaflet/leaflet.css">
 <script src="/static/leaflet/leaflet.js"></script>
 <style>
@@ -23,7 +24,7 @@
   .chip { padding: 3px 10px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); font-size: 13px; white-space: nowrap; }
   .chip b { font-variant-numeric: tabular-nums; }
   #main { display: grid; grid-template-columns: minmax(300px, 30%) 1fr 320px; min-height: 0; }
-  #main.novideo { grid-template-columns: 280px 1fr 320px; }
+  #main.novideo { grid-template-columns: 330px 1fr 320px; }
   #left, #side { overflow-y: auto; background: var(--panel); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
   #left { border-right: 1px solid var(--line); }
   #side { border-left: 1px solid var(--line); }
@@ -211,9 +212,14 @@
     } else banner.style.display = "none";
     // Lần đầu: khung bản đồ vừa vùng camera của mọi drone. Sau đó, nếu đang bám và chỉ một drone bay, giữ nó ở giữa.
     const live = uavs.filter(u => !u.done);
+    // Hết chuyến (mọi drone xong): thu bản đồ về toàn bộ vùng đã quét một lần, để thấy trọn kết quả chuyến bay.
+    const allDone = uavs.length && !live.length;
     if (uavs.length && !fittedUav) { map.fitBounds(uavs.flatMap(u => u.footprint), { maxZoom: 18, padding: [30, 30] }); fittedUav = true; }
+    else if (allDone && !shownAll) { map.flyToBounds(uavs.flatMap(u => u.footprints.flat()), { maxZoom: 18, padding: [30, 30], duration: 1.2 }); shownAll = true; }
     else if (follow && live.length === 1) map.panTo([live[0].lat, live[0].lon], { animate: true, duration: .5 });
+    if (live.length) shownAll = false;
   }
+  let shownAll = false;
   let fittedUav = false;
   // Biểu tượng vẽ bằng SVG thay cho emoji: máy chiếu hoặc trình duyệt thiếu phông emoji vẫn hiện đúng.
   const DRONE_SVG = '<svg width="16" height="16" viewBox="-8 -8 16 16" style="vertical-align:-2px"><path d="M0,-7 L5,6 L0,3 L-5,6 Z" fill="#39c5e0"/></svg>';

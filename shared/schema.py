@@ -70,6 +70,15 @@ class AlertCrop(BaseModel):
     jpeg_base64: str
 
 
+class TrailPoint(BaseModel):
+    """Một điểm đường bay kèm vùng camera nhìn, drone gửi bù khi các gói trạng thái trước đó bị mất."""
+
+    t: float
+    lat: float
+    lon: float
+    footprint: list[tuple[float, float]]
+
+
 class UavState(BaseModel):
     """Gói trạng thái drone gửi về trạm mỗi giây hoặc vài giây (vài trăm byte), để bản đồ hiện drone, vùng camera
     đang nhìn và đường truyền còn sống hay không. Gửi một lần, không gửi lại: gói cũ không còn giá trị."""
@@ -90,3 +99,6 @@ class UavState(BaseModel):
     device: str | None = None  # tên hồ sơ thiết bị giả lập, nếu có
     telemetry_real: bool = True  # False khi pipeline dùng đường bay giả lập
     done: bool = False  # chuyến bay đã kết thúc
+    # Điểm đường bay của các gói trạng thái chưa tới trạm (mất sóng), cũ trước mới; gửi bù để vùng đã quét trên bản đồ
+    # không bị thủng ở đoạn mất sóng. Rỗng khi gói trước tới đủ.
+    trail: list[TrailPoint] = []

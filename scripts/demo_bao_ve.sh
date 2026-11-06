@@ -6,6 +6,8 @@
 #   scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super # demo: mở màn hình điều phối (video, drone, bản đồ) trên trình duyệt
 #   scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super 20 30   # thêm mất sóng từ giây 20 tới 30
 #   scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super   # video hai thiết bị cạnh nhau
+#   scripts/demo_bao_ve.sh chuan-bi hotay_quet && scripts/demo_bao_ve.sh chay hotay_quet orin_nano_super 60 80
+#                                                           # chuyến bay mô phỏng quét vùng (ảnh tổng hợp), mất sóng giây 60–80
 #
 # Kịch bản: configs/demo/<tên>.yaml. Thiết bị: configs/devices/<tên>.yaml (ước lượng, không phải số đo; xem
 # TECHNICAL mục 14.6). Ô bản đồ đã xem khi diễn tập được giữ ở runs/ground/tiles, nên vẫn hiện khi mất mạng.
@@ -24,6 +26,12 @@ title() { sed -n 's/^name: *//p' "$1"; }
 
 case "$CMD" in
   chuan-bi)
+    SCENARIO="configs/demo/${NAME}_scenario.yaml"
+    if [ -f "$SCENARIO" ]; then
+      # Chuyến bay mô phỏng: sinh ảnh tổng hợp, telemetry và phát hiện giả vào cache; không cần GPU.
+      $PY -m sim.make_rq3 --config "$SCENARIO" --output "$CACHE"
+      exit 0
+    fi
     # Phát hiện cho mọi khung nguồn (--fps bằng fps nguồn, bỏ --min-views), để lúc phát lại thiết bị nào chọn khung
     # nào cũng có sẵn. Bước này cần mô hình và GPU.
     SRC_FPS=$(sed -n 's/^source_fps: *//p' "$CFG")

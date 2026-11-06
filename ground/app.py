@@ -272,9 +272,13 @@ def create_app(
         with uav_lock:
             item = uavs.setdefault(state.uav_id, {"track": [], "footprints": [], "state": None})
             if item["state"] is None or state.t >= item["state"]["t"]:
-                item["state"], item["received"] = state.model_dump(), time.monotonic()
-                item["track"].append((state.lat, state.lon))
-                item["footprints"].append(state.footprint)
+                # Điểm gửi bù (trail) của đoạn mất sóng vào trước, rồi tới điểm hiện tại; chỉ lấy điểm mới hơn điểm cuối.
+                last_t = item["state"]["t"] if item["state"] else float("-inf")
+                for point in [*sorted(state.trail, key=lambda p: p.t), state]:
+                    if point.t > last_t or item["state"] is None:
+                        item["track"].append((point.lat, point.lon))
+                        item["footprints"].append(point.footprint)
+                item["state"], item["received"] = state.model_dump(exclude={"trail"}), time.monotonic()
                 del item["track"][:-MAX_TRACK], item["footprints"][:-MAX_TRACK]
         return {"ack": f"{state.uav_id}:state:{state.seq}"}
 

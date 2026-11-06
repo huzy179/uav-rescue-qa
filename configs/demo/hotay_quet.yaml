@@ -1,0 +1,22 @@
+# Demo "quét vùng": pipeline chạy trên chuyến bay MÔ PHỎNG configs/demo/hotay_quet_scenario.yaml (ảnh tổng hợp, telemetry
+# mô phỏng, detector giả theo recall của E2c). Cho thấy vùng đã quét lớn dần trên bản đồ, cảnh báo theo đường bay, mất
+# sóng giữa chuyến. Xử lý 4 khung/giây, cắt ô 640 (8 ô mỗi khung 1080p, để giả lập thời gian thiết bị), xác nhận geo
+# N = 3; thăm dò đường truyền mỗi 2 s (quyết định #17); phát nhanh gấp đôi (3 phút bay còn khoảng 1,5 phút).
+source: runs/edge/demo_cache/hotay_quet/frames.mp4
+telemetry: runs/edge/demo_cache/hotay_quet/telemetry.csv
+simulated_flight: true
+mode: tiled
+tile: 640
+overlap: 0.2
+conf: 0.1
+fps: 4.0
+fov_deg: 82.0
+fov_type: diagonal
+confirm: geo
+radius_m: 3.0
+n_confirm: 3
+window_s: 5.0
+expire_s: 6.0
+gps_sigma_m: 1.0
+link_probe_s: 2.0
+realtime_speed: 2.0

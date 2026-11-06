@@ -90,6 +90,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--net-outage", type=float, nargs=2, action="append", default=None, metavar=("START", "END"), help="Giả lập: khoảng mất sóng (giây), lặp được")
     parser.add_argument("--link-probe-s", type=float, default=None, help="Gửi cảnh báo: khi mọi gói đang chờ gửi lại, cứ mỗi số giây này thử một gói toạ độ; gửi được thì gửi ngay mọi gói đang chờ (mặc định tắt)")
     parser.add_argument("--state-every-s", type=float, default=None, help="Gửi trạng thái drone (vị trí, vùng camera nhìn, cảnh báo đang chờ) về trạm mỗi số giây này, qua cùng giả lập mạng; mặc định tắt (edge/status.py)")
+    parser.add_argument("--simulated-flight", action="store_true", help="Nguồn là chuyến bay mô phỏng (sim/make_rq3.py --render): ghi 'ảnh tổng hợp' lên video và báo trạm telemetry không phải thật")
     parser.add_argument("--live-port", type=int, default=None, help="Demo: phát video đã vẽ dạng MJPEG ở cổng này để trang bản đồ nhúng (http://localhost:<cổng>/); drone thật không gửi video")
     parser.add_argument("--drain-s", type=float, default=60.0, help="Sau khung cuối, tiếp tục gửi bù thêm số giây này")
     parser.add_argument("--seed", type=int, default=0, help="Seed cho giả lập mạng và nhiễu thời gian chờ gửi lại")
@@ -260,12 +261,12 @@ def main() -> None:
         reporter.maybe_send(
             t_now, tel, cam, force=force, speed_mps=speed, fps=device.achieved_fps(t_now) if device else fps_now,
             pending_alerts=outbox.pending(), alerts_total=len(confirmed),
-            device=device.profile.name if device else None, telemetry_real=not synthetic, done=done,
+            device=device.profile.name if device else None, telemetry_real=not (synthetic or args.simulated_flight), done=done,
         )
 
     def status(t_now: float) -> tuple[list[str], str | None]:
         """Dòng trạng thái và banner vẽ lên video demo."""
-        lines = []
+        lines = ["ANH TONG HOP - chuyen bay mo phong"] if args.simulated_flight else []
         if device:
             lines.append(f"Thiet bi gia lap: {device.profile.name}")
             lines.append(f"{device.achieved_fps(t_now):.1f} khung/s, tre {device.last_latency_ms:.0f} ms/khung, bo {device.n_skipped} khung")

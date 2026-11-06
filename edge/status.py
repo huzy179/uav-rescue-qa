@@ -19,18 +19,24 @@ import cv2
 
 from edge.alerts import OutboxMessage, Transport
 from edge.georef import Camera, footprint
-from shared.schema import Telemetry, UavState
+from shared.schema import Telemetry, TrailPoint, UavState
 
 
 class StatusReporter:
-    """Gửi trạng thái drone tối đa một lần mỗi `every_s` giây; ghi mỗi lần gửi vào log JSONL nếu có."""
+    """Gửi trạng thái drone tối đa một lần mỗi `every_s` giây; ghi mỗi lần gửi vào log JSONL nếu có.
 
-    def __init__(self, transport: Transport, uav_id: str, every_s: float, log: TextIO | None = None) -> None:
+    Gói hỏng không gửi lại, nhưng điểm đường bay của nó (vị trí, vùng camera nhìn) được giữ và gửi kèm gói kế tiếp
+    (trường trail, tối đa max_trail điểm, giữ các điểm mới nhất), để trạm vẽ đủ vùng đã quét sau khi mất sóng.
+    """
+
+    def __init__(self, transport: Transport, uav_id: str, every_s: float, log: TextIO | None = None, max_trail: int = 600) -> None:
         if every_s <= 0:
             raise ValueError(f"every_s phải dương, nhận được: {every_s}")
         self.transport, self.uav_id, self.every_s, self.log = transport, uav_id, every_s, log
         self.last_t: float | None = None
         self.seq = 0
+        self.max_trail = max_trail
+        self.unsent: list[TrailPoint] = []
 
     def maybe_send(self, t: float, tel: Telemetry, cam: Camera, force: bool = False, **info: Any) -> bool | None:
         """Gửi nếu đã tới hạn (hoặc force); trả về True/False theo ack, None nếu chưa tới hạn."""
@@ -40,10 +46,14 @@ class StatusReporter:
         self.seq += 1
         state = UavState(
             uav_id=self.uav_id, seq=self.seq, t=t, lat=tel.lat, lon=tel.lon, alt_m=tel.alt_agl_m, yaw_deg=tel.yaw_deg,
-            footprint=footprint(tel, cam), **info,
+            footprint=footprint(tel, cam), trail=self.unsent, **info,
         )
         msg = OutboxMessage(f"{self.uav_id}:state:{self.seq}", self.uav_id, "state", state.model_dump_json())
         ok = self.transport.send(msg, t)
+        if ok:
+            self.unsent = []
+        else:
+            self.unsent = [*self.unsent, TrailPoint(t=t, lat=tel.lat, lon=tel.lon, footprint=state.footprint)][-self.max_trail:]
         if self.log is not None:
             self.log.write(json.dumps({"t": t, "seq": self.seq, "ok": ok, "bytes": len(msg.payload)}) + "\n")
         return ok

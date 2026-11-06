@@ -26,10 +26,11 @@ import cv2
 import numpy as np
 
 from edge.detector import person_scale
-from edge.georef import Camera
+from edge.georef import Camera, ground_offset_m
 from shared.config import parse_args_with_config
 from shared.provenance import write_run_config
 from sim.flight import AltitudeProfile, StraightFlight, ZigzagFlight
+from sim.render import FloodScene, scene_extent
 from sim.scenario import (
     GaussMarkovGps, RecallCurve, noisy_telemetry, place_people, simulate_detections, tilted_view, visible_boxes,
 )
@@ -70,6 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--target-person-px", type=float, default=None,
                         help="Pipeline thu nhỏ khung theo độ cao về cỡ này (edge/main.py): recall lấy ở cỡ người sau thu nhỏ")
     parser.add_argument("--fp-per-frame", type=float, default=0.5, help="Số báo nhầm trung bình mỗi khung")
+    parser.add_argument("--render", action="store_true",
+                        help="Vẽ ảnh tổng hợp vùng ngập (nước, mái nhà, cây, người; sim/render.py) thay cho khung đen, để demo; không đổi telemetry, phát hiện hay nhãn")
     parser.add_argument("--seed", type=int, default=0, help="Seed cho vị trí người, nhiễu GPS và detector giả")
     return parser
 
@@ -107,6 +110,16 @@ def main() -> None:
 
     n_frames = int(args.duration_s * args.fps)
     black = np.zeros((cam.height, cam.width, 3), dtype=np.uint8)
+    scene = None
+    if args.render:
+        # Mặt đất bao trọn đường bay thật cộng nửa đường chéo vùng chụp ở độ cao lớn nhất (dùng seed riêng, không đổi
+        # chuỗi ngẫu nhiên của nhiễu GPS và detector giả).
+        times = [k / args.fps for k in range(0, n_frames, max(1, int(args.fps)))] + [(n_frames - 1) / args.fps]
+        path = [ground_offset_m(args.lat0, args.lon0, flight.at(t).lat, flight.at(t).lon) for t in times]
+        path += [ground_offset_m(args.lat0, args.lon0, *p.at(t)) for p in people for t in (0.0, args.duration_s)]
+        top = max(profile(t) for t in times) if profile is not None else args.alt_m
+        margin = 0.5 * float(np.hypot(cam.width, cam.height)) * top / cam.f_px + 5.0
+        scene = FloodScene(args.lat0, args.lon0, scene_extent(path, margin), people, seed=args.seed + 3)
     video = cv2.VideoWriter(str(args.output / "frames.mp4"), cv2.VideoWriter.fourcc(*"mp4v"), args.fps, (cam.width, cam.height))
     frames_truth = []
     with (
@@ -130,7 +143,7 @@ def main() -> None:
             frames_truth.append({"frame_id": frame_id, "t": t, "visible": [{"person_id": pid, "box_px": box} for pid, box in boxes]})
             for det in simulate_detections(frame_id, t, boxes, cam, frame_recall, args.fp_per_frame, rng):
                 det_file.write(det.model_dump_json() + "\n")
-            video.write(black)
+            video.write(scene.render(true_tel, cam, t) if scene is not None else black)
     video.release()
 
     truth = {
