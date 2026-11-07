@@ -25,6 +25,8 @@ class Telemetry(BaseModel):
     yaw_deg: float  # hướng của đỉnh ảnh, 0 = Bắc, theo chiều kim đồng hồ
     pitch_deg: float = -90.0  # -90 = nhìn thẳng xuống
     roll_deg: float = 0.0
+    # Độ chính xác ngang do bộ thu GPS tự báo, quy về độ lệch chuẩn mỗi trục (m); None khi nguồn không có.
+    gps_acc_m: float | None = None
 
 
 class Detection(BaseModel):

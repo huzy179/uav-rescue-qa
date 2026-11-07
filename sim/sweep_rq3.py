@@ -42,6 +42,7 @@ from shared.provenance import write_run_config
 METRICS = [
     "n_alerts", "false_alarms_per_min", "missed_rate", "merge_errors", "split_errors",
     "time_to_alert_s_median", "position_error_m_median", "position_error_m_max", "within_reported_radius", "within_reported_radius_95",
+    "search_radius_95_m_median",
     "delivery_delay_s_median", "delivery_delay_s_max", "lost_rate", "kb_per_alert", "frames_processed",
 ]
 # Do sweep tự đặt cho từng lần chạy; không được ghi đè trong cấu hình.

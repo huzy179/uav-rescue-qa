@@ -13,7 +13,7 @@ import numpy as np
 from edge.georef import ground_offset_m
 from shared.schema import Telemetry
 
-CSV_FIELDS = ["lat", "lon", "alt_agl_m", "yaw_deg", "pitch_deg", "roll_deg"]
+CSV_FIELDS = ["lat", "lon", "alt_agl_m", "yaw_deg", "pitch_deg", "roll_deg", "gps_acc_m"]
 REQUIRED = {"t", "lat", "lon", "alt_agl_m", "yaw_deg"}
 
 
@@ -38,7 +38,7 @@ class SampledTelemetry:
 
     @classmethod
     def from_csv(cls, path: Path) -> SampledTelemetry:
-        """File CSV có cột t, lat, lon, alt_agl_m, yaw_deg (pitch_deg, roll_deg tuỳ chọn)."""
+        """File CSV có cột t, lat, lon, alt_agl_m, yaw_deg (pitch_deg, roll_deg, gps_acc_m tuỳ chọn)."""
         with path.open(newline="", encoding="utf-8") as f:
             rows = [{key: float(value) for key, value in row.items()} for row in csv.DictReader(f)]
         return cls(rows, str(path))

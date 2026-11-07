@@ -1,0 +1,20 @@
+# RQ3c mô phỏng: bán kính sai số theo độ chính xác GPS do bộ thu tự báo (--gps-sigma-from-telemetry, cột gps_acc_m)
+# so với σ GPS cố định 3 m. GPS thật tốt (1 m), đúng giả định (3 m), kém (5 m), hoặc kém đi giữa chuyến (1 m rồi 5 m từ
+# giây 25–30); bộ thu báo đúng σ hay báo lạc quan bằng nửa σ thật. Kịch bản như rq3_geoerr.yaml. docs/results/rq3_gpsacc.md.
+output: runs/rq3/gpsacc
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  recall: 0.7
+  fp_per_frame: 0.5
+  gps_acc_report: true
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+  confirm: geo
+grid:
+  scenario.alt_m: [50, 100]
+  scenario.gps_sigma_profile: ["0:1", "0:3", "0:5", "0:1,25:1,30:5"]
+  scenario.gps_acc_scale: [1.0, 0.5]
+  pipeline.gps_sigma_from_telemetry: [false, true]

@@ -109,6 +109,8 @@ def compute_metrics(
         "within_reported_radius_95": (
             sum(p["position_error_m"] <= R95_FACTOR * p["reported_error_m"] for p in found) / len(found) if found else None
         ),
+        # Bán kính vùng tìm 95% trên bản đồ (trung vị qua người đã được cảnh báo): cái giá của vùng chứa đủ người.
+        "search_radius_95_m_median": _median([R95_FACTOR * p["reported_error_m"] for p in found]),
         "delivery_delay_s_median": _median(delays),
         "delivery_delay_s_max": max(delays, default=None),
         "lost_rate": (len(alerts) - len(delays)) / len(alerts) if alerts else None,

@@ -111,20 +111,32 @@ class GaussMarkovGps:
     gian tương quan τ. GPS thật lệch chậm như vậy, không nhảy ngẫu nhiên độc lập mỗi khung.
     """
 
-    def __init__(self, sigma_m: float, tau_s: float, seed: int) -> None:
-        self.sigma_m, self.tau_s = sigma_m, tau_s
+    def __init__(self, sigma_m: float, tau_s: float, seed: int, profile: Callable[[float], float] | None = None) -> None:
+        """profile: σ theo thời gian (sim.flight.SigmaProfile) thay cho σ cố định. Khi đó sai số = σ(t)·z(t), z là quá
+        trình Gauss–Markov đơn vị cùng τ: độ lớn sai số đổi ngay theo σ(t), như khi GPS mất vệ tinh."""
+        self.sigma_m, self.tau_s, self.profile = sigma_m, tau_s, profile
         self._rng = random.Random(seed)
-        self._error = (self._rng.gauss(0, sigma_m), self._rng.gauss(0, sigma_m)) if sigma_m > 0 else (0.0, 0.0)
+        self._unit = profile is not None
+        scale = 1.0 if self._unit else sigma_m
+        self._error = (self._rng.gauss(0, scale), self._rng.gauss(0, scale)) if scale > 0 else (0.0, 0.0)
         self._t: float | None = None
+
+    def sigma_at(self, t: float) -> float:
+        """σ mỗi trục tại t (cái mà bộ thu GPS lý tưởng sẽ báo)."""
+        return self.profile(t) if self.profile is not None else self.sigma_m
 
     def step(self, t: float) -> tuple[float, float]:
         """Sai số (bắc, đông) tại t; phải gọi với t tăng dần."""
-        if self._t is not None and self.sigma_m > 0:
+        scale = 1.0 if self._unit else self.sigma_m
+        if self._t is not None and scale > 0:
             decay = math.exp(-(t - self._t) / self.tau_s)
-            spread = self.sigma_m * math.sqrt(1.0 - decay**2)
+            spread = scale * math.sqrt(1.0 - decay**2)
             north, east = self._error
             self._error = (north * decay + spread * self._rng.gauss(0, 1), east * decay + spread * self._rng.gauss(0, 1))
         self._t = t
+        if self._unit:
+            sigma = self.sigma_at(t)
+            return (self._error[0] * sigma, self._error[1] * sigma)
         return self._error
 
 

@@ -70,9 +70,11 @@ class AltitudeProfile:
     tần số xử lý và thu nhỏ khung theo độ cao có ý nghĩa nhất: độ cao đổi giữa chuyến (TECHNICAL mục 11.3).
     """
 
+    allow_zero = False
+
     def __init__(self, points: list[tuple[float, float]]) -> None:
-        if not points or any(alt <= 0 for _, alt in points):
-            raise ValueError("Cần ít nhất một điểm, độ cao dương")
+        if not points or any(v < 0 or (v == 0 and not self.allow_zero) for _, v in points):
+            raise ValueError("Cần ít nhất một điểm, giá trị dương" + (" hoặc bằng 0" if self.allow_zero else ""))
         points = sorted(points)
         self.t, self.alt = [p[0] for p in points], [p[1] for p in points]
 
@@ -82,7 +84,7 @@ class AltitudeProfile:
         try:
             return cls([(float(t), float(a)) for t, a in (item.split(":") for item in text.split(","))])
         except ValueError as error:
-            raise ValueError(f"Hồ sơ độ cao phải dạng 't:alt,t:alt', nhận được {text!r}") from error
+            raise ValueError(f"Hồ sơ phải dạng 't:giá_trị,t:giá_trị', nhận được {text!r}") from error
 
     def __call__(self, t: float) -> float:
         if t <= self.t[0]:
@@ -91,3 +93,10 @@ class AltitudeProfile:
             if t <= t1:
                 return a0 + (a1 - a0) * (t - t0) / (t1 - t0) if t1 > t0 else a1
         return self.alt[-1]
+
+
+class SigmaProfile(AltitudeProfile):
+    """Độ lệch chuẩn nhiễu GPS thay đổi theo thời gian, cùng cú pháp "t:σ,t:σ" (σ ≥ 0). Ví dụ "0:1,25:1,30:5": GPS tốt
+    25 giây đầu rồi kém đi (mất vệ tinh, nhiễu đa đường gần nhà cao) (docs/CAI_TIEN.md 3.2)."""
+
+    allow_zero = True

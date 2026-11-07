@@ -9,6 +9,7 @@ Ví dụ:
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import time
 from pathlib import Path
@@ -85,6 +86,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--position-error-m", type=float, default=None,
                         help="Sai số định vị cố định ghi vào cảnh báo; không đặt thì tính theo vị trí trong ảnh và độ cao (TECHNICAL 8.4)")
     parser.add_argument("--gps-sigma-m", type=float, default=3.0, help="Sai số GPS của UAV (1σ, m); RTK thì khoảng 0,05")
+    parser.add_argument("--gps-sigma-from-telemetry", action="store_true",
+                        help="Lấy σ GPS từ cột gps_acc_m của telemetry (độ chính xác bộ thu tự báo) khi có, thay --gps-sigma-m (docs/CAI_TIEN.md 3.2)")
     parser.add_argument("--alt-sigma-m", type=float, default=2.0, help="Sai số độ cao so với mặt nước (1σ, m)")
     parser.add_argument("--yaw-sigma-deg", type=float, default=2.0, help="Sai số hướng (1σ, độ)")
     parser.add_argument("--tilt-sigma-deg", type=float, default=1.0, help="Lệch khỏi nhìn thẳng xuống (1σ, độ)")
@@ -377,7 +380,11 @@ def main() -> None:
                 error_m = args.position_error_m
                 if error_m is None:
                     x1, _, x2, y2 = c.box_px
-                    error_m = position_error_m((x1 + x2) / 2.0, y2, tel, cam, error_model)
+                    model = error_model
+                    if args.gps_sigma_from_telemetry and tel.gps_acc_m is not None:
+                        # Bộ thu báo độ chính xác theo thời gian: bán kính co giãn theo GPS lúc đó (rq3_gpsacc.md).
+                        model = dataclasses.replace(error_model, gps_sigma_m=tel.gps_acc_m)
+                    error_m = position_error_m((x1 + x2) / 2.0, y2, tel, cam, model)
                 alert = make_alert(c, args.uav_id, len(confirmed) + 1, tel, round(error_m, 2), model_name)
                 # Có thiết bị giả lập thì quyết định chỉ có khi xử lý xong (t_done); không có thì coi xử lý tức thời.
                 outbox.enqueue(alert, AlertCrop(alert_id=alert.alert_id, jpeg_base64=crop_jpeg_base64(frame, c.box_px)), t_done)

@@ -29,7 +29,7 @@ from edge.detector import person_scale
 from edge.georef import Camera, ground_offset_m
 from shared.config import parse_args_with_config
 from shared.provenance import write_run_config
-from sim.flight import AltitudeProfile, StraightFlight, ZigzagFlight
+from sim.flight import AltitudeProfile, SigmaProfile, StraightFlight, ZigzagFlight
 from sim.render import FloodScene, scene_extent
 from sim.scenario import (
     GaussMarkovGps, RecallCurve, noisy_telemetry, place_people, simulate_detections, tilted_view, visible_boxes,
@@ -55,6 +55,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--lateral-m", type=float, default=25.0, help="Người lệch ngang khỏi đường bay tối đa (m)")
     parser.add_argument("--drift-mps", type=float, default=0.0, help="Vận tốc trôi theo dòng nước (m/s), hướng ngẫu nhiên")
     parser.add_argument("--gps-sigma-m", type=float, default=0.0, help="Độ lệch chuẩn nhiễu GPS mỗi trục (m)")
+    parser.add_argument("--gps-sigma-profile", default=None,
+                        help="σ GPS đổi theo thời gian 't:σ,t:σ,...' (sim.flight.SigmaProfile), thay --gps-sigma-m")
+    parser.add_argument("--gps-acc-report", action="store_true",
+                        help="Ghi cột gps_acc_m vào telemetry.csv: độ chính xác bộ thu GPS tự báo (σ thật × --gps-acc-scale)")
+    parser.add_argument("--gps-acc-scale", type=float, default=1.0,
+                        help="Bộ thu báo σ bằng σ thật nhân hệ số này (< 1: báo lạc quan hơn thật)")
     parser.add_argument("--gps-tau-s", type=float, default=30.0, help="Thời gian tương quan của nhiễu GPS (giây)")
     parser.add_argument("--yaw-bias-deg", type=float, default=0.0, help="Sai số cố định của hướng trong telemetry (độ)")
     parser.add_argument("--alt-bias-m", type=float, default=0.0, help="Sai số cố định của độ cao trong telemetry (m)")
@@ -101,7 +107,8 @@ def main() -> None:
         flight = StraightFlight(args.lat0, args.lon0, args.alt_m, args.speed_mps, args.yaw_deg)
         path_m = args.speed_mps * args.duration_s
         people = place_people(flight, args.n_people, (half_footprint_m, path_m - half_footprint_m), args.lateral_m, args.drift_mps, args.seed)
-    gps = GaussMarkovGps(args.gps_sigma_m, args.gps_tau_s, args.seed + 1)
+    sigma_profile = SigmaProfile.parse(args.gps_sigma_profile) if args.gps_sigma_profile else None
+    gps = GaussMarkovGps(args.gps_sigma_m, args.gps_tau_s, args.seed + 1, sigma_profile)
     rng = random.Random(args.seed + 2)
     recall = RecallCurve.from_csv(args.recall_curve, args.recall_model) if args.recall_curve else args.recall
     if args.target_person_px is not None and not isinstance(recall, RecallCurve):
@@ -127,7 +134,7 @@ def main() -> None:
         (args.output / "detections.jsonl").open("w", encoding="utf-8") as det_file,
     ):
         tel_writer = csv.writer(tel_file)
-        tel_writer.writerow(["t", "lat", "lon", "alt_agl_m", "yaw_deg"])
+        tel_writer.writerow(["t", "lat", "lon", "alt_agl_m", "yaw_deg"] + (["gps_acc_m"] if args.gps_acc_report else []))
         for frame_id in range(n_frames):
             t = frame_id / args.fps
             true_tel = flight.at(t)
@@ -138,7 +145,8 @@ def main() -> None:
             if args.target_person_px is not None and isinstance(recall, RecallCurve):
                 # Cùng công thức với edge/main.py, theo độ cao ĐO của khung này (có sai số), không phải độ cao thật.
                 frame_recall = recall.scaled(person_scale(0.5 * cam.f_px / seen.alt_agl_m, args.target_person_px))
-            tel_writer.writerow([t, f"{seen.lat:.9f}", f"{seen.lon:.9f}", seen.alt_agl_m, seen.yaw_deg])
+            reported = [round(gps.sigma_at(t) * args.gps_acc_scale, 3)] if args.gps_acc_report else []
+            tel_writer.writerow([t, f"{seen.lat:.9f}", f"{seen.lon:.9f}", seen.alt_agl_m, seen.yaw_deg, *reported])
             boxes = visible_boxes(people, tilted_view(true_tel, args.tilt_deg), cam, t)
             frames_truth.append({"frame_id": frame_id, "t": t, "visible": [{"person_id": pid, "box_px": box} for pid, box in boxes]})
             for det in simulate_detections(frame_id, t, boxes, cam, frame_recall, args.fp_per_frame, rng):

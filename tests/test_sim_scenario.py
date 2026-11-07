@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import random
+
+import pytest
 from pathlib import Path
 
 from edge.georef import Camera
@@ -44,3 +46,34 @@ def test_ho_so_do_cao() -> None:
 
     p = AltitudeProfile.parse("0:120,20:120,30:40")
     assert (p(-1), p(10), p(25), p(30), p(99)) == (120, 120, 80, 40, 40)
+
+
+def test_gps_sigma_profile_giu_nguyen_khi_hang_so_va_doi_theo_thoi_gian() -> None:
+    from sim.flight import SigmaProfile
+    from sim.scenario import GaussMarkovGps
+
+    # Hồ sơ hằng số 3 m cho cùng chuỗi sai số như σ cố định 3 m (cùng seed): kết quả cũ không đổi khi chuyển sang hồ sơ.
+    fixed, profiled = GaussMarkovGps(3.0, 30.0, 7), GaussMarkovGps(0.0, 30.0, 7, SigmaProfile.parse("0:3"))
+    for k in range(20):
+        a, b = fixed.step(k * 0.5), profiled.step(k * 0.5)
+        assert a == pytest.approx(b)
+    # Cùng seed nên cùng z: sai số tỉ lệ đúng theo σ(t).
+    low, ramp = GaussMarkovGps(0.0, 30.0, 1, SigmaProfile.parse("0:1")), GaussMarkovGps(0.0, 30.0, 1, SigmaProfile.parse("0:1,10:1,11:5"))
+    for k in range(30):
+        x, y = low.step(k * 0.5), ramp.step(k * 0.5)
+        factor = ramp.sigma_at(k * 0.5)  # 1 tới giây 10, tăng dần tới 5 ở giây 11
+        assert y == pytest.approx((x[0] * factor, x[1] * factor))
+    assert ramp.sigma_at(5.0) == 1.0 and ramp.sigma_at(10.5) == pytest.approx(3.0) and ramp.sigma_at(20) == 5.0
+    assert SigmaProfile.parse("0:0").__call__(3.0) == 0.0
+    with pytest.raises(ValueError):
+        SigmaProfile.parse("0:-1")
+
+
+def test_telemetry_csv_doc_do_chinh_xac_gps(tmp_path) -> None:
+    from edge.telemetry import SampledTelemetry
+
+    path = tmp_path / "tel.csv"
+    path.write_text("t,lat,lon,alt_agl_m,yaw_deg,gps_acc_m\n0,21,105,50,0,1\n2,21,105,50,0,5\n", encoding="utf-8")
+    assert SampledTelemetry.from_csv(path).at(1.0).gps_acc_m == pytest.approx(3.0)
+    path.write_text("t,lat,lon,alt_agl_m,yaw_deg\n0,21,105,50,0\n", encoding="utf-8")
+    assert SampledTelemetry.from_csv(path).at(0.0).gps_acc_m is None
