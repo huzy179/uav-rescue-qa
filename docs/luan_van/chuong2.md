@@ -1,6 +1,6 @@
 # Chương 2. Cơ sở lý thuyết và nghiên cứu liên quan
 
-> **Ghi chú bản nháp (xoá khi đưa vào quyển).** Nháp 8/11/2026 theo `docs/DAN_Y_LUAN_VAN.md` mục chương 2. Trích dẫn dùng mã trong `docs/luan_van/tai_lieu_tham_khao.md`, nơi ghi tên, tác giả, năm, nơi công bố đã tra 7/11. Mã có dấu **[TRA]** là tài liệu chưa tra lại (đang dựa trên trí nhớ trong `docs/THUAT_TOAN.md` mục 7): phải tra trước khi nộp. Khẳng định về nội dung một bài mà mới đọc tóm tắt được đánh **[ĐỌC TOÀN VĂN]**. Mục 2.6 (khoảng trống nghiên cứu) phụ thuộc quyết định #19 (ROADMAP), viết theo đề xuất hiện tại. Thuật ngữ theo `docs/THUAT_NGU.md`; lần đầu gặp mỗi thuật ngữ ghi kèm tiếng Anh.
+> **Ghi chú bản nháp (xoá khi đưa vào quyển).** Nháp 8/11/2026 theo `docs/DAN_Y_LUAN_VAN.md` mục chương 2. Trích dẫn dùng mã trong `docs/luan_van/tai_lieu_tham_khao.md`, nơi ghi tên, tác giả, năm, nơi công bố đã tra 7/11. Mã có dấu **[TRA]** (TensorRT, Blackman, Bar-Shalom) là tài liệu chưa tra lại (đang dựa trên trí nhớ trong `docs/THUAT_TOAN.md` mục 7): phải tra trước khi nộp. Khẳng định về nội dung một bài mà mới đọc tóm tắt được đánh **[ĐỌC TOÀN VĂN]**. Mục 2.6 (khoảng trống nghiên cứu) phụ thuộc quyết định #19 (ROADMAP), viết theo đề xuất hiện tại. Thuật ngữ theo `docs/THUAT_NGU.md`; lần đầu gặp mỗi thuật ngữ ghi kèm tiếng Anh.
 
 Chương này trình bày nền tảng của các khâu trong hệ thống và vị trí của luận văn so với các nghiên cứu đã có: phát hiện đối tượng và họ mô hình YOLO (2.1), phát hiện vật nhỏ (2.2), dữ liệu ảnh từ UAV cho tìm kiếm cứu nạn (2.3), theo dõi đối tượng qua nhiều khung (2.4), nén mô hình cho thiết bị biên (2.5), và khoảng trống mà luận văn nhắm tới (2.6).
 
@@ -14,10 +14,10 @@ Với người rất nhỏ, IoU khắc nghiệt: một box lệch 2 px quanh ng�
 
 ### 2.1.2. Bộ phát hiện một giai đoạn và họ YOLO
 
-Các bộ phát hiện một giai đoạn (one-stage) dự đoán box và lớp trực tiếp trên lưới đặc trưng, không qua bước đề xuất vùng riêng; họ YOLO [YOLO, TRA] là đại diện được dùng rộng rãi nhất cho phát hiện thời gian thực, với công cụ xuất sang các định dạng triển khai như TensorRT. Một bộ phát hiện hiện đại gồm ba phần:
+Các bộ phát hiện một giai đoạn (one-stage) dự đoán box và lớp trực tiếp trên lưới đặc trưng, không qua bước đề xuất vùng riêng; họ YOLO [YOLO] là đại diện được dùng rộng rãi nhất cho phát hiện thời gian thực, với công cụ xuất sang các định dạng triển khai như TensorRT. Một bộ phát hiện hiện đại gồm ba phần:
 
 - **Backbone** trích đặc trưng và giảm dần độ phân giải qua các tầng P1, P2, P3, P4, P5, với bước nhảy (stride) 2, 4, 8, 16, 32 pixel ảnh vào;
-- **Neck** trộn đặc trưng nhiều tầng, theo kiểu kim tự tháp đặc trưng (FPN) [FPN, TRA] cộng đường đi xuống (PAN), để tầng mịn có thêm ngữ nghĩa và tầng thô có thêm chi tiết;
+- **Neck** trộn đặc trưng nhiều tầng, theo kiểu kim tự tháp đặc trưng (FPN) [FPN] cộng đường đi xuống (PAN), để tầng mịn có thêm ngữ nghĩa và tầng thô có thêm chi tiết;
 - **Head** dự đoán box và lớp trên từng tầng.
 
 Đầu ra thông thường gồm nhiều box chồng nhau cho cùng một đối tượng, nên cần bước loại bỏ box trùng (non-maximum suppression, NMS) ở cuối.
@@ -64,7 +64,7 @@ Các mục 2.2 và chương 3 lần lượt xét các cách chống lại từng
 
 **Bù chuyển động camera.** Khi camera chuyển động, vị trí của mọi đối tượng trên ảnh trôi theo camera. BoT-SORT [BoT-SORT] ước lượng chuyển động camera giữa hai khung từ chính ảnh rồi dời các track trước khi ghép. Trên UAV có thể tính phép dời này từ telemetry thay vì từ ảnh (chương 3, mục 3.6.1).
 
-**Định vị và ghép theo toạ độ thế giới.** Đổi vị trí phát hiện trên ảnh sang toạ độ mặt đất bằng mô hình camera lỗ kim và vị trí, hướng của camera là kỹ thuật hình học cơ bản [Hartley–Zisserman, TRA]. Rudol và Doherty [Rudol08] đã định vị người phát hiện từ UAV (ảnh màu và ảnh nhiệt) lên bản đồ cho tìm kiếm cứu nạn. Gần đây, Wang và cộng sự [MIDDTD] đổi phát hiện từ drone sang toạ độ thế giới bằng tham số bay (GPS, độ cao, góc gimbal) rồi ghép giữa các khung, và báo giảm số lần đổi mã track khi theo dõi xe [ĐỌC TOÀN VĂN: tần số khung, cách ghép]. Luật xác nhận một mục tiêu khi nó được thấy M lần trong N lần quét là luật kinh điển trong theo dõi mục tiêu bằng radar [Blackman, Bar-Shalom, TRA].
+**Định vị và ghép theo toạ độ thế giới.** Đổi vị trí phát hiện trên ảnh sang toạ độ mặt đất bằng mô hình camera lỗ kim và vị trí, hướng của camera là kỹ thuật hình học cơ bản [HZ]. Rudol và Doherty [Rudol08] đã định vị người phát hiện từ UAV (ảnh màu và ảnh nhiệt) lên bản đồ cho tìm kiếm cứu nạn. Gần đây, Wang và cộng sự [MIDDTD] đổi phát hiện từ drone sang toạ độ thế giới bằng tham số bay (GPS, độ cao, góc gimbal) rồi ghép giữa các khung, và báo giảm số lần đổi mã track khi theo dõi xe [ĐỌC TOÀN VĂN: tần số khung, cách ghép]. Luật xác nhận một mục tiêu khi nó được thấy M lần trong N lần quét là luật kinh điển trong theo dõi mục tiêu bằng radar [Blackman, Bar-Shalom, TRA].
 
 ## 2.5. Thiết bị biên và nén mô hình
 

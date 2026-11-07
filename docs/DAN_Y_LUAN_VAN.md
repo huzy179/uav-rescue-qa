@@ -25,7 +25,7 @@ Nháp 7/11: `docs/luan_van/chuong1.md` (1.1–1.6; thêm 1.5 phạm vi và giớ
 
 ## Chương 2. Cơ sở lý thuyết và nghiên cứu liên quan
 
-Nháp 8/11: `docs/luan_van/chuong2.md`, trích dẫn theo `luan_van/tai_lieu_tham_khao.md`; còn **[TRA]** (YOLO gốc, FPN, TensorRT, Hartley–Zisserman, Blackman, Bar-Shalom), **[ĐỌC TOÀN VĂN]** (SAHI, Adaptive Resizing, Altitude-Aware Dynamic Tiling, MIDDTD, hai bài tổng quan), mục 2.6 chờ quyết định #19.
+Nháp 8/11: `docs/luan_van/chuong2.md`, trích dẫn theo `luan_van/tai_lieu_tham_khao.md`; còn **[TRA]** (TensorRT, Blackman, Bar-Shalom), **[ĐỌC TOÀN VĂN]** (SAHI, Adaptive Resizing, Altitude-Aware Dynamic Tiling, MIDDTD, hai bài tổng quan), mục 2.6 chờ quyết định #19.
 
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
