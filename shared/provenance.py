@@ -73,7 +73,7 @@ def write_run_config(
             "sahi": _package_version("sahi"),
             "opencv-python": _package_version("opencv-python"),
             "numpy": _package_version("numpy"),
-            "tensorrt": _package_version("tensorrt") or _package_version("tensorrt-cu12"),
+            "tensorrt": _package_version("tensorrt") or _package_version("tensorrt-cu12") or _package_version("tensorrt-cu13"),
             "onnx": _package_version("onnx"),
         },
         "gpu": _gpu_name(),

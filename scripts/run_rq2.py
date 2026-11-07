@@ -173,6 +173,7 @@ def export_step(config: Rq2Config, variants: list[Variant], device: str) -> None
     from edge.detector import export_model  # import trễ: chỉ bước này cần ultralytics trong tiến trình chính
 
     done: set[str] = set()
+    failed: dict[str, str] = {}
     for v in variants:
         if v.precision == "pt" or v.engine_key() in done:
             continue
@@ -182,23 +183,40 @@ def export_step(config: Rq2Config, variants: list[Variant], device: str) -> None
             print(f"[đã có] {out}")
             continue
         tiled = v.mode == "tiled"
-        export_model(
-            str(config.weights), out, "engine", {"fp32": 32, "fp16": 16, "int8": 8}[v.precision],
-            imgsz=v.tile if tiled else v.imgsz, batch=config.max_tiles if tiled else 1, dynamic=tiled,
-            data=calib_data_yaml(config, tiled) if v.precision == "int8" else None,
-            fraction=config.calib.fraction if config.calib and v.precision == "int8" else 1.0,
-            max_det=config.max_det, device=device,
-        )
+        try:
+            export_model(
+                str(config.weights), out, "engine", {"fp32": 32, "fp16": 16, "int8": 8}[v.precision],
+                imgsz=v.tile if tiled else v.imgsz, batch=config.max_tiles if tiled else 1, dynamic=tiled,
+                data=calib_data_yaml(config, tiled) if v.precision == "int8" else None,
+                fraction=config.calib.fraction if config.calib and v.precision == "int8" else 1.0,
+                max_det=config.max_det, device=device,
+            )
+        except Exception as e:  # một engine hỏng (ví dụ INT8 trên GPU cũ) không được làm mất cả lần chạy nhiều giờ
+            failed[v.engine_key()] = f"{type(e).__name__}: {e}"
+            print(f"[lỗi xuất] {out}: {failed[v.engine_key()]}; bỏ qua các biến thể dùng engine này", flush=True)
+            continue
         print(f"Đã xuất {out}")
     if not done:
         return
     (config.output / "models").mkdir(parents=True, exist_ok=True)
     write_run_config(config.output / "models", "scripts/run_rq2.py", str(config.weights), device,
-                     {"step": "export", "engines": sorted(done)})
+                     {"step": "export", "engines": sorted(done - set(failed)), "failed": failed})
+
+
+def runnable(config: Rq2Config, variants: list[Variant]) -> list[Variant]:
+    """Biến thể có mô hình để chạy: .pt luôn có; engine thiếu (xuất lỗi hoặc chưa xuất) thì báo và bỏ."""
+    keep = []
+    for v in variants:
+        if v.precision != "pt" and not model_path(config, v).exists():
+            print(f"[bỏ qua] {v.name}: không có {model_path(config, v)}")
+            continue
+        keep.append(v)
+    return keep
 
 
 def accuracy_step(config: Rq2Config, variants: list[Variant], device: str) -> None:
     """Dự đoán ở conf thấp trên từng tập rồi chấm theo kích thước ở IoU 0,5 và 0,3."""
+    variants = runnable(config, variants)
     for data in config.accuracy:
         for v in variants:
             if v.target_person_px is not None and data.altitude_csv is None:
@@ -232,7 +250,7 @@ def speed_step(config: Rq2Config, variants: list[Variant], device: str) -> None:
     """Chạy cả pipeline trên chuỗi khung có telemetry, ghi timings.jsonl; rồi tổng hợp thời gian mọi biến thể."""
     s = config.speed
     runs = []
-    for v in variants:
+    for v in runnable(config, variants):
         out = config.output / "speed" / v.name
         runs.append(out)
         if (out / "timings.jsonl").exists():
