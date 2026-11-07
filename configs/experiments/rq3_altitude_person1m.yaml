@@ -1,0 +1,21 @@
+# Độ nhạy của rq3_altitude.yaml với cỡ người: box người thật 1,0 m thay cho 0,5 m (box nhãn SeaDronesSee lớn hơn 0,5 m
+# khoảng 1,8–2,6 lần ở khung nhìn thẳng, docs/results/person_px_check.md). Pipeline vẫn giả định 0,5 m. Còn lại như
+# rq3_altitude.yaml, chỉ E2c; thêm biến thể thu nhỏ về 10 px dự kiến.
+output: runs/rq3/altitude_person1m
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  lateral_m: 15
+  gps_sigma_m: 0.5
+  fp_per_frame: 0.5
+  recall_curve: runs/e6_sds/eval/recall_by_pixels.csv
+  recall_model: E2c
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+  confirm: geo
+grid:
+  scenario.alt_m: [30, 50, 80, 120, 160, 200]
+  scenario.person_m: [0.5, 1.0]
+  scenario.target_person_px: [null, 10]

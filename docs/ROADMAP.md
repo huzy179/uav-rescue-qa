@@ -33,6 +33,7 @@ Từ nay tới 11/11 ưu tiên gán nhãn; mã chỉ viết khi khoá tập ho�
 - **E2e (thêm C2A) xong, âm**: kém E2c ở người nhỏ (VisDrone val −0,029 AP50, < 8 px −0,053), SeaDronesSee +0,041 không có ý nghĩa; giữ E2c, #14 khép lại (`E2e.md`).
 - Câu hỏi 2: chạy thử hai biến thể trên T4 xong; lần chạy đủ đầu lỗi xuất INT8 (TensorRT 11 trên T4), đã ghim TensorRT 10 và để `run_rq2.py` bỏ qua engine lỗi; chuẩn bị `after_rq2.py`, `rq2_report.py`, `rq3_device.yaml`.
 - 8/11: đầu một-một không NMS của YOLO26 (`nms_free.md`): mất recall vận hành trên VisDrone, không nhanh hơn trên PyTorch; giữ mặc định có NMS. Dùng lại ô không đổi khi drone đứng yên (`tile_skip.md`): bớt ô nhưng recall giảm tới 0,238 vì người bơi cử động; không dùng.
+- 8/11: cỡ người dự kiến so với nhãn (`person_px_check.md`): box người bơi lớn hơn giả định 0,5 m khoảng 1,8–2,6 lần; mô phỏng với người 1,0 m cho thu nhỏ theo độ cao giúp rõ hơn (30 m bỏ sót 0,867 → 0,400).
 - Cải tiến âm, giữ làm tuỳ chọn: phóng to người nhỏ (`upscale_small.md`), lượt toàn ảnh sau thu nhỏ (`full_pass.md`), đồng bộ và làm mượt gimbal (`georef_sync.md`), ngưỡng theo cỡ (`conf_by_size.md`), đếm người theo cụm hoặc theo khung trong cửa sổ (`rq3_group.md`, #18).
 - Cải tiến có lợi, tuỳ chọn (mô phỏng): định vị theo góc gimbal (`georef_pitch.md`, chưa tốt hơn tính chung), tự hiệu chỉnh la bàn (`rq3_yawcalib.md`), bán kính theo độ chính xác GPS bộ thu báo (`rq3_gpsacc.md`), mất gói theo cụm trong giả lập mạng (`rq3_burst.md`).
 - Sân thử trong `python -m console` (13 câu hỏi dựng sẵn); số người ước tính mỗi sự cố (`group_size`).

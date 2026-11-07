@@ -164,3 +164,15 @@ def test_r95_factor_is_rayleigh_95_percent() -> None:
 
     assert 1.0 - math.exp(-R95_FACTOR**2 / 2.0) == pytest.approx(0.95)
     assert 1.0 - math.exp(-0.5) == pytest.approx(0.3935, abs=1e-4)  # bán kính 1σ chỉ chứa khoảng 39 %
+
+
+def test_visible_boxes_person_size() -> None:
+    from edge.georef import Camera
+    from shared.schema import Telemetry
+    from sim.scenario import Person, visible_boxes
+
+    cam = Camera.from_fov(82.0, "diagonal", 3840, 2160)
+    tel = Telemetry(t=0.0, lat=21.0, lon=105.8, alt_agl_m=50.0, yaw_deg=0.0, pitch_deg=-90.0)
+    (_, small), = visible_boxes([Person(0, 21.0, 105.8)], tel, cam, 0.0)
+    (_, big), = visible_boxes([Person(0, 21.0, 105.8)], tel, cam, 0.0, person_m=1.0)
+    assert abs((big[2] - big[0]) - 2 * (small[2] - small[0])) < 1e-9

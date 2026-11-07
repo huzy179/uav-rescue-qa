@@ -78,6 +78,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--recall-model", default=None, help="Cột model cần lấy trong --recall-curve")
     parser.add_argument("--target-person-px", type=float, default=None,
                         help="Pipeline thu nhỏ khung theo độ cao về cỡ này (edge/main.py): recall lấy ở cỡ người sau thu nhỏ")
+    parser.add_argument("--person-m", type=float, default=0.5,
+                        help="Cỡ box người thật trong cảnh (m) để tra recall theo pixel; pipeline vẫn ước lượng theo 0,5 m (docs/results/person_px_check.md)")
     parser.add_argument("--fp-per-frame", type=float, default=0.5, help="Số báo nhầm trung bình mỗi khung")
     parser.add_argument("--render", action="store_true",
                         help="Vẽ ảnh tổng hợp vùng ngập (nước, mái nhà, cây, người; sim/render.py) thay cho khung đen, để demo; không đổi telemetry, phát hiện hay nhãn")
@@ -147,11 +149,12 @@ def main() -> None:
             seen = noisy_telemetry(true_tel, gps, args.yaw_bias_deg, args.alt_bias_m)
             frame_recall = recall
             if args.target_person_px is not None and isinstance(recall, RecallCurve):
-                # Cùng công thức với edge/main.py, theo độ cao ĐO của khung này (có sai số), không phải độ cao thật.
+                # Cùng công thức với edge/main.py (người giả định 0,5 m), theo độ cao ĐO của khung này (có sai số),
+                # không phải độ cao thật và không phải cỡ người thật --person-m.
                 frame_recall = recall.scaled(person_scale(0.5 * cam.f_px / seen.alt_agl_m, args.target_person_px))
             reported = [round(gps.sigma_at(t) * args.gps_acc_scale, 3)] if args.gps_acc_report else []
             tel_writer.writerow([t, f"{seen.lat:.9f}", f"{seen.lon:.9f}", seen.alt_agl_m, seen.yaw_deg, *reported])
-            boxes = visible_boxes(people, tilted_view(true_tel, args.tilt_deg), cam, t)
+            boxes = visible_boxes(people, tilted_view(true_tel, args.tilt_deg), cam, t, args.person_m)
             frames_truth.append({"frame_id": frame_id, "t": t, "visible": [{"person_id": pid, "box_px": box} for pid, box in boxes]})
             for det in simulate_detections(frame_id, t, boxes, cam, frame_recall, args.fp_per_frame, rng):
                 det_file.write(det.model_dump_json() + "\n")

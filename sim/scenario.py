@@ -106,9 +106,15 @@ def place_people(
     return people
 
 
-def visible_boxes(people: list[Person], tel: Telemetry, cam: Camera, t: float) -> list[tuple[int, tuple[float, float, float, float]]]:
-    """(person_id, box) của những người có tâm nằm trong khung, theo telemetry THẬT; box vuông cạnh bằng bề ngang người."""
-    half = PERSON_WIDTH_M / 2.0 * cam.f_px / tel.alt_agl_m
+def visible_boxes(
+    people: list[Person], tel: Telemetry, cam: Camera, t: float, person_m: float = PERSON_WIDTH_M
+) -> list[tuple[int, tuple[float, float, float, float]]]:
+    """(person_id, box) của những người có tâm nằm trong khung, theo telemetry THẬT; box vuông cạnh bằng person_m.
+
+    person_m là cỡ box người THẬT trong cảnh (box nhãn SeaDronesSee lớn hơn 0,5 m khoảng 1,8–2,6 lần,
+    docs/results/person_px_check.md); pipeline vẫn ước lượng theo 0,5 m của nó.
+    """
+    half = person_m / 2.0 * cam.f_px / tel.alt_agl_m
     boxes = []
     for person in people:
         u, v = gps_to_pixel(*person.at(t), tel, cam)

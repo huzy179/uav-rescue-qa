@@ -41,3 +41,5 @@ Gộp nhầm trung bình: E1 0,000–0,333, E2c 0,667–1,333 mỗi kịch bản
 .venv/bin/python eval/recall_by_pixels.py ...   # e6_sds_pilot.md, ra runs/e6_sds/eval/recall_by_pixels.csv
 .venv/bin/python -m sim.sweep_rq3 --config configs/experiments/rq3_altitude.yaml --jobs 8
 ```
+
+**Cập nhật 8/11:** mô phỏng này dùng người 0,5 m trong khi box người trong nhãn SeaDronesSee (nguồn của đường recall) lớn hơn khoảng 1,8–2,6 lần. Với người 1,0 m, bay thấp bỏ sót nhiều hơn (30 m: 0,867) và thu nhỏ theo độ cao giúp rõ hơn (30 m: 0,400) (`person_px_check.md`).

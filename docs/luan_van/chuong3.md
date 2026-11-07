@@ -144,7 +144,7 @@ s = max(1, px_dự_kiến / p*)
 thu khung đi s lần → cắt ô → phát hiện → nhân toạ độ box với s để về ảnh gốc
 ```
 
-Box luôn được quy về toạ độ ảnh gốc, nên khâu định vị và xác nhận không cần biết khung đã bị thu nhỏ. Không bao giờ phóng to (s ≥ 1): phóng to khi người dự kiến dưới 8 px đã được thử như một phần mở rộng và không cải thiện có ý nghĩa (`upscale_small.md`). Mục tiêu p* = 10 px được chọn trên SeaDronesSee (đã thử 10 và 20 px), không trên tập ảnh lũ.
+Box luôn được quy về toạ độ ảnh gốc, nên khâu định vị và xác nhận không cần biết khung đã bị thu nhỏ. Không bao giờ phóng to (s ≥ 1): phóng to khi người dự kiến dưới 8 px đã được thử như một phần mở rộng và không cải thiện có ý nghĩa (`upscale_small.md`). Mục tiêu p* = 10 px được chọn trên SeaDronesSee (đã thử 10 và 20 px), không trên tập ảnh lũ. Đây là số pixel **dự kiến** theo giả định người 0,5 m; box người bơi trong nhãn SeaDronesSee lớn hơn khoảng 1,8–2,6 lần ở khung nhìn thẳng, nên trên tập đó người sau khi thu nhỏ thực tế khoảng 18–26 px (`person_px_check.md`).
 
 ### 3.4.3. Hai tác dụng
 

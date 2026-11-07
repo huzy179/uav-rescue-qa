@@ -125,6 +125,8 @@ python scripts/gsd_calc.py     # mặc định đúng cấu hình này
 
 Cột "ở imgsz N" là kích thước sau khi ảnh 3840 px bị thu nhỏ theo tỉ lệ `N / 3840` để đưa vào mô hình (mục 3.3).
 
+**Kiểm tra trên dữ liệu thật (8/11):** box người bơi trong nhãn SeaDronesSee lớn hơn cột "Người (0,5 m)" khoảng 1,8–2,6 lần ở khung camera nhìn thẳng, ở cả Mavic lẫn M100 (`tools/person_px_check.py`, `results/person_px_check.md`): chủ yếu do cỡ box (thân, tay, bọt nước), góc nhìn riêng từng camera không tách được. Mô phỏng có `--person-m` để đặt cỡ box người thật khác giả định 0,5 m của pipeline.
+
 ### 2.4. Thời gian người nằm trong khung và số lần nhìn thấy
 
 UAV bay với vận tốc `v` theo chiều dọc ảnh. Chiều dọc vùng chụp là `L_v = 2h · tan(VFOV/2)`. Một điểm trên mặt đất đi từ mép trên xuống mép dưới ảnh trong thời gian:

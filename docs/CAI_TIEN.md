@@ -92,7 +92,8 @@ Cập nhật 7/11/2026.
 - **Vấn đề.** Phép chiếu giả định nhìn thẳng xuống; mọi đoạn SeaDronesSee có drone di chuyển đều quay với gimbal nghiêng 20–78°.
 - **Đã làm, tuỳ chọn (7/11):** phép chiếu tính góc gimbal (`--use-pitch`, TECHNICAL 8.3, có hàm ngược và test đi một vòng). Kiểm chứng bằng độ tản vị trí của cùng một người qua các khung (`georef_pitch.md`): tốt hơn rõ ở các đoạn drone di chuyển với camera nghiêng vừa phải (v8: 4,982 → 1,301 m), nhưng kém hơn khi camera gần chân trời hoặc drone đứng yên; tính chung chưa tốt hơn (1,336 → 1,603 m), nên chưa bật mặc định.
 - **Đã thử, bỏ (7/11): đồng bộ thời gian metadata gimbal và làm mượt góc** (`ShiftedTelemetry`, `SmoothedAngles`). Lưới 11 độ trễ × 4 cửa sổ, chọn trên phần train của SeaDronesSee: ô tốt nhất (trễ +0,3 s, làm mượt 2 s) vẫn kém nhìn thẳng trên train (1,512 so với 1,146 m), trên val chỉ nhỉnh (1,397 so với 1,441 m) (`georef_sync.md`).
-- **Đề xuất (không cần GPU):** góc nhìn thật của từng camera (Mavic, M210, M100 khác nhau), quy ước góc gimbal của từng drone, và một thước đo thấy được lệch đều (một người đứng yên nhìn từ hai hướng bay). Nếu ổn, bật cho các đoạn camera nghiêng và dùng một đoạn drone di chuyển thật cho phần quét vùng của demo.
+- **Đã kiểm tra (8/11): góc nhìn từng camera** (`tools/person_px_check.py`, `person_px_check.md`). Ở khung nhìn thẳng, box người trong nhãn lớn hơn dự kiến 1,8–2,6 lần ở cả Mavic lẫn M100: chủ yếu do cỡ box người bơi, không tách được góc nhìn riêng (bài SeaDronesSee không ghi ống kính từng drone). Giữ 82° và 0,5 m. Hệ quả: mô phỏng thêm `--person-m`; với người 1,0 m, thu nhỏ theo độ cao giảm bỏ sót ở 30 m từ 0,867 xuống 0,400 (mô phỏng).
+- **Đề xuất:** quy ước góc gimbal của từng drone và một thước đo thấy được lệch đều (một người đứng yên nhìn từ hai hướng bay); đo lại tỉ số cỡ người trên drone và camera thật.
 
 ## 4. Trạm mặt đất và demo
 

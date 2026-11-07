@@ -44,6 +44,8 @@ Số đọc từ `runs/sds_det/compare_<A>_<B>/compare.csv`.
 4. Mục tiêu 10 px cho recall cao hơn 20 px có ý nghĩa; vì ước lượng px đang thấp hơn thực tế, "10 px dự kiến" thực ra đưa người về cỡ lớn hơn 10 px, gần vùng E2c mạnh nhất. Khi có camera và góc nhìn thật của drone dùng cho lũ, nên hiệu chỉnh lại ước lượng này.
 5. Thu nhỏ còn giảm số ô phải chạy, nên nhanh hơn; chưa đo kỹ thời gian (máy RTX 5060, không phải Jetson).
 
+**Cập nhật 8/11:** đo được box người trong nhãn lớn hơn dự kiến (người 0,5 m, 82°) khoảng 1,8–2,6 lần ở khung nhìn thẳng, chủ yếu do cỡ box người bơi; "10 px dự kiến" tương ứng khoảng 18–26 px trong nhãn (`person_px_check.md`).
+
 **Cập nhật 7/11:** thêm lượt toàn ảnh sau khi thu nhỏ không cải thiện AP50 (`full_pass.md`); phóng to khi người dự kiến dưới 8 px không cải thiện có ý nghĩa (`upscale_small.md`).
 
 ## Đề xuất
