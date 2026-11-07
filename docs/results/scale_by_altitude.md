@@ -44,6 +44,8 @@ Số đọc từ `runs/sds_det/compare_<A>_<B>/compare.csv`.
 4. Mục tiêu 10 px cho recall cao hơn 20 px có ý nghĩa; vì ước lượng px đang thấp hơn thực tế, "10 px dự kiến" thực ra đưa người về cỡ lớn hơn 10 px, gần vùng E2c mạnh nhất. Khi có camera và góc nhìn thật của drone dùng cho lũ, nên hiệu chỉnh lại ước lượng này.
 5. Thu nhỏ còn giảm số ô phải chạy, nên nhanh hơn; chưa đo kỹ thời gian (máy RTX 5060, không phải Jetson).
 
+**Cập nhật 7/11:** thêm lượt toàn ảnh sau khi thu nhỏ không cải thiện AP50 (`full_pass.md`); phóng to khi người dự kiến dưới 8 px không cải thiện có ý nghĩa (`upscale_small.md`).
+
 ## Đề xuất
 
 - Bật `--target-person-px` cho pipeline khi dùng mô hình fine-tune; giá trị chọn trên tập lũ khi có nhãn (thử 10 và 20), **không chọn trên tập test lũ đã khoá** mà trên phần val hoặc dữ liệu khác.

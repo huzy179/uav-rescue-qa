@@ -171,6 +171,8 @@ So cặp: thu nhỏ về 10 px so với cắt ô ở độ phân giải gốc +0
 
 Ba điều rút ra. **Cắt ô ở độ phân giải gốc là cách tệ nhất** cho mô hình tinh chỉnh trên ảnh bay thấp: precision 0,065, nền bị báo nhầm rất nhiều. **Thu nhỏ theo độ cao sửa được gần hết**, và đưa mô hình chính về ngang mô hình gốc trên nước biển, trong khi vẫn giữ lợi thế lớn ở người nhỏ (Bảng 5.3). Điều này trả lời tốt hơn băn khoăn ở mục 5.1.2 ("mô hình chính chưa hơn mô hình gốc với người dưới nước"): một phần khoảng cách đến từ việc đưa người sai cỡ vào mô hình, không phải từ mô hình. Cuối cùng, cách này **dùng một dữ liệu drone vốn có** (độ cao bay) để chọn thang xử lý, thay vì cố định; đây là phần thứ nhất của luận điểm xuyên suốt (mục 5.4).
 
+Hai biến thể của cùng ý tưởng đã được thử và không giữ lại: thêm một lượt toàn ảnh sau khi thu nhỏ để bắt người to bị cắt đôi giữa các ô không làm tăng AP50 (−0,013, −0,071 đến +0,001) mà tốn thêm một lượt suy luận mỗi khung (`full_pass.md`); theo chiều ngược lại, phóng to khung khi người dự kiến dưới 8 px không cải thiện có ý nghĩa ở mức thu nhỏ nào, trong khi số ô tăng hơn gấp đôi ở mức thu nhỏ 6 lần (`upscale_small.md`). Người dưới khoảng 6–8 px vì vậy vẫn là giới hạn dưới của khâu phát hiện; cách chữa là bay thấp hơn (mục 5.3.1).
+
 Giới hạn: một tập, 11 video, người phần lớn to; cỡ mục tiêu 10 và 20 px được chọn sau khi xem kết quả trên chính tập này, nên đây là khảo sát chứ chưa phải đánh giá độc lập; góc nhìn camera giả định chung 82°, và ước lượng số pixel thường thấp hơn cỡ người trong nhãn. Tập ảnh lũ không có độ cao bay (video YouTube) nên không đánh giá được cách này trên ảnh lũ (quyết định đã ghi ở chương 4); phần kiểm chứng thêm nằm ở mô phỏng (mục 5.3.1).
 
 ### 5.1.5. Nhiễu riêng của cảnh lũ (RQ1e)

@@ -17,7 +17,7 @@ Cập nhật 7/11/2026.
   - lấy mẫu C2A ít hơn (ví dụ một phần ba số ảnh) thay vì toàn bộ, giữ tỉ lệ người nhỏ gần E2c;
   - hoặc fine-tune ngắn từ `E2c/best.pt` thêm vài epoch có C2A với tốc độ học nhỏ, rồi kiểm tra VisDrone < 8 px không tụt;
   - kiểm chứng: so cặp với E2c trên VisDrone val (< 8 px không được kém có ý nghĩa) và SeaDronesSee (> 32 px tăng có ý nghĩa).
-- **Đề xuất (không cần huấn luyện, cần GPU suy luận vài phút):** cắt ô kèm một lượt toàn ảnh thu nhỏ (gộp bằng IOS như bộ cắt ô) để bắt người to bị cắt đôi giữa các ô; kiểm chứng trên SeaDronesSee 4K so với cắt ô thuần.
+- **Đã thử, bỏ (7/11): cắt ô kèm một lượt toàn ảnh** (`--full-pass`). Khi đã thu nhỏ theo độ cao, AP50 không tăng (−0,013, −0,071 đến +0,001), recall người trên 32 px chỉ +0,028, số lần suy luận từ 1.513 lên 1.830 (`full_pass.md`). Không bật trong cấu hình cuối.
 
 ### 1.2. Người rất nhỏ (dưới 8 px, bay cao)
 
@@ -108,6 +108,6 @@ Cập nhật 7/11/2026.
 
 1. RQ2 trên T4 rồi hiệu chỉnh hồ sơ thiết bị (mục 2): mở khoá câu hỏi 2, khoảng 2 giờ GPU.
 2. Hai seed cho E2c (mục 1.5): cần cho chương 5, khoảng 20 giờ GPU.
-3. ~~Phóng to khi người dưới 8 px~~ (7/11, kết quả âm, `upscale_small.md`) và lượt toàn ảnh cho người to (mục 1.1): chỉ cần suy luận, vài giờ công.
+3. ~~Phóng to khi người dưới 8 px và lượt toàn ảnh cho người to~~ (7/11, cả hai kết quả âm: `upscale_small.md`, `full_pass.md`).
 4. Đồng bộ thời gian metadata gimbal (mục 3.6): không cần GPU; mở được video thật cho phần quét vùng.
 5. Lấy mẫu C2A một phần (mục 1.1): chỉ khi còn khoảng 10 giờ GPU sau mục 1 và 2.
