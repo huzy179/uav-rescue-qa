@@ -64,3 +64,12 @@ def test_signed() -> None:
     assert signed(0.0123) == "+0,012"
     assert signed(-0.5) == "−0,500"
     assert signed(None) == "–"
+
+
+def test_group_count_summary() -> None:
+    from eval.group_count_eval import summarize
+
+    s = summarize([(1, 1), (2, 1), (1, 3)])
+    assert s["n_alerts_matched"] == 3 and s["exact"] == round(1 / 3, 4)
+    assert (s["n_over"], s["n_under"]) == (1, 1)
+    assert s["error_mean"] == round((0 + 1 - 2) / 3, 4)
