@@ -192,7 +192,8 @@ def export_model(
 
     quantize: 32 (FP32), 16 (FP16) hoặc 8 (INT8, cần `data`: data.yaml có phần val dùng hiệu chỉnh). Engine cắt ô
     xuất với dynamic=True và batch bằng số ô tối đa mỗi khung, vì số ô đổi theo kích thước khung (thu nhỏ theo độ cao).
-    YOLO26 end-to-end nướng TopK k = max_det vào engine; mặc định 1000 như quy ước đo, khớp lần chạy .pt.
+    Xuất với nms mặc định của ultralytics (None): đầu một-nhiều, NMS chạy ngoài engine như lần chạy .pt; max_det 1000
+    như quy ước đo. Đầu một-một không NMS (nms=False) chưa dùng (TECHNICAL mục 3.1, 14.1).
     Ultralytics ghi file cạnh trọng số với cùng tên gốc, nên trọng số được chép thành `output` đuôi .pt trước khi
     xuất: file ra nằm trong thư mục của `output` (trọng số gốc có thể ở chỗ chỉ đọc, như /kaggle/input), FP16 và INT8
     không đè nhau.

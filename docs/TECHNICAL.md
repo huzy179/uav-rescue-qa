@@ -177,10 +177,10 @@ YOLO26 là bộ phát hiện một giai đoạn (one-stage), gồm ba phần. Đ
 | Head | Dự đoán box và lớp | `Detect` trên P3 (stride 8), P4 (16), P5 (32) |
 
 Hai thay đổi đáng chú ý so với YOLO11, thấy trực tiếp trong file cấu hình:
-- `end2end: True`: mô hình xuất kết quả cuối mà **không cần NMS** khi suy luận. Bớt một bước hậu xử lý, có lợi cho thiết bị biên và cho xuất TensorRT.
+- `end2end: True`: ngoài đầu dự đoán một-nhiều (cần NMS), YOLO26 có thêm đầu **một-một** cho kết quả cuối không cần NMS. Ultralytics 8.4.174 **mặc định vẫn dùng đầu một-nhiều kèm NMS chạy ngoài** khi dự đoán và khi xuất (tham số `nms=None`); đầu một-một chỉ dùng khi đặt `nms=False` (docs.ultralytics.com/guides/end2end-detection; kiểm tra trên mã đã cài 7/11: `end2end False` khi nạp `best.pt`). **Mọi kết quả của đề tài dùng mặc định này**, cả PyTorch lẫn TensorRT. Đầu một-một là một khả năng tăng tốc chưa đo.
 - `reg_max: 1`: bỏ DFL (Distribution Focal Loss); box được hồi quy trực tiếp. Đầu ra đơn giản hơn, dễ lượng tử hoá hơn.
 
-Theo tài liệu của Ultralytics, YOLO26 còn có ProgLoss và STAL (gán nhãn có lưu ý vật thể nhỏ), được giới thiệu là cải thiện vật thể nhỏ. Đây là tuyên bố của nhà phát triển; E5 (so với YOLO11s) là cách đề tài kiểm chứng nó.
+Theo tài liệu của Ultralytics, YOLO26 còn có ProgLoss và STAL (gán nhãn có lưu ý vật thể nhỏ), được giới thiệu là cải thiện vật thể nhỏ. Đây là tuyên bố của nhà phát triển; thí nghiệm so với YOLO11s (E5) để kiểm chứng nó đã bị cắt 7/11 vì lịch, nên luận văn không khẳng định điều này.
 
 Kích thước bản `s`: 10,0 triệu tham số, 22,8 GFLOPs ở ảnh 640. GFLOPs tăng theo bình phương cạnh ảnh: ở 1280 khoảng 91 GFLOPs.
 
@@ -271,7 +271,7 @@ SAHI gọi mô hình từng ô một và gắn với cách nạp mô hình của
 5. Tuỳ chọn: lượt toàn ảnh ở độ phân giải thấp cho người lớn.
 6. Trả về `list[Detection]` cùng thời gian từng phần (cắt, suy luận, gộp) cho RQ2.
 
-YOLO26 không cần NMS **trong** từng ô, nhưng vẫn cần gộp **giữa** các ô vì cùng một người xuất hiện ở vùng chồng của hai ô.
+Trong từng ô, ultralytics chạy NMS của nó (mặc định, xem mục 3.1); giữa các ô vẫn cần gộp riêng theo IOS vì cùng một người xuất hiện ở vùng chồng của hai ô.
 
 **Thu nhỏ theo độ cao [Đã có, sơ bộ]:** `--target-person-px` thu nhỏ khung trước khi cắt ô để người dự kiến (0,5 m × f_px / độ cao, mục 2.3) còn khoảng số px này; không phóng to. Lý do: mô hình fine-tune (E2c) mạnh ở người 10–30 px, yếu với người to vì dữ liệu huấn luyện hầu như không có (`results/e6_sds_pilot.md`). Trên SDS 4K, cắt ô ở độ phân giải gốc cho AP50 0,235; thu nhỏ theo độ cao cho 0,531, ngang mô hình gốc trên nước (`results/scale_by_altitude.md`). Cũng giảm số ô phải chạy.
 
@@ -1110,7 +1110,7 @@ Những điều phải biết:
 - **Engine không mang sang máy khác được.** Engine xây trên T4 của Kaggle không chạy trên Jetson; phải xuất lại ngay trên Jetson (hoặc cùng phiên bản TensorRT và cùng kiến trúc GPU).
 - Kích thước ảnh và batch được cố định lúc xuất. Chế độ cắt ô cần engine có batch bằng số ô (32 cho 4K, ô 640, chồng 0,2), hoặc engine batch động.
 - **INT8** cần dữ liệu hiệu chỉnh (vài trăm ảnh đại diện, lấy từ tập train, không lấy từ tập test) để đo dải giá trị kích hoạt. INT8 thường làm hại vật thể nhỏ nhiều nhất (tín hiệu yếu bị lượng tử hoá thô), nên phải đo lại recall theo nhóm kích thước sau khi lượng tử hoá.
-- `end2end` của YOLO26 giúp engine trả thẳng kết quả cuối, không cần NMS chạy ngoài. Đổi lại TopK `k = max_det` được nướng vào engine lúc xuất (mặc định 300 của ultralytics): `export_model` xuất với `max_det = 1000` cho khớp quy ước đo, nếu không AP của engine và của `.pt` không so được.
+- Engine xuất với mặc định `nms=None`: đầu một-nhiều, NMS chạy ngoài engine như lần chạy `.pt`, nên AP của engine và của `.pt` so được trực tiếp (lần chạy thử 7/11 trên T4: AP50 VisDrone test-dev bằng nhau ở PyTorch và FP16). `export_model` vẫn truyền `max_det = 1000` cho khớp quy ước đo. Xuất với `nms=False` (đầu một-một, giới hạn `max_det` nằm trong engine) là một biến thể tốc độ chưa đo.
 - Ultralytics 8.4.174 thay `half`, `int8` bằng `quantize` (16, 8). Ultralytics tự cài `tensorrt` và `onnx` khi xuất lần đầu (chưa ghim trong `pyproject.toml`); `run_config.json` ghi phiên bản `tensorrt`, `onnx` và tên GPU.
 
 ### 14.2. Đo đúng cách trên Jetson

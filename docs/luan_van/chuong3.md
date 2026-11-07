@@ -98,7 +98,7 @@ Giả định nhìn thẳng xuống được giữ làm mặc định. Phép chi
 
 ### 3.3.1. Mô hình và dữ liệu tinh chỉnh
 
-Mô hình là YOLO26s (Ultralytics), loại end-to-end không cần bước NMS ở đầu ra. Mô hình được **tinh chỉnh** từ trọng số học trên COCO, với một lớp duy nhất là người, ở đầu vào 1280 px. Dữ liệu tinh chỉnh trộn hai nguồn bù nhau: VisDrone (người rất nhỏ nhìn từ trên cao, đô thị) và AFO (người dưới nước). Mô hình này (E2c) là mô hình chính của luận văn; lý do chọn và các phương án đã thử (thêm tầng P2, thêm ảnh thảm hoạ C2A) ở chương 5, mục 5.1.2.
+Mô hình là YOLO26s (Ultralytics 8.4.174). YOLO26 có hai đầu dự đoán: đầu một-nhiều cần bước loại bỏ box trùng (NMS) và đầu một-một cho kết quả cuối không cần NMS; luận văn dùng mặc định của thư viện, đầu một-nhiều kèm NMS, cho cả lần chạy PyTorch lẫn TensorRT, nên kết quả hai bên so được trực tiếp. Mô hình được **tinh chỉnh** từ trọng số học trên COCO, với một lớp duy nhất là người, ở đầu vào 1280 px. Dữ liệu tinh chỉnh trộn hai nguồn bù nhau: VisDrone (người rất nhỏ nhìn từ trên cao, đô thị) và AFO (người dưới nước). Mô hình này (E2c) là mô hình chính của luận văn; lý do chọn và các phương án đã thử (thêm tầng P2, thêm ảnh thảm hoạ C2A) ở chương 5, mục 5.1.2.
 
 ### 3.3.2. Cắt ô theo lô
 

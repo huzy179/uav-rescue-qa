@@ -135,7 +135,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 
 **Vì sao.**
 - Họ YOLO là chuẩn thực tế cho phát hiện thời gian thực, có sẵn công cụ xuất sang TensorRT cho GPU nhúng.
-- YOLO26 bỏ được bước NMS ở cuối (đầu ra "end-to-end"), giảm độ trễ và đơn giản hoá việc chạy trên thiết bị biên.
+- YOLO26 có thêm đầu ra một-một không cần NMS ("end-to-end"), có thể giảm độ trễ trên thiết bị biên. Đề tài dùng mặc định của Ultralytics 8.4.174 (đầu một-nhiều kèm NMS) cho mọi kết quả; đầu một-một chưa đo.
 - Bản `s` cân bằng giữa độ chính xác và tốc độ cho thiết bị dưới 25 W.
 
 **Cách khác.**

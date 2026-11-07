@@ -27,7 +27,7 @@ Nháp 7/11: `docs/luan_van/chuong1.md` (1.1–1.6; thêm 1.5 phạm vi và giớ
 
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
-| 2.1 Phát hiện đối tượng và YOLO26 | Backbone, neck, head; end-to-end không cần NMS; vì sao người nhỏ bị mất qua các tầng | TECHNICAL mục 3, THUAT_TOAN mục 7 (nguồn tham khảo) | Viết |
+| 2.1 Phát hiện đối tượng và YOLO26 | Backbone, neck, head; đầu một-một không cần NMS (tuỳ chọn; đề tài dùng mặc định có NMS); vì sao người nhỏ bị mất qua các tầng | TECHNICAL mục 3, THUAT_TOAN mục 7 (nguồn tham khảo) | Viết |
 | 2.2 Phát hiện vật nhỏ | Cắt ô (SAHI), tầng P2, khớp tỉ lệ (TinyPerson) | TECHNICAL mục 4, THUAT_TOAN mục 7 | Viết |
 | 2.3 Ảnh từ UAV và bộ dữ liệu | VisDrone, AFO, C2A, SeaDronesSee, HydroVigilance; vì sao chưa có bộ ảnh lũ có nhãn | TONG_QUAN 3.3, TECHNICAL 13.1 | Viết |
 | 2.4 Theo dõi đối tượng qua nhiều khung | ByteTrack, bù chuyển động camera; giả định tần số khung cao | TECHNICAL mục 9 | Viết |

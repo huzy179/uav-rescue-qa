@@ -48,7 +48,7 @@ Ai làm thị giác máy tính hay UAV cũng hiểu; vẫn giải thích một l
 | theo dõi đối tượng | object tracking | Gán cùng một mã cho cùng một đối tượng qua nhiều khung |
 | bù chuyển động camera | camera motion compensation (CMC) | Trừ đi phần dịch chuyển do camera di chuyển trước khi ghép box giữa hai khung |
 | Pareto | Pareto front | Các cấu hình không bị cấu hình nào khác hơn ở mọi tiêu chí (vừa nhanh hơn vừa chính xác hơn) |
-| end-to-end (YOLO26) | end-to-end, NMS-free | Mô hình xuất thẳng kết quả cuối, không cần NMS |
+| end-to-end (YOLO26) | end-to-end, NMS-free | Đầu ra một-một của YOLO26 cho kết quả cuối không cần NMS; tuỳ chọn (`nms=False`), đề tài dùng mặc định có NMS |
 
 ## 2. Khái niệm có trong tài liệu khoa học, tên tiếng Việt do dự án đặt
 
