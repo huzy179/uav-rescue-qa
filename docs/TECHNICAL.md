@@ -404,12 +404,13 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `eval/recall_by_tag.py` | Recall và báo nhầm theo thẻ ảnh và thuộc tính người của tập lũ (5.7) |
 | `eval/recall_by_pixels.py` | E6: gộp người của mọi mức thu nhỏ, recall theo cạnh ngắn sau thu nhỏ (13.6) |
 | `eval/rq2_tradeoff.py` | RQ2: ghép độ chính xác và thời gian các biến thể thành bảng và hình recall theo FPS (14.5) |
+| `eval/rq2_report.py` | RQ2: bảng tốc độ (số lần nhanh hơn PyTorch) và hiệu độ chính xác theo cặp, dạng CSV và Markdown (14.5) |
 | `eval/frames.py` | Chọn khung từ video để gán nhãn: lấy mẫu theo thời gian, bỏ khung gần trùng bằng dHash, rải đều |
 | `eval/rq3_metrics.py` | Chỉ số RQ3 từ log pipeline và nhãn theo thời gian (15.4) |
 | `eval/timing_summary.py` | Thời gian từng chặng, p50/p95, FPS đạt được (14) |
 | `eval/report.py`, `eval/draw.py` | Ghi CSV, tóm tắt, histogram; vẽ box |
 
-**Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra; thu nhỏ theo độ cao bằng `--altitude-csv --target-person-px`), `eval_flood.sh` (cả chuỗi chấm tập lũ từ file xuất CVAT), `run_rq2.py` (RQ2 trọn một lệnh, 14.5), `demo_multi.sh` (demo hai drone), `demo_bao_ve.sh` (demo bảo vệ: phát lại theo thời gian thực với thiết bị giả lập, so hai thiết bị; `docs/DEMO_BAO_VE.md`), `ghep_video.py` (ghép hai video cạnh nhau), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
+**Script thí nghiệm (`scripts/`):** `run_baseline.py` (toàn ảnh), `run_sahi.py` (SAHI), `run_tiled.py` (bộ cắt ô riêng, cùng định dạng đầu ra; thu nhỏ theo độ cao bằng `--altitude-csv --target-person-px`), `eval_flood.sh` (cả chuỗi chấm tập lũ từ file xuất CVAT), `run_rq2.py` (RQ2 trọn một lệnh, 14.5), `after_rq2.py` (xử lý trên máy sau khi tải kết quả RQ2 về: so cặp, hiệu chỉnh hồ sơ thiết bị, bảng kết quả; 14.5), `demo_multi.sh` (demo hai drone), `demo_bao_ve.sh` (demo bảo vệ: phát lại theo thời gian thực với thiết bị giả lập, so hai thiết bị; `docs/DEMO_BAO_VE.md`), `ghep_video.py` (ghép hai video cạnh nhau), `gsd_calc.py` (mục 2), `benchmark_speed.py` (tốc độ `.pt`, `.onnx`, `.engine`).
 
 **Công cụ dữ liệu (`tools/`):** `convert_visdrone.py` (VisDrone → YOLO một lớp, kèm vùng bỏ qua), `extract_frames.py` (trích khung từ video lũ theo LABELING mục 1; logic ở `eval/frames.py`), `convert_cvat.py` (nhãn tập lũ từ CVAT → YOLO, vùng bỏ qua, CSV thuộc tính và thẻ), `convert_yolo_subset.py` (bộ YOLO nhiều lớp như C2A, AFO → một lớp person, chọn lớp theo tên), `split_by_video.py` (chia tập theo video), `check_visdrone.py` (đối chiếu nhãn VisDrone đã chuyển với nhãn gốc, 6.7), `prepare_afo.py` (dựng lại bố cục AFO từ bản Kaggle cho `convert_yolo_subset.py`), `convert_seadronessee_mot.py` (SeaDronesSee-MOT thành chuỗi khung, telemetry từ metadata drone, nhãn theo track), `make_sds_det.py` (tập phát hiện người dưới nước từ SeaDronesSee, 1 khung mỗi 15), `check_leakage.py` (rò rỉ giữa các tập), `label_size_stats.py` (kích thước người khi huấn luyện, 13.4), `rescale_dataset.py` (thu nhỏ ảnh nhiều mức cho E6, 13.6), `make_tiles.py` (cắt ô có nhãn, 13.2), `shift_telemetry.py` (dời telemetry giả lập drone thứ hai), `fit_device_profile.py` (hiệu chỉnh hồ sơ thiết bị từ `timings.jsonl` của RQ2, 14.6).
 
@@ -1127,7 +1128,7 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 
 ---
 
-### 14.5. Chạy RQ2 [Đã có mã, chưa chạy trên T4]
+### 14.5. Chạy RQ2 [Đã có mã, đang chạy trên T4]
 
 `scripts/run_rq2.py --config configs/experiments/rq2_t4.yaml` làm trọn bốn bước; bước nào đã có kết quả thì bỏ qua:
 
@@ -1137,6 +1138,16 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 4. **Ghép**: `eval/rq2_tradeoff.py` ghi `rq2.csv` (AP50, recall, recall người dưới 8 px ở IoU 0,3, thời gian p50/p95, FPS theo p95) và `rq2_<tập>.png` (recall theo FPS, đường dọc ở 2 FPS).
 
 Chạy thử 2/11 trên RTX 5060 (máy cá nhân, chỉ các biến thể PyTorch, 12 khung) để kiểm tra luồng: AP50 trên SDS trùng các lần chạy trước (`scale_by_altitude.md`). Lần thử cho thấy bước thu nhỏ khung 4K bằng `cv2.INTER_AREA` tốn đáng kể trên CPU so với suy luận; số đo chính thức chờ T4. `runs/rq2/speed/<biến thể>/timings.jsonl` của lần chạy T4 cũng là đầu vào hiệu chỉnh hồ sơ thiết bị (14.6).
+
+7/11: chạy thử trên Kaggle T4 với hai biến thể (`pt_tiled`, `fp16_tiled`) đi hết bốn bước, kể cả xuất TensorRT; lần chạy đủ chín biến thể đang chạy. Số chính thức lấy từ lần chạy đủ.
+
+**Sau khi tải về** (`scripts/after_rq2.py`, máy cá nhân, không cần GPU):
+
+1. So cặp bằng bootstrap theo video (`eval/compare_runs.py`, IoU 0,5 và 0,3) mọi cặp của `eval.rq2_report.comparison_pairs`: mỗi biến thể TensorRT với PyTorch cùng cách chạy (nén mất bao nhiêu, RQ2a), cắt ô thu nhỏ về 10 px với cắt ô không thu nhỏ (RQ2c), cắt ô với toàn ảnh. Kết quả ở `runs/rq2/compare/<tập>/<B>__vs__<A>_iou<iou>/`.
+2. Hiệu chỉnh bốn hồ sơ `configs/devices/*.yaml` bằng `tools/fit_device_profile.py` từ `fp16_tiled` và `fp16_full1280`, với các tỉ lệ thiết bị/T4 ở 14.6.
+3. `eval/rq2_report.py`: `report/speed.csv` (số ô, suy luận và tổng theo p50, p95, FPS theo p95, số lần nhanh hơn PyTorch cùng cách chạy, tính trong script chứ không chia tay) và `report/accuracy_diff.csv`, kèm bảng Markdown để chép vào `docs/results/rq2_t4.md`.
+
+Tiếp theo là RQ2c bằng mô phỏng: `configs/experiments/rq3_device.yaml` quét độ cao 30, 50, 100 m × tần số xin 2, 4, 8 khung/giây × bốn hồ sơ đã hiệu chỉnh, thu nhỏ về 10 px; đo bỏ sót, số khung xử lý được và độ trễ cảnh báo.
 
 ### 14.6. Giả lập thời gian thiết bị biên [Đã có]
 

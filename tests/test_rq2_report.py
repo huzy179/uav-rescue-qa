@@ -1,0 +1,66 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from eval.rq2_report import (
+    KIND_ALT, KIND_QUANT, KIND_TILE, accuracy_rows, compare_dir, comparison_pairs, markdown_accuracy, signed, speed_rows,
+)
+
+VARIANTS = [
+    {"name": "pt_full1280", "precision": "pt", "mode": "full", "imgsz": 1280},
+    {"name": "fp16_full1280", "precision": "fp16", "mode": "full", "imgsz": 1280},
+    {"name": "pt_tiled", "precision": "pt", "mode": "tiled"},
+    {"name": "fp16_tiled", "precision": "fp16", "mode": "tiled"},
+    {"name": "int8_tiled", "precision": "int8", "mode": "tiled"},
+    {"name": "pt_tiled_px10", "precision": "pt", "mode": "tiled", "target_person_px": 10},
+    {"name": "fp16_tiled_px10", "precision": "fp16", "mode": "tiled", "target_person_px": 10},
+]
+
+
+def test_comparison_pairs() -> None:
+    pairs = set(comparison_pairs(VARIANTS))
+    assert pairs == {
+        ("pt_full1280", "fp16_full1280", KIND_QUANT),
+        ("pt_tiled", "fp16_tiled", KIND_QUANT),
+        ("pt_tiled", "int8_tiled", KIND_QUANT),
+        ("pt_tiled_px10", "fp16_tiled_px10", KIND_QUANT),
+        ("pt_tiled", "pt_tiled_px10", KIND_ALT),
+        ("fp16_tiled", "fp16_tiled_px10", KIND_ALT),
+        ("pt_full1280", "pt_tiled", KIND_TILE),
+        ("fp16_full1280", "fp16_tiled", KIND_TILE),
+    }
+
+
+def test_speed_rows_speedup_against_same_shape() -> None:
+    timing = [
+        {"run": "runs/rq2/speed/pt_tiled", "total_ms_p95": "400", "n_tiles": "32", "fps_at_p95": "2.5", "gpu": "Tesla T4"},
+        {"run": "runs/rq2/speed/fp16_tiled", "total_ms_p95": "100", "n_tiles": "32", "fps_at_p95": "10", "gpu": "Tesla T4"},
+        {"run": "runs/rq2/speed/fp16_full1280", "total_ms_p95": "50", "n_tiles": "1", "fps_at_p95": "20", "gpu": "Tesla T4"},
+    ]
+    rows = {r["variant"]: r for r in speed_rows(VARIANTS, timing)}
+    assert set(rows) == {"pt_tiled", "fp16_tiled", "fp16_full1280"}
+    assert rows["pt_tiled"]["speedup_p95_vs_pt"] == 1.0
+    assert rows["fp16_tiled"]["speedup_p95_vs_pt"] == 4.0
+    assert rows["fp16_full1280"]["speedup_p95_vs_pt"] is None  # pt_full1280 chưa có thời gian
+
+
+def test_accuracy_rows_and_markdown(tmp_path: Path) -> None:
+    out = compare_dir(tmp_path, "sds_det", "pt_tiled", "fp16_tiled", "0.5")
+    out.mkdir(parents=True)
+    (out / "compare.csv").write_text(
+        "size_bin,metric,A,B,diff,diff_lo,diff_hi,p_value,significant\n"
+        "all,AP,0.2345,0.2339,-0.0006,-0.004,0.002,0.7,False\n"
+        "8-16,AP,0.3,0.3,0,0,0,1,False\n"
+        "<8,recall,0.1,0.05,-0.05,-0.08,-0.01,0.01,True\n",
+        encoding="utf-8",
+    )
+    rows = accuracy_rows(tmp_path, ["sds_det"], [("pt_tiled", "fp16_tiled", KIND_QUANT)])
+    assert [(r["size_bin"], r["metric"]) for r in rows] == [("all", "AP"), ("<8", "recall")]
+    table = markdown_accuracy(rows, "0.5")
+    assert "| sds_det | nén | fp16_tiled − pt_tiled | −0,001 (−0,004 đến +0,002) | – | −0,050 (−0,080 đến −0,010) * |" in table
+
+
+def test_signed() -> None:
+    assert signed(0.0123) == "+0,012"
+    assert signed(-0.5) == "−0,500"
+    assert signed(None) == "–"

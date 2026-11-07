@@ -1,0 +1,25 @@
+# RQ2c mô phỏng: thiết bị yếu có theo kịp không. Cùng chuyến bay như rq3_adaptive.yaml (kịch bản quay 8 khung/giây,
+# recall theo cỡ người của E2c), pipeline xin xử lý 2, 4 hoặc 8 khung/giây trên thiết bị giả lập (edge/device_sim.py):
+# thiết bị bận thì bỏ khung tới, cảnh báo gửi lúc xử lý xong. Thu nhỏ về 10 px ở cả kịch bản (recall) và pipeline (số ô).
+# Chạy SAU khi hiệu chỉnh configs/devices/*.yaml từ RQ2 (scripts/after_rq2.py); hồ sơ Jetson vẫn là ước lượng.
+output: runs/rq3/device
+seeds: [0, 1, 2]
+scenario:
+  duration_s: 60
+  n_people: 10
+  lateral_m: 15
+  gps_sigma_m: 0.5
+  fp_per_frame: 0.5
+  fps: 8
+  recall_curve: runs/e6_sds/eval/recall_by_pixels.csv
+  recall_model: E2c
+  target_person_px: 10
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+  confirm: geo
+  target_person_px: 10
+grid:
+  scenario.alt_m: [30, 50, 100]
+  pipeline.fps: [2, 4, 8]
+  pipeline.device_profile: [configs/devices/t4.yaml, configs/devices/agx_orin_64gb.yaml, configs/devices/orin_nx_16gb.yaml, configs/devices/orin_nano_super.yaml]

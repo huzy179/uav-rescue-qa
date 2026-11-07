@@ -274,6 +274,8 @@ python scripts/run_rq2.py --config configs/experiments/rq2_t4.yaml              
 python scripts/run_rq2.py --config configs/experiments/rq2_t4.yaml --only pt_tiled fp16_tiled --steps export accuracy
 ```
 
+Sau khi tải `runs/rq2/` từ Output của Kaggle về máy (không cần GPU, cần `data/processed/sds_det` và `data/processed/visdrone`): `python scripts/after_rq2.py --rq2 runs/rq2` so cặp TensorRT với PyTorch, thu nhỏ theo độ cao với không thu nhỏ, cắt ô với toàn ảnh (bootstrap cặp, IoU 0,5 và 0,3), hiệu chỉnh lại `configs/devices/*.yaml` từ thời gian đo trên T4 (`--skip-devices` để giữ nguyên), rồi `eval/rq2_report.py` in bảng tốc độ và bảng hiệu độ chính xác dạng Markdown (`runs/rq2/report/`). Sau đó: `python -m sim.sweep_rq3 --config configs/experiments/rq3_device.yaml --jobs 8` (thiết bị yếu có theo kịp không, mô phỏng).
+
 Tần số xử lý theo độ cao: `python -m edge.main ... --min-views 6 --fps 8` xử lý dày khi bay thấp, thưa khi bay cao, để mỗi người được thấy khoảng 6 lần. Sai số vị trí trong cảnh báo tính theo vị trí trong ảnh và độ cao (`--gps-sigma-m`, `--alt-sigma-m`, `--yaw-sigma-deg`, `--tilt-sigma-deg`); `--position-error-m` ép một hằng số.
 
 Mô phỏng thêm: `python -m sim.make_rq3 ... --pattern zigzag --leg-m 200` (bay quét luống cày), `--alt-bias-m 2` (độ cao đo lệch), `--alt-profile 0:120,25:120,35:40` (độ cao đổi giữa chuyến), `--target-person-px 10` (detector giả lấy recall ở cỡ người sau khi thu nhỏ). Quét so sánh tần số cố định và theo độ cao: `python -m sim.sweep_rq3 --config configs/experiments/rq3_adaptive.yaml --jobs 8`.
