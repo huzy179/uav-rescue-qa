@@ -35,7 +35,7 @@ Cập nhật 7/11/2026.
 ### 1.4. Ngưỡng tin cậy
 
 - **Vấn đề.** Pipeline dùng conf 0,1 (để khối xác nhận lọc), bảng recall vận hành dùng 0,25; trên SeaDronesSee E2c cắt ô gốc có precision rất thấp (`scale_by_altitude.md`).
-- **Đề xuất (không cần GPU huấn luyện):** chọn ngưỡng theo nhóm cỡ người (người nhỏ ngưỡng thấp, người to ngưỡng cao) trên VisDrone val và SeaDronesSee, không trên tập lũ; kiểm chứng bằng báo nhầm mỗi phút và bỏ sót trong mô phỏng RQ3 với recall đo được.
+- **Đã thử, bỏ (7/11): ngưỡng theo cỡ box dự đoán** (`eval/conf_by_size.py`, `conf_by_size.md`). Chọn trên VisDrone val (tối đa recall giữ precision của ngưỡng 0,25): ngay trên tập chọn recall chỉ 0,6655 → 0,6657; ngưỡng riêng chỉ chuyển recall từ người 8–16 px sang người dưới 8 px. Trên test-dev recall −0,0019, precision −0,0141 (không có ý nghĩa); trên SeaDronesSee recall +0,0199 nhưng precision −0,0355 (có ý nghĩa). Giữ ngưỡng chung.
 
 ### 1.5. Một seed
 

@@ -405,6 +405,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `eval/recall_by_pixels.py` | E6: gộp người của mọi mức thu nhỏ, recall theo cạnh ngắn sau thu nhỏ (13.6) |
 | `eval/rq2_tradeoff.py` | RQ2: ghép độ chính xác và thời gian các biến thể thành bảng và hình recall theo FPS (14.5) |
 | `eval/rq2_report.py` | RQ2: bảng tốc độ (số lần nhanh hơn PyTorch) và hiệu độ chính xác theo cặp, dạng CSV và Markdown (14.5) |
+| `eval/conf_by_size.py` | Ngưỡng tin cậy theo cỡ box: chọn trên một tập, kiểm chứng bằng bootstrap cặp trên tập khác (kết quả âm, `conf_by_size.md`) |
 | `eval/frames.py` | Chọn khung từ video để gán nhãn: lấy mẫu theo thời gian, bỏ khung gần trùng bằng dHash, rải đều |
 | `eval/rq3_metrics.py` | Chỉ số RQ3 từ log pipeline và nhãn theo thời gian (15.4) |
 | `eval/timing_summary.py` | Thời gian từng chặng, p50/p95, FPS đạt được (14) |
