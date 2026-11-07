@@ -17,6 +17,14 @@ def test_latency_is_linear_in_inferences() -> None:
     assert PROFILE.latency_ms(8, 1) == pytest.approx(140.0)
 
 
+def test_resize_cost_only_when_frame_is_scaled() -> None:
+    profile = PROFILE.model_copy(update={"resize_ms_per_mpx": 5.0})
+    # 20 + 6 × 10 + 8,2944 MP × 5 = 121,472 ms; không thu nhỏ thì không cộng
+    assert profile.latency_ms(6, 0, 3840 * 2160 / 1e6) == pytest.approx(121.472)
+    assert profile.latency_ms(6, 0) == pytest.approx(80.0)
+    assert PROFILE.resize_ms_per_mpx == 0.0  # hồ sơ cũ không có khoá này vẫn đọc được
+
+
 def test_inference_counts_match_detector_tiling() -> None:
     # 1920×1080, ô 640, chồng 0,2 (bước 512): ngang ceil(1280/512)+1 = 4, dọc ceil(440/512)+1 = 2 → 8 ô
     assert inference_counts(1920, 1080, 1.0, "tiled", 640, 0.2) == (8, 0)

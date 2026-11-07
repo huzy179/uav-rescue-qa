@@ -127,6 +127,48 @@ def accuracy_rows(rq2: Path, datasets: list[str], pairs: list[tuple[str, str, st
     return rows
 
 
+def conf_rows(rq2: Path, datasets: list[str], variants: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Phân bố độ tin cậy của mọi box dự đoán (boxes.csv, conf ≥ 0,001) mỗi tập và biến thể: số box ở conf ≥ 0,25 và
+    ≥ 0,1, phân vị 99 và lớn nhất. Dùng để thấy nén INT8 dịch độ tin cậy xuống (docs/results/rq2_t4.md)."""
+    rows = []
+    for data in datasets:
+        for v in variants:
+            confs = sorted(float(r["conf"]) for r in read_csv(rq2 / data / v["name"] / "boxes.csv"))
+            if not confs:
+                continue
+            rows.append({"dataset": data, "variant": v["name"], "n_boxes": len(confs),
+                         "n_conf_ge_025": sum(c >= 0.25 for c in confs), "n_conf_ge_010": sum(c >= 0.1 for c in confs),
+                         "conf_q99": round(confs[min(len(confs) - 1, int(0.99 * len(confs)))], 4),
+                         "conf_max": round(confs[-1], 4)})
+    return rows
+
+
+def pareto_flags(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
+    """Mỗi dòng rq2.csv kèm cờ on_front: không dòng nào khác cùng tập vừa có FPS theo p95 lẫn recall vận hành ≥ nó
+    và hơn hẳn ở ít nhất một tiêu chí (biên Pareto recall theo tốc độ)."""
+    out = []
+    for r in rows:
+        fps, rec = _num(r.get("fps_at_p95")), _num(r.get("recall"))
+        if fps is None or rec is None:
+            continue
+        dominated = any(
+            o is not r and o["dataset"] == r["dataset"] and (of := _num(o.get("fps_at_p95"))) is not None
+            and (orc := _num(o.get("recall"))) is not None and of >= fps and orc >= rec and (of > fps or orc > rec)
+            for o in rows)
+        out.append({"dataset": r["dataset"], "variant": r["variant"], "fps_at_p95": fps, "recall": rec,
+                    "AP50": _num(r.get("AP50")), "on_front": not dominated})
+    return out
+
+
+def markdown_pareto(rows: list[dict[str, Any]]) -> str:
+    """Bảng biên Pareto, mỗi tập xếp theo FPS giảm dần."""
+    lines = ["| Tập | Biến thể | FPS theo p95 | Recall vận hành | AP50 | Trên biên Pareto |", "|---|---|---|---|---|---|"]
+    for r in sorted(rows, key=lambda r: (r["dataset"], -r["fps_at_p95"])):
+        lines.append(f"| {r['dataset']} | {r['variant']} | {vn(r['fps_at_p95'], 2)} | {vn(r['recall'])} | {vn(r['AP50'])} | "
+                     f"{'có' if r['on_front'] else ''} |")
+    return "\n".join(lines)
+
+
 def vn(x: float | None, digits: int = 3) -> str:
     """Số theo quy ước tài liệu: cố định chữ số thập phân, dấu phẩy; thiếu thì gạch."""
     if x is None:
@@ -165,7 +207,7 @@ def markdown_accuracy(rows: list[dict[str, Any]], iou: str) -> str:
     cell: dict[tuple[str, str, str, str], dict[str, Any]] = {}
     for r in rows:
         if r["iou"] == iou:
-            cell[(r["dataset"], r["b"], r["size_bin"], r["metric"])] = r
+            cell[(r["dataset"], r["a"], r["b"], r["size_bin"], r["metric"])] = r
     keys = sorted({(r["dataset"], r["kind"], r["a"], r["b"]) for r in rows if r["iou"] == iou})
 
     def fmt(r: dict[str, Any] | None) -> str:
@@ -177,8 +219,8 @@ def markdown_accuracy(rows: list[dict[str, Any]], iou: str) -> str:
     lines = [f"IoU {iou.replace('.', ',')}; * là có ý nghĩa thống kê (bootstrap cặp 95%).", "",
              "| Tập | So sánh | B − A | Hiệu AP, tất cả | Hiệu recall, tất cả | Hiệu recall < 8 px |", "|---|---|---|---|---|---|"]
     for data, kind, a, b in keys:
-        lines.append(f"| {data} | {kind} | {b} − {a} | {fmt(cell.get((data, b, 'all', 'AP')))} | "
-                     f"{fmt(cell.get((data, b, 'all', 'recall')))} | {fmt(cell.get((data, b, '<8', 'recall')))} |")
+        lines.append(f"| {data} | {kind} | {b} − {a} | {fmt(cell.get((data, a, b, 'all', 'AP')))} | "
+                     f"{fmt(cell.get((data, a, b, 'all', 'recall')))} | {fmt(cell.get((data, a, b, '<8', 'recall')))} |")
     return "\n".join(lines)
 
 
@@ -192,8 +234,12 @@ def main() -> None:
     accuracy = accuracy_rows(args.rq2, datasets, comparison_pairs(variants))
     write_csv(args.rq2 / "report" / "speed.csv", speed)
     write_csv(args.rq2 / "report" / "accuracy_diff.csv", accuracy)
+    write_csv(args.rq2 / "report" / "conf.csv", conf_rows(args.rq2, datasets, variants))
+    pareto = pareto_flags(read_csv(args.rq2 / "rq2.csv"))
+    write_csv(args.rq2 / "report" / "pareto.csv", pareto)
     gpu = next((r["gpu"] for r in speed if r["gpu"]), "?")
     print(f"## Tốc độ cả pipeline ({gpu}; chỉ so sánh tương đối)\n\n{markdown_speed(speed)}\n")
+    print(f"## Biên Pareto recall theo tốc độ\n\n{markdown_pareto(pareto)}\n")
     for iou in ("0.5", "0.3"):
         print(f"## Hiệu độ chính xác theo cặp\n\n{markdown_accuracy(accuracy, iou)}\n")
     if not accuracy:

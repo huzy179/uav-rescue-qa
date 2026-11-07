@@ -1,9 +1,12 @@
-# Hồ sơ thời gian thiết bị cho edge/device_sim.py: ước lượng, không phải số đo (TECHNICAL mục 14.6).
-name: Tesla T4 (Kaggle)
-calibrated: false
-source: >-
-  Ultralytics, bảng YOLO26 (docs.ultralytics.com/models/yolo26, xem 4/11/2026): YOLO26s 640 trên T4 TensorRT10 2,5 ms/ảnh, lô 1, không gồm tiền và hậu xử lý; trang không ghi độ chính xác số. full_ms = 4 × tile_ms (lượt 1280 có số pixel gấp 4 ô 640). overhead_ms = 0 vì chưa đo: đọc khung, cắt ô, gộp box chưa được tính, nên độ trễ ở đây thấp hơn thật. Thay bằng hồi quy trên timings.jsonl của RQ2 (tools/fit_device_profile.py).
+# Hồ sơ thời gian thiết bị cho edge/device_sim.py: đo trên T4 (TECHNICAL mục 14.6).
+name: Tesla T4 (Kaggle, do)
+calibrated: true
+source: 'Đo trên T4 bằng tools/fit_device_profile.py: overhead 0.55 ms, một ô 3.75
+  ms, toàn ảnh 23.72 ms, thu nhỏ khung 5.57 ms mỗi megapixel (trung vị; runs/rq2/speed/fp16_tiled/timings.jsonl,
+  runs/rq2/speed/fp16_full1280/timings.jsonl, runs/rq2/speed/fp16_tiled_px10/timings.jsonl).
+  Nhân tỉ lệ suy luận 1 và tỉ lệ CPU 1: chính T4, không nhân.'
 power_mode: không áp dụng
-overhead_ms: 0.0
-tile_ms: 2.5
-full_ms: 10.0
+overhead_ms: 0.55
+tile_ms: 3.75
+full_ms: 23.72
+resize_ms_per_mpx: 5.574

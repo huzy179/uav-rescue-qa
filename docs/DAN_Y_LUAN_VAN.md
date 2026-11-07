@@ -38,7 +38,7 @@ Nháp 8/11: `docs/luan_van/chuong2.md`, trích dẫn theo `luan_van/tai_lieu_tha
 
 ## Chương 3. Phương pháp
 
-Nháp đầy đủ 7/11: `docs/luan_van/chuong3.md` (3.1–3.8 và tóm tắt; còn **[CHỜ RQ2]** cho hồ sơ thiết bị đã hiệu chỉnh ở 3.8.3, hình 3.1 vẽ khi dàn trang). Thêm mục 3.8 (công cụ giả lập) so với dàn ý ban đầu.
+Nháp đầy đủ 7/11: `docs/luan_van/chuong3.md` (3.1–3.8 và tóm tắt; hồ sơ thiết bị đã hiệu chỉnh ở 3.8.3 điền 8/11; hình 3.1 vẽ khi dàn trang). Thêm mục 3.8 (công cụ giả lập) so với dàn ý ban đầu.
 
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
@@ -66,7 +66,7 @@ Nháp đầy đủ 7/11: `docs/luan_van/chuong4.md` (còn chỗ **[CHỜ KHOÁ]*
 
 Theo ba câu hỏi; mỗi câu hỏi con một tiểu mục ngắn: bảng, hình, nhận xét. Kết quả âm (nhánh P2) và kết quả sơ bộ giữ nguyên nhãn.
 
-Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDronesSee và VisDrone), RQ3a–e, mục 5.6; còn chỗ **[CHỜ KHOÁ]** (RQ1a phần lũ, RQ1e, RQ1f, 5.5), **[CHỜ RQ2]** (5.2, một ý ở 5.3.1 và 5.4); 5.4 và tóm tắt chương mới có khung.
+Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDronesSee và VisDrone), RQ3a–e, mục 5.6; còn chỗ **[CHỜ KHOÁ]** (RQ1a phần lũ, RQ1e, RQ1f, 5.5); câu hỏi 2 (5.2, Bảng 5.8a–d) điền 8/11; 5.4 và tóm tắt chương mới có khung.
 
 | Mục | Câu hỏi con | Kết quả | Trạng thái |
 |---|---|---|---|
@@ -76,8 +76,8 @@ Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDr
 | | RQ1d thu nhỏ theo độ cao | `scale_by_altitude.md`; biến thể âm: `upscale_small.md`, `full_pass.md` | Có, sơ bộ |
 | | RQ1e nhiễu của cảnh lũ | recall theo thẻ ảnh trên tập lũ | **Chờ** tập lũ |
 | | RQ1f chuyển sang cảnh lũ | `sds_det.md` và tập lũ | **Chờ** tập lũ |
-| 5.2 Câu hỏi 2 | RQ2a, RQ2b nén mô hình, cấu hình tốt nhất | Bảng recall theo FPS trên T4 (`rq2_t4.md`, bảng in sẵn bởi `scripts/after_rq2.py`) | **Đang chạy** trên Kaggle (7/11) |
-| | RQ2c thiết bị yếu | Giả lập thời gian thiết bị, hiệu chỉnh từ RQ2 (ước lượng, bảng riêng; mô phỏng `rq3_device.yaml`) | **Chờ** hiệu chỉnh |
+| 5.2 Câu hỏi 2 | RQ2a, RQ2b nén mô hình, cấu hình tốt nhất | Bảng tốc độ, hiệu độ chính xác theo cặp, biên Pareto trên T4 (`rq2_t4.md`) | **Đã có** (8/11) |
+| | RQ2c thiết bị yếu | Giả lập thời gian thiết bị, hiệu chỉnh từ RQ2 (ước lượng, bảng riêng; mô phỏng `rq3_device.yaml`, `rq2_t4.md` kết quả 4) | **Đã có** (8/11, mô phỏng) |
 | 5.3 Câu hỏi 3 | RQ3a số khung mỗi giây | `rq3_adaptive.md`, `rq3_altitude.md`, `rq3_altprofile.md` | Có, mô phỏng |
 | | RQ3b xác nhận | `sds_mot_confirm.md`, `rq3_cmc_cause.md` | Có, sơ bộ |
 | | RQ3c sai số GPS | `rq3_geoerr.md`, `rq3_yawcalib.md`, `rq3_gpsacc.md`; video thật: `georef_pitch.md`, `georef_sync.md` (âm) | Có, mô phỏng |
@@ -89,7 +89,7 @@ Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDr
 
 ## Chương 6. Kết luận
 
-Khung 8/11: `docs/luan_van/chuong6.md` (trả lời ba câu hỏi theo chương 5, đóng góp, giới hạn, hướng phát triển); chờ **[CHỜ KHOÁ]**, **[CHỜ RQ2]**, **[CHỜ #19]**.
+Khung 8/11: `docs/luan_van/chuong6.md` (trả lời ba câu hỏi theo chương 5, đóng góp, giới hạn, hướng phát triển); câu hỏi 2 điền 8/11; chờ **[CHỜ KHOÁ]**, **[CHỜ #19]**.
 
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|

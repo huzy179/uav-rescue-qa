@@ -44,9 +44,10 @@ Cập nhật 7/11/2026.
 
 ## 2. Tốc độ trên thiết bị biên (câu hỏi 2)
 
-- **Vấn đề.** Đo TensorRT FP16/INT8 trên T4 đang chạy (7/11; lần đầu INT8 lỗi với TensorRT 11, đã ghim TensorRT 10). Hồ sơ Jetson trong `configs/devices/` là ước lượng chưa hiệu chỉnh.
-- **Đã làm:** thu nhỏ theo độ cao giảm số ô mỗi khung (khung 4K từ 32 ô xuống 6 ô, `DEMO_BAO_VE.md`); tần số xử lý theo độ cao chạy ít khung hơn khi bay cao (`rq3_adaptive.md`); giả lập thời gian thiết bị (`--device-profile`).
-- **Đề xuất (cần GPU T4, khoảng 2 giờ):** chạy RQ2, rồi hiệu chỉnh hồ sơ bằng `scripts/after_rq2.py`.
+- **Đã đo (8/11, `rq2_t4.md`):** chín biến thể trên Kaggle T4. FP16 nhanh hơn PyTorch 1,833–3,028 lần mà độ chính xác gần như giữ; cấu hình đề xuất là FP16 với thu nhỏ theo độ cao (11,58 FPS theo p95 trên khung 4K, recall vận hành 0,580 trên SeaDronesSee). Hồ sơ `configs/devices/` đã hiệu chỉnh từ số đo này (Jetson vẫn là ước lượng, nhân tỉ lệ công bố).
+- **Đã làm:** thu nhỏ theo độ cao giảm số ô mỗi khung (khung 4K từ 32 ô xuống 6 ô); tần số xử lý theo độ cao chạy ít khung hơn khi bay cao (`rq3_adaptive.md`); giả lập thời gian thiết bị (`--device-profile`), từ 8/11 có thêm thời gian thu nhỏ khung (`resize_ms_per_mpx`).
+- **Điểm yếu mới đo được: đổi cỡ khung 4K tốn hơn suy luận.** Với thu nhỏ theo độ cao, `cv2.resize` (INTER_AREA) trên CPU mất 46,28 ms mỗi khung (trung vị) trên Kaggle, trong tổng 77,34 ms, nhiều hơn suy luận FP16 của 6 ô (30,56 ms). Trên Jetson CPU ARM còn yếu hơn. **Đề xuất (khoảng nửa ngày, chưa làm):** đổi cỡ trên GPU (torch `interpolate` có antialias, hoặc bộ VIC/NVMM của Jetson qua GStreamer), hoặc giải mã video thẳng ở độ phân giải thấp hơn khi bay cao; kiểm chứng bằng bootstrap cặp trên SeaDronesSee val (AP không được giảm) và `timings.jsonl` (chặng `tile_ms`).
+- **Điểm yếu mới đo được: INT8 nén độ tin cậy.** Trên VisDrone test-dev, INT8 mất ít AP50 (−0,021) nhưng mất 0,130 recall ở conf 0,25 (dưới 8 px: 0,217 → 0,108); recall tối đa gần như giữ. Ngưỡng 0,25 chọn cho mô hình không nén không hợp với INT8. **Đề xuất (chỉ khi thiết bị cần INT8):** chọn ngưỡng conf riêng cho INT8 trên VisDrone val (không trên test-dev, không trên tập lũ), và hiệu chỉnh INT8 với nhiều ảnh hơn, có ảnh nước. Trên T4 INT8 chỉ nhanh hơn FP16 ít (toàn ảnh 44,58 so với 39,90 FPS theo p95; thu nhỏ 10 px 11,98 so với 11,58) nên hiện không đáng.
 - **Đã thử, bỏ (8/11): đầu một-một không cần NMS của YOLO26** (`--nms-free`, `nms_free.md`). Cùng trọng số E2c, recall ở conf 0,25 giảm có ý nghĩa trên VisDrone (val −0,034, dưới 8 px −0,056; test-dev −0,030), AP50 gần như không đổi; trên PyTorch không nhanh hơn (15,2 ms/ảnh ở 1280 cả hai cách). Giữ mặc định có NMS.
 - **Đề xuất (chỉ nếu còn giờ T4):** đo thời gian đầu một-một trên TensorRT; nếu nhanh hơn rõ thì chọn lại ngưỡng conf trên val để lấy lại recall.
 - **Đã thử, bỏ (8/11): dùng lại kết quả ô không đổi khi drone đứng yên** (`--skip-static-tiles`, `edge/tile_cache.py`, `tile_skip.md`). Bốn đoạn SDS drone đứng yên: chỉ còn chạy 0,518–0,852 số ô nhưng recall giảm 0,035–0,238 (có ý nghĩa ở val v21 và train v9), precision cũng giảm: người bơi vẫn cử động mà ảnh ô thu nhỏ không thấy, box cũ bị dùng lại sai chỗ. Không dùng.
@@ -115,7 +116,7 @@ Cập nhật 7/11/2026.
 
 ## Thứ tự nên làm nếu còn giờ (đề xuất)
 
-1. RQ2 trên T4 rồi hiệu chỉnh hồ sơ thiết bị (mục 2): mở khoá câu hỏi 2, khoảng 2 giờ GPU.
+1. ~~RQ2 trên T4 rồi hiệu chỉnh hồ sơ thiết bị~~ (8/11, `rq2_t4.md`). Việc mới từ kết quả này: đổi cỡ khung trên GPU (mục 2), khoảng nửa ngày, không cần GPU Kaggle.
 2. Hai seed cho E2c (mục 1.5): cần cho chương 5, khoảng 20 giờ GPU.
 3. ~~Phóng to khi người dưới 8 px và lượt toàn ảnh cho người to~~ (7/11, cả hai kết quả âm: `upscale_small.md`, `full_pass.md`).
 4. ~~Đồng bộ thời gian metadata gimbal~~ (7/11, kết quả âm, `georef_sync.md`); còn lại ở mục 3.6: góc nhìn thật từng camera.

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from eval.rq2_report import (
-    KIND_ALT, KIND_QUANT, KIND_TILE, accuracy_rows, compare_dir, comparison_pairs, markdown_accuracy, signed, speed_rows,
+    KIND_ALT, KIND_QUANT, KIND_TILE, accuracy_rows, compare_dir, conf_rows, comparison_pairs, markdown_accuracy, pareto_flags, signed, speed_rows,
 )
 
 VARIANTS = [
@@ -73,3 +73,37 @@ def test_group_count_summary() -> None:
     assert s["n_alerts_matched"] == 3 and s["exact"] == round(1 / 3, 4)
     assert (s["n_over"], s["n_under"]) == (1, 1)
     assert s["error_mean"] == round((0 + 1 - 2) / 3, 4)
+
+
+def test_markdown_accuracy_keeps_pairs_with_same_b_apart(tmp_path: Path) -> None:
+    # fp16_tiled được so với hai mốc (pt_tiled, fp16_full1280): mỗi dòng phải lấy số của đúng cặp của nó.
+    for a, diff in (("pt_tiled", "-0.0008"), ("fp16_full1280", "-0.2229")):
+        out = compare_dir(tmp_path, "sds_det", a, "fp16_tiled", "0.5")
+        out.mkdir(parents=True)
+        (out / "compare.csv").write_text(
+            "size_bin,metric,A,B,diff,diff_lo,diff_hi,p_value,significant\n"
+            f"all,AP,0.3,0.3,{diff},-0.3,0.1,0.5,False\n", encoding="utf-8")
+    pairs = [("pt_tiled", "fp16_tiled", KIND_QUANT), ("fp16_full1280", "fp16_tiled", KIND_TILE)]
+    table = markdown_accuracy(accuracy_rows(tmp_path, ["sds_det"], pairs), "0.5")
+    assert "| fp16_tiled − pt_tiled | −0,001 (" in table
+    assert "| fp16_tiled − fp16_full1280 | −0,223 (" in table
+
+
+def test_pareto_flags() -> None:
+    rows = [
+        {"dataset": "d", "variant": "fast", "fps_at_p95": "40", "recall": "0.45", "AP50": "0.4"},
+        {"dataset": "d", "variant": "slow_better", "fps_at_p95": "10", "recall": "0.58", "AP50": "0.5"},
+        {"dataset": "d", "variant": "dominated", "fps_at_p95": "18", "recall": "0.44", "AP50": "0.4"},
+        {"dataset": "e", "variant": "alone", "fps_at_p95": "1", "recall": "0.1", "AP50": "0.1"},
+    ]
+    front = {r["variant"]: r["on_front"] for r in pareto_flags(rows)}
+    assert front == {"fast": True, "slow_better": True, "dominated": False, "alone": True}
+
+
+def test_conf_rows(tmp_path: Path) -> None:
+    run = tmp_path / "d" / "int8_tiled"
+    run.mkdir(parents=True)
+    (run / "boxes.csv").write_text("image,conf\na.jpg,0.05\na.jpg,0.2\nb.jpg,0.3\nb.jpg,0.6\n", encoding="utf-8")
+    rows = conf_rows(tmp_path, ["d"], [{"name": "int8_tiled"}, {"name": "missing"}])
+    assert rows == [{"dataset": "d", "variant": "int8_tiled", "n_boxes": 4, "n_conf_ge_025": 2, "n_conf_ge_010": 3,
+                     "conf_q99": 0.6, "conf_max": 0.6}]

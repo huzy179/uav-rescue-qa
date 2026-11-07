@@ -271,10 +271,21 @@ Một chuyến bay giả (đường thẳng hoặc quét luống cày) sinh tele
 Không có Jetson nên không đo được trực tiếp, và không có công cụ nào giả lập được GPU của Jetson. Cách làm: pipeline chạy thật trên máy này, nhưng đồng hồ mô phỏng coi mỗi khung tốn thời gian của thiết bị đích,
 
 ```
-độ_trễ = overhead + số_ô × t_ô + số_lượt_toàn_ảnh × t_toàn_ảnh
+độ_trễ = overhead + số_ô × t_ô + số_lượt_toàn_ảnh × t_toàn_ảnh + megapixel_khung_gốc × t_thu_nhỏ
 ```
 
-với số ô tính từ kích thước khung sau khi thu nhỏ theo độ cao (mục 3.4). Thiết bị bận tới khi xử lý xong; khung tới trong lúc bận bị bỏ, như trên máy thật, và cảnh báo vào hàng đợi gửi lúc xử lý xong. Hồ sơ thời gian của từng thiết bị lấy từ số đo trên GPU T4 (chương 4, mục 4.4.2) nhân với tỉ lệ thời gian thiết bị/T4 theo bảng benchmark công bố của Ultralytics trên cùng họ mô hình. [CHỜ RQ2] Hồ sơ sau khi hiệu chỉnh. Không giả lập được: giảm xung khi nóng, chế độ công suất thấp, tranh chấp bộ nhớ dùng chung giữa CPU và GPU.
+với số ô tính từ kích thước khung sau khi thu nhỏ theo độ cao (mục 3.4), và số hạng cuối chỉ có khi khung bị thu nhỏ. Thiết bị bận tới khi xử lý xong; khung tới trong lúc bận bị bỏ, như trên máy thật, và cảnh báo vào hàng đợi gửi lúc xử lý xong. Hồ sơ thời gian của từng thiết bị lấy từ số đo trên GPU T4 (chương 4, mục 4.4.2) nhân với tỉ lệ thời gian thiết bị/T4 theo bảng benchmark công bố của Ultralytics trên cùng họ mô hình (Bảng 3.x). Số hạng thu nhỏ khung được thêm sau khi đo trên T4 thấy đổi cỡ một khung 4K trên CPU tốn hơn cả suy luận (chương 5, mục 5.2.1).
+
+**Bảng 3.x.** Hồ sơ thời gian thiết bị, TensorRT FP16 (`configs/devices/`, `rq2_t4.md`). Hàng T4 là số đo; các hàng Jetson là ước lượng.
+
+| Thiết bị | overhead (ms) | t_ô, ô 640 (ms) | t_toàn_ảnh, 1280 (ms) | t_thu_nhỏ (ms mỗi megapixel) |
+|---|---|---|---|---|
+| Tesla T4 (đo) | 0,55 | 3,75 | 23,72 | 5,574 |
+| Jetson AGX Orin 64GB | 0,85 | 5,78 | 36,56 | 8,59 |
+| Jetson Orin NX 16GB | 1,34 | 9,12 | 57,63 | 13,539 |
+| Jetson Orin Nano Super | 1,48 | 10,09 | 63,77 | 14,983 |
+
+Tỉ lệ Jetson/T4 lấy từ thời gian suy luận YOLO26n công bố và được dùng chung cho phần chạy trên CPU (đọc khung, thu nhỏ, gộp box), một giả định chưa kiểm chứng. Không giả lập được: giảm xung khi nóng, chế độ công suất thấp, tranh chấp bộ nhớ dùng chung giữa CPU và GPU.
 
 ## Tóm tắt chương
 

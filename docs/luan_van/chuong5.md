@@ -1,6 +1,6 @@
 # Chương 5. Kết quả và thảo luận
 
-> **Ghi chú bản nháp (xoá khi đưa vào quyển).** Nháp 7/11/2026 theo `docs/DAN_Y_LUAN_VAN.md` mục chương 5. Mọi số liệu chép từ `docs/results/` (mỗi bảng ghi file nguồn), các file đó chép từ CSV trong `runs/`. Chỗ đánh dấu **[CHỜ KHOÁ]** điền sau khi khoá và chấm tập ảnh lũ (11–13/11); **[CHỜ RQ2]** điền sau khi chạy đo tốc độ trên Kaggle T4. Kết quả "sơ bộ" và "mô phỏng" giữ nguyên nhãn đó. Thuật ngữ theo `docs/THUAT_NGU.md`. Số hình, số bảng đánh lại khi dàn trang.
+> **Ghi chú bản nháp (xoá khi đưa vào quyển).** Nháp 7/11/2026 theo `docs/DAN_Y_LUAN_VAN.md` mục chương 5. Mọi số liệu chép từ `docs/results/` (mỗi bảng ghi file nguồn), các file đó chép từ CSV trong `runs/`. Chỗ đánh dấu **[CHỜ KHOÁ]** điền sau khi khoá và chấm tập ảnh lũ (11–13/11); phần câu hỏi 2 đã điền 8/11 từ `rq2_t4.md`. Kết quả "sơ bộ" và "mô phỏng" giữ nguyên nhãn đó. Thuật ngữ theo `docs/THUAT_NGU.md`. Số hình, số bảng đánh lại khi dàn trang.
 
 Chương này trình bày kết quả theo ba câu hỏi nghiên cứu. Mỗi câu hỏi con có một tiểu mục: bảng số, điều bảng cho thấy, và giới hạn của nó. Cách đo, tập dữ liệu và mã thí nghiệm đã mô tả ở chương 4; ở đây chỉ nhắc lại khi cần để đọc đúng một bảng.
 
@@ -194,17 +194,73 @@ Câu hỏi 2 đo trên GPU Tesla T4 của Kaggle với TensorRT, vì đề tài 
 Một lựa chọn đã thử trước khi đo trên T4: YOLO26 có đầu ra một-một không cần NMS, được giới thiệu là đơn giản cho thiết bị biên. Cùng trọng số mô hình chính, đầu này làm recall vận hành giảm có ý nghĩa trên VisDrone, nhiều nhất ở người dưới 8 px (val −0,056, test-dev −0,029), trong khi AP50 gần như giữ và thời gian trên PyTorch không đổi (`nms_free.md`). Mọi cấu hình dưới đây dùng đầu mặc định có NMS. Một cách giảm khối lượng tính khác cũng đã thử và bỏ: khi drone đứng yên, dùng lại kết quả của ô gần như không đổi làm số ô phải chạy còn 0,518–0,852 so với chạy đủ, nhưng recall giảm tới 0,238 vì người bơi vẫn cử động mà phép so ô thu nhỏ không thấy (`tile_skip.md`).
 
 
-[CHỜ RQ2] Bảng cho mỗi cấu hình (PyTorch FP32, TensorRT FP16, TensorRT INT8; toàn ảnh 1280 và cắt ô; có và không thu nhỏ theo độ cao): thời gian từng khâu (giải mã, cắt ô, suy luận, gộp box) theo trung vị và p95, số khung mỗi giây, AP50 và recall vận hành theo nhóm cỡ. Câu hỏi cần trả lời:
+Chín cấu hình được đo trên T4: mô hình chính ở PyTorch, TensorRT FP16 và TensorRT INT8, mỗi loại chạy toàn ảnh 1280, cắt ô 640 ở độ phân giải gốc, và cắt ô sau khi thu nhỏ về 10 px dự kiến theo độ cao. Tốc độ là của **cả pipeline** trên thiết bị biên (đọc khung, thu nhỏ, cắt ô, suy luận, gộp box, chiếu xuống mặt đất, xác nhận) trên 100 khung của một đoạn video SeaDronesSee 4K có telemetry thật; độ chính xác chấm trên SeaDronesSee val và VisDrone test-dev.
 
-- INT8 mất bao nhiêu AP50 ở nhóm dưới 8 px so với FP16, bootstrap cặp;
-- những cấu hình nào nằm trên **biên Pareto** (không cấu hình nào khác vừa nhanh hơn vừa có recall cao hơn), vẽ thành hình recall theo số khung mỗi giây;
-- cấu hình nào đạt tần số cần thiết (mục 5.3.1) với recall cao nhất.
+**Bảng 5.8a.** Tốc độ cả pipeline trên khung 4K, Tesla T4 (`rq2_t4.md`). Chỉ so sánh tương đối.
 
-Nguồn: `notebooks/kaggle_rq2.ipynb`, `eval/timing_summary.py`, `eval/rq2_tradeoff.py`; file kết quả dự kiến `docs/results/rq2_t4.md`.
+| Cấu hình | Số ô | Thu nhỏ khung p50 (ms) | Suy luận p50 (ms) | Tổng p50 (ms) | Khung/giây theo p95 |
+|---|---|---|---|---|---|
+| PyTorch, toàn ảnh | 1 | 0,00 | 54,37 | 54,71 | 18,01 |
+| FP16, toàn ảnh | 1 | 0,00 | 23,72 | 24,06 | 39,90 |
+| INT8, toàn ảnh | 1 | 0,00 | 20,11 | 20,37 | 44,58 |
+| PyTorch, cắt ô gốc | 32 | 0,05 | 385,50 | 386,06 | 2,48 |
+| FP16, cắt ô gốc | 32 | 0,05 | 120,10 | 120,57 | 7,50 |
+| INT8, cắt ô gốc | 32 | 0,05 | 105,98 | 106,58 | 9,04 |
+| PyTorch, thu nhỏ 10 px | 6 | 46,35 | 90,97 | 138,49 | 6,32 |
+| FP16, thu nhỏ 10 px | 6 | 46,28 | 30,56 | 77,34 | 11,58 |
+| INT8, thu nhỏ 10 px | 6 | 45,74 | 25,84 | 72,10 | 11,98 |
+
+**FP16 gần như không mất gì.** So với PyTorch cùng cách chạy, FP16 nhanh hơn 1,833–3,028 lần (theo p95). Trên SeaDronesSee hiệu AP50 và recall vận hành không có ý nghĩa thống kê; trên VisDrone AP50 giảm 0,005 và recall vận hành của người dưới 8 px không khác có ý nghĩa (`rq2_t4.md`).
+
+**INT8 mất recall vận hành, không phải khả năng phân biệt.** Bảng 5.8b trả lời câu hỏi "INT8 mất gì ở người nhỏ" trên VisDrone test-dev (SeaDronesSee val gần như không có người dưới 16 px).
+
+**Bảng 5.8b.** INT8 so với PyTorch, toàn ảnh 1280, VisDrone test-dev, IoU 0,5 (`rq2_t4.md`).
+
+| Nhóm cỡ | AP50 PyTorch → INT8 | Recall vận hành (conf 0,25) | Recall tối đa (mọi ngưỡng) |
+|---|---|---|---|
+| < 8 px | 0,241 → 0,223 | 0,217 → 0,108 | 0,477 → 0,461 |
+| 8–16 px | 0,623 → 0,592 | 0,572 → 0,407 | 0,853 → 0,834 |
+| 16–32 px | 0,823 → 0,808 | 0,783 → 0,664 | 0,951 → 0,945 |
+| > 32 px | 0,888 → 0,879 | 0,853 → 0,768 | 0,969 → 0,970 |
+
+Hiệu AP50 dưới 8 px là −0,018 (KTC 95% −0,041 đến −0,015), còn hiệu recall vận hành dưới 8 px là −0,109 (−0,176 đến −0,096); ở IoU 0,3 tương ứng −0,035 và −0,172. Recall tối đa gần như giữ, còn số box có độ tin cậy từ 0,25 trở lên giảm từ 19.423 (FP16) xuống 10.940 và phân vị 99 của độ tin cậy từ 0,639 xuống 0,492. Nghĩa là **INT8 nén độ tin cậy xuống**: thứ tự giữa các box gần như giữ nên AP ít đổi, nhưng ngưỡng 0,25 chọn cho mô hình không nén cắt mất một nửa số người dưới 8 px. Đổi lại, INT8 chỉ nhanh hơn FP16 ít (Bảng 5.8a). Trên SeaDronesSee với thu nhỏ theo độ cao, INT8 không khác PyTorch có ý nghĩa, nhưng khoảng tin cậy rộng (recall vận hành −0,025, từ −0,100 đến +0,010).
+
+**Thu nhỏ theo độ cao vừa đúng hơn vừa nhanh hơn, và đẩy chỗ tốn thời gian sang khâu đổi cỡ khung.** Trên khung 4K, cắt ô ở độ phân giải gốc phải chạy 32 ô và cho AP50 thấp nhất (0,234; INT8 0,164); thu nhỏ về 10 px còn 6 ô, AP50 0,534 với FP16 (hiệu +0,301, KTC 95% +0,060 đến +0,414). Nhưng đổi cỡ một khung 4K trên CPU mất 46,28 ms (trung vị, FP16), nhiều hơn suy luận của 6 ô (30,56 ms với FP16). Từ đây, muốn nhanh hơn nữa thì phải tối ưu khâu đổi cỡ khung (làm trên GPU hoặc giải mã video ở độ phân giải thấp hơn), không phải nén mô hình thêm.
+
+**Bảng 5.8c.** Biên Pareto recall vận hành theo tốc độ, SeaDronesSee val (`rq2_t4.md`; hình: `runs/rq2/rq2_sds_det.png`).
+
+| Cấu hình | Khung/giây theo p95 | Recall vận hành | AP50 | Trên biên |
+|---|---|---|---|---|
+| INT8, toàn ảnh | 44,58 | 0,443 | 0,470 | có |
+| FP16, toàn ảnh | 39,90 | 0,468 | 0,457 | có |
+| PyTorch, toàn ảnh | 18,01 | 0,466 | 0,468 | |
+| INT8, thu nhỏ 10 px | 11,98 | 0,554 | 0,524 | có |
+| FP16, thu nhỏ 10 px | 11,58 | 0,580 | 0,534 | có |
+| INT8, cắt ô gốc | 9,04 | 0,290 | 0,164 | |
+| FP16, cắt ô gốc | 7,50 | 0,372 | 0,234 | |
+| PyTorch, thu nhỏ 10 px | 6,32 | 0,579 | 0,531 | |
+| PyTorch, cắt ô gốc | 2,48 | 0,374 | 0,234 | |
+
+**Trả lời RQ2a, RQ2b.** Trên T4, FP16 là mức nén nên dùng: nhanh hơn PyTorch 1,833–3,028 lần mà độ chính xác gần như giữ. INT8 nhanh thêm ít và, với ngưỡng hiện tại, mất một nửa recall vận hành ở người dưới 8 px vì độ tin cậy bị nén; muốn dùng phải chọn lại ngưỡng riêng trên tập val. Biên Pareto có hai nhóm: toàn ảnh (39,90–44,58 khung/giây theo p95, recall vận hành 0,443–0,468) và thu nhỏ theo độ cao (11,58–11,98 khung/giây, recall 0,554–0,580). Vì trần tần số cần thiết ở mục 5.3.1 là 8 khung mỗi giây, cấu hình được chọn là **FP16 với thu nhỏ theo độ cao**: recall cao nhất trên biên và vẫn trên mức cần thiết trên T4. Thiết bị yếu hơn có theo kịp không là câu hỏi của mục 5.2.2.
 
 ### 5.2.2. Thiết bị yếu (RQ2c)
 
-[CHỜ RQ2] Bảng **ước lượng** cho Jetson Orin Nano từ giả lập thời gian thiết bị (chương 3), hồ sơ hiệu chỉnh theo tỉ lệ đo được trên T4. Bảng này để riêng và ghi rõ là ước lượng, không đặt cạnh số đo. Câu hỏi cần trả lời: với tần số tối thiểu ở mục 5.3.1, thiết bị yếu có theo kịp không; thu nhỏ theo độ cao giảm số ô phải chạy, nên giảm thời gian mỗi khung bao nhiêu.
+Không có Jetson, nên câu hỏi này trả lời bằng **giả lập thời gian thiết bị** (chương 3): pipeline chạy trên máy cá nhân nhưng "bận" theo hồ sơ của thiết bị khác, khung tới lúc bận bị bỏ. Hồ sơ được hiệu chỉnh từ số đo trên T4 ở mục 5.2.1; với Jetson, nó nhân thêm tỉ lệ thời gian suy luận công bố (Jetson so với T4), nên **mọi số trong mục này là ước lượng**, không đặt cạnh số đo. Khi đo trên T4 thấy khâu thu nhỏ khung tốn nhiều, hồ sơ được bổ sung một hệ số thời gian thu nhỏ theo megapixel; nếu không, giả lập sẽ bỏ qua đúng phần nặng nhất của cấu hình được chọn.
+
+**Bảng 5.8d.** Thiết bị yếu theo kịp không: cùng chuyến bay như Bảng 5.10, thu nhỏ về 10 px, pipeline xin 8 khung mỗi giây (`rq2_t4.md`). **Mô phỏng, hồ sơ Jetson là ước lượng.**
+
+| Độ cao | Thiết bị | Độ trễ mỗi khung, trung vị (ms) | Khung xử lý trong 60 s | Tỉ lệ bỏ sót |
+|---|---|---|---|---|
+| 30 m | T4 (hồ sơ đo) | 54,283 | 480 | 0,000 |
+| 30 m | AGX Orin | 83,659 | 480 | 0,000 |
+| 30 m | Orin NX | 131,878 | 240 | 0,067 |
+| 30 m | Orin Nano Super | 145,935 | 240 | 0,067 |
+| 50 m | T4 (hồ sơ đo) | 69,283 | 480 | 0,000 |
+| 50 m | Orin Nano Super | 186,295 | 240 | 0,033 |
+| 100 m | T4 (hồ sơ đo) | 136,783 | 240 | 0,000 |
+| 100 m | Orin Nano Super | 367,915 | 160 | 0,000 |
+
+**Trả lời RQ2c.** Theo ước lượng, Orin NX và Orin Nano Super chỉ xử lý được 4 trong 8 khung mỗi giây khi bay 30–50 m, nên bỏ sót 0,067 ở 30 m, bằng đúng mức của việc chỉ xin 4 khung mỗi giây; ở 100 m mọi thiết bị đều không bỏ sót vì 2 khung mỗi giây đã đủ (Bảng 5.10). Thiết bị yếu thiếu sức đúng lúc bay thấp, khi tần số cần cao nhất. Cũng lúc đó mỗi khung chỉ có 2 ô, nên độ trễ chủ yếu nằm ở khâu thu nhỏ khung 4K chứ không ở suy luận: nén thêm mô hình (INT8) giúp ít, còn đổi cỡ khung trên GPU hoặc lấy video ở độ phân giải thấp hơn khi bay thấp mới là hướng đúng (chưa làm, chương 6). Các số này phụ thuộc vào một giả định chưa kiểm chứng, rằng phần chạy trên CPU của Jetson chậm hơn T4 theo cùng tỉ lệ với phần suy luận.
 
 ## 5.3. Câu hỏi 3: báo đúng về trạm mặt đất
 
@@ -244,7 +300,7 @@ Tần số theo độ cao **chuyển khung từ chỗ thừa sang chỗ thiếu*
 
 Khi độ cao **đổi giữa chuyến** (dò ở 120 m rồi hạ xuống 40 m), 12 lần nhìn với trần 8 bỏ sót 0,033 với 137 khung, gần bằng xử lý cố định 8 khung mỗi giây (0,000 với 480 khung); thêm thu nhỏ về 10 px thì không bỏ sót ai (`rq3_altprofile.md`). Trong mô phỏng, thu nhỏ theo độ cao chỉ cải thiện nhỏ, vì người ở 30–120 m nằm trong khoảng 8–45 px, nơi đường recall của mô hình chính gần phẳng (Bảng 5.2); lợi ích đo được trên SeaDronesSee (Bảng 5.8) đến từ người trên 45 px và từ báo nhầm khi cắt ô người to, hai thứ mô phỏng không có. Một lý do nữa: mô phỏng giả định người rộng 0,5 m, trong khi box người trong nhãn SeaDronesSee, nguồn của đường recall, lớn hơn khoảng 1,8–2,6 lần ở khung nhìn thẳng. Lặp lại mô phỏng với người 1,0 m, bay 30 m bỏ sót 0,867 và thu nhỏ về 10 px dự kiến giảm còn 0,400; ở 50 m từ 0,133 còn 0,033 (`person_px_check.md`, **mô phỏng**). Con số bỏ sót khi bay thấp vì vậy phụ thuộc mạnh vào cỡ người giả định.
 
-**Trả lời RQ3a.** Không có một tần số đủ cho mọi độ cao. Tần số cần thiết phụ thuộc độ cao, vận tốc và recall của detector; tính nó từ telemetry giúp vừa giảm bỏ sót khi bay thấp vừa giảm tính toán khi bay cao. [CHỜ RQ2] Đối chiếu tần số cần thiết với tốc độ đo được.
+**Trả lời RQ3a.** Không có một tần số đủ cho mọi độ cao. Tần số cần thiết phụ thuộc độ cao, vận tốc và recall của detector; tính nó từ telemetry giúp vừa giảm bỏ sót khi bay thấp vừa giảm tính toán khi bay cao. Đối chiếu với câu hỏi 2: cấu hình được chọn chạy 11,58 khung mỗi giây (p95) trên T4 với khung 4K, trên trần 8; thiết bị yếu hơn theo ước lượng chỉ đạt 4 khung mỗi giây khi bay 30–50 m (Bảng 5.8d).
 
 ### 5.3.2. Gom theo toạ độ mặt đất hay theo dõi trên ảnh (RQ3b)
 
@@ -376,7 +432,7 @@ Giới hạn: ba đoạn video, đối chiếu với nhãn trong không gian ả
 Ba kết quả ở ba câu hỏi có chung một cơ chế: **dùng telemetry sẵn có của drone (độ cao, GPS, hướng) thay cho một giả định cố định**.
 
 - **Phát hiện (RQ1d):** độ cao cho biết người sẽ to bao nhiêu pixel, nên chọn được mức thu nhỏ đưa người về cỡ mô hình làm tốt. Trên SeaDronesSee 4K, cách này nâng AP50 của mô hình chính khi cắt ô từ 0,235 lên 0,531 (Bảng 5.8).
-- **Tốc độ (RQ2c):** cùng mức thu nhỏ đó giảm số ô phải chạy; cùng độ cao và vận tốc cho biết cần bao nhiêu khung mỗi giây (Bảng 5.10). [CHỜ RQ2] Số ô và thời gian mỗi khung giảm bao nhiêu.
+- **Tốc độ (RQ2c):** cùng mức thu nhỏ đó giảm số ô phải chạy; cùng độ cao và vận tốc cho biết cần bao nhiêu khung mỗi giây (Bảng 5.10). Trên khung 4K, số ô giảm từ 32 xuống 6 và tổng thời gian trung vị với FP16 từ 120,57 ms xuống 77,34 ms trên T4 (Bảng 5.8a), đồng thời AP50 tăng.
 - **Xác nhận (RQ3b):** GPS và hướng cho phép ghép các lần thấy theo toạ độ mặt đất, không cần box chồng lấn giữa hai khung; nhờ đó xác nhận được người ở 2 khung mỗi giây, nơi tracker trên ảnh gãy (Bảng 5.11, 5.12).
 
 Mặt trái của luận điểm cũng phải nêu: hệ thống phụ thuộc vào chất lượng telemetry. GPS tệ hơn giả định làm vùng tìm 95% không còn đủ (Bảng 5.13), la bàn lệch gây tách nhầm khi bay cao, và góc gimbal nhiễu làm phép chiếu theo góc nghiêng kém hơn ở một số đoạn (mục 5.3.2).
@@ -403,5 +459,5 @@ Phần này không đo gì mới; nó cho thấy các thành phần chạy cùng
 [Viết sau khi điền đủ các chỗ chờ. Khung dự kiến:]
 
 - **Câu hỏi 1.** Dữ liệu huấn luyện quyết định nhiều nhất cho người nhỏ; kiến trúc (P2) và cắt ô trên ảnh độ phân giải vừa giúp rất ít. Mô hình tinh chỉnh yếu với người to; thu nhỏ theo độ cao bù được trên SeaDronesSee. Thêm ảnh thảm hoạ người to theo cách đơn giản làm mất người nhỏ. [CHỜ KHOÁ] Kết quả trên tập lũ.
-- **Câu hỏi 2.** [CHỜ RQ2]
+- **Câu hỏi 2.** Trên T4, TensorRT FP16 nhanh hơn PyTorch 1,833–3,028 lần mà gần như không mất độ chính xác; INT8 nhanh thêm ít và nén độ tin cậy, mất một nửa recall vận hành ở người dưới 8 px với ngưỡng hiện tại. Cấu hình được chọn là FP16 với thu nhỏ theo độ cao, nằm trên biên Pareto với recall cao nhất. Khâu tốn thời gian nhất của nó là thu nhỏ khung 4K, không phải suy luận; theo ước lượng, thiết bị yếu thiếu sức đúng lúc bay thấp.
 - **Câu hỏi 3.** Trong mô phỏng và trên ba đoạn video thật: gom theo toạ độ mặt đất bền hơn theo dõi trên ảnh ở 2 khung mỗi giây; tần số theo độ cao giảm bỏ sót khi bay thấp và giảm tính toán khi bay cao; vùng tìm 95% chứa người thật khi GPS không tệ hơn giả định; thăm dò đường truyền giữ không mất cảnh báo và cắt độ trễ lớn nhất; gộp ở trạm giảm lặp mà không bỏ cảnh báo.

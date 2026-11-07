@@ -5,7 +5,7 @@ import random
 import pytest
 
 from edge.georef import Camera, ground_offset_m, offset_gps
-from eval.rq3_metrics import compute_metrics, presence
+from eval.rq3_metrics import compute_metrics, presence, timing_metrics
 from shared.schema import Alert, Telemetry
 from sim.flight import StraightFlight
 from sim.scenario import GaussMarkovGps, Person, noisy_telemetry, simulate_detections, visible_boxes
@@ -176,3 +176,9 @@ def test_visible_boxes_person_size() -> None:
     (_, small), = visible_boxes([Person(0, 21.0, 105.8)], tel, cam, 0.0)
     (_, big), = visible_boxes([Person(0, 21.0, 105.8)], tel, cam, 0.0, person_m=1.0)
     assert abs((big[2] - big[0]) - 2 * (small[2] - small[0])) < 1e-9
+
+
+def test_timing_metrics_simulated_latency() -> None:
+    records = [{"sim_latency_ms": 50.0}, {"sim_latency_ms": 70.0}, {"sim_latency_ms": 60.0}, {"sim_latency_ms": 90.0}]
+    assert timing_metrics(records) == {"frames_processed": 4, "sim_latency_ms_median": 65.0}
+    assert timing_metrics([{"infer_ms": 3.0}]) == {"frames_processed": 1, "sim_latency_ms_median": None}

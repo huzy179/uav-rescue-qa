@@ -1,6 +1,6 @@
 # Chương 6. Kết luận
 
-> **Ghi chú bản nháp (xoá khi đưa vào quyển).** Khung 8/11/2026 theo `docs/DAN_Y_LUAN_VAN.md` mục chương 6. Chương này **không đưa số mới**: mỗi câu trả lời tóm từ chương 5, số (nếu có) chép từ bảng của chương 5 kèm số bảng. Chỗ **[CHỜ KHOÁ]** điền sau khi chấm tập ảnh lũ (11–13/11), **[CHỜ RQ2]** sau khi có kết quả đo tốc độ trên T4, **[CHỜ #19]** theo quyết định về cách viết đóng góp. Viết lại toàn chương sau khi chương 5 đủ.
+> **Ghi chú bản nháp (xoá khi đưa vào quyển).** Khung 8/11/2026 theo `docs/DAN_Y_LUAN_VAN.md` mục chương 6. Chương này **không đưa số mới**: mỗi câu trả lời tóm từ chương 5, số (nếu có) chép từ bảng của chương 5 kèm số bảng. Chỗ **[CHỜ KHOÁ]** điền sau khi chấm tập ảnh lũ (11–13/11), **[CHỜ #19]** theo quyết định về cách viết đóng góp. Viết lại toàn chương sau khi chương 5 đủ.
 
 ## 6.1. Trả lời các câu hỏi nghiên cứu
 
@@ -10,13 +10,13 @@ Dữ liệu huấn luyện quyết định nhiều nhất. Tinh chỉnh trên �
 
 **Câu hỏi 2: cấu hình nào đạt tần số xử lý cần thiết mà giữ recall cao nhất.**
 
-[CHỜ RQ2] Mức nhanh thêm và mức mất độ chính xác của FP16, INT8 so với PyTorch, nhất là ở người nhỏ; cấu hình không bị cấu hình nào khác vượt ở cả tốc độ lẫn recall; thiết bị yếu có theo kịp tần số cần thiết (mục 5.3.1) không, và thu nhỏ theo độ cao giảm khối lượng tính bao nhiêu (ước lượng bằng giả lập thời gian thiết bị).
+Trên GPU T4 với TensorRT, nén FP16 nhanh hơn PyTorch 1,833–3,028 lần mà gần như không mất độ chính xác; nén INT8 nhanh thêm ít và nén độ tin cậy xuống, nên với cùng ngưỡng mất một nửa recall vận hành ở người dưới 8 px dù AP gần như giữ (Bảng 5.8a, 5.8b). Cấu hình được chọn là FP16 với thu nhỏ theo độ cao: nằm trên biên Pareto với recall cao nhất, vượt trần 8 khung mỗi giây của câu hỏi 3 trên T4 (Bảng 5.8c). Thu nhỏ theo độ cao vừa tăng độ chính xác vừa giảm số ô từ 32 xuống 6 trên khung 4K; chỗ tốn thời gian nhất sau đó là thu nhỏ khung trên CPU chứ không phải suy luận. Theo ước lượng bằng giả lập thời gian thiết bị, Jetson Orin NX và Orin Nano Super chỉ xử lý được 4 khung mỗi giây khi bay 30–50 m, đúng lúc cần tần số cao nhất (Bảng 5.8d); ở độ cao lớn, 2 khung mỗi giây đã đủ cho mọi thiết bị.
 
 **Câu hỏi 3: hệ thống báo nhầm, bỏ sót bao nhiêu, cảnh báo tới trạm sau bao lâu; cách xác nhận nào chịu được sai số GPS và chuyển động camera.**
 
 Khi chỉ xử lý vài khung mỗi giây, gom phát hiện theo toạ độ mặt đất bền hơn theo dõi trên ảnh, cả trên ba đoạn video thật có telemetry lẫn trong mô phỏng có nhiễu GPS; bù chuyển động camera bằng telemetry chỉ cứu được theo dõi trên ảnh khi GPS rất ổn định giữa hai khung (mục 5.3.2). Không có một tần số đủ cho mọi độ cao; tính tần số từ độ cao và vận tốc giảm bỏ sót khi bay thấp và giảm tính toán khi bay cao (mục 5.3.1). Vùng tìm 95% chứa người thật khi GPS không tệ hơn giả định; lấy độ chính xác GPS do bộ thu báo giữ được điều đó khi GPS kém đi giữa chuyến, và tự hiệu chỉnh lệch la bàn giảm tách nhầm khi bay cao (mục 5.3.3, mô phỏng). Hàng đợi gửi kèm thăm dò đường truyền không làm mất cảnh báo nào trong mọi kịch bản mất gói, mất sóng, kể cả mất theo cụm; phần trễ còn lại là chính độ dài khoảng mất sóng (mục 5.3.4, mô phỏng). Gộp ở trạm giảm cảnh báo lặp mà không bỏ cảnh báo nào (mục 5.3.5). Phần lớn kết quả câu hỏi 3 là mô phỏng; phần trên video thật dựa vào ba đoạn SeaDronesSee.
 
-**Luận điểm xuyên suốt.** [Viết sau mục 5.4.] Dữ liệu bay sẵn có của UAV giúp ở cả ba khâu: chọn cỡ ảnh khi phát hiện, giảm khối lượng tính để máy yếu theo kịp [CHỜ RQ2], và xác nhận người khi chỉ xử lý vài khung mỗi giây.
+**Luận điểm xuyên suốt.** [Viết sau mục 5.4.] Dữ liệu bay sẵn có của UAV giúp ở cả ba khâu: chọn cỡ ảnh khi phát hiện, giảm khối lượng tính để máy yếu theo kịp (số ô từ 32 xuống 6 trên khung 4K), và xác nhận người khi chỉ xử lý vài khung mỗi giây.
 
 ## 6.2. Đóng góp
 
@@ -41,7 +41,8 @@ Kèm theo: hệ thống hoàn chỉnh từ video tới bản đồ, các công c
 
 - Đo trên thiết bị Jetson thật, gồm điện năng và giảm xung khi nóng; hiệu chỉnh lại giả lập thời gian thiết bị bằng số đo đó.
 - Mở rộng tập ảnh lũ, nhất là video có telemetry để đánh giá thu nhỏ theo độ cao trên cảnh lũ.
-- Thử đầu ra một-một không cần NMS của YOLO26 để giảm thời gian mỗi khung (`CAI_TIEN.md`).
+- Đổi cỡ khung trên GPU (hoặc giải mã video ở độ phân giải thấp hơn khi bay thấp), vì đây là khâu chậm nhất của cấu hình được chọn và là chỗ thiết bị yếu thiếu sức (mục 5.2).
+- Nếu cần INT8: chọn ngưỡng tin cậy riêng cho mô hình nén trên tập val và hiệu chỉnh INT8 với ảnh có nước.
 - Ảnh nhiệt kết hợp ảnh màu cho ban đêm và người bị che khuất.
 - Nhiều UAV phối hợp, chia vùng quét; xếp ưu tiên sự cố theo mức nguy cấp.
-- Các mục "Đề xuất" còn lại của `docs/CAI_TIEN.md` (ví dụ bỏ qua ô không thay đổi khi UAV gần đứng yên, đọc độ chính xác GPS từ log bay thật).
+- Các mục "Đề xuất" còn lại của `docs/CAI_TIEN.md` (ví dụ đọc độ chính xác GPS từ log bay thật). Hai hướng giảm tính toán đã thử và bỏ: đầu ra không cần NMS của YOLO26 (mất recall, không nhanh hơn trên PyTorch) và dùng lại kết quả ô không đổi khi UAV đứng yên (mất recall vì người bơi vẫn cử động).

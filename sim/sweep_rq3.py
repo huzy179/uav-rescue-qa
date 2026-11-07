@@ -44,6 +44,7 @@ METRICS = [
     "time_to_alert_s_median", "position_error_m_median", "position_error_m_max", "within_reported_radius", "within_reported_radius_95",
     "search_radius_95_m_median", "group_count_exact", "group_count_error_mean", "group_count_abs_error_mean",
     "delivery_delay_s_median", "delivery_delay_s_max", "lost_rate", "kb_per_alert", "frames_processed",
+    "sim_latency_ms_median",
 ]
 # Do sweep tự đặt cho từng lần chạy; không được ghi đè trong cấu hình.
 RESERVED = {"scenario": {"output", "seed"}, "pipeline": {"source", "telemetry", "replay", "output", "seed", "source_fps"}}

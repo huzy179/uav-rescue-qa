@@ -388,7 +388,8 @@ def main() -> None:
                 n_tiles, n_full = inference_counts(frame.shape[1], frame.shape[0], scale, args.mode, args.tile, args.overlap)
                 if "n_tiles_run" in timings:  # dùng lại ô không đổi: thiết bị chỉ chạy số ô thật sự chạy
                     n_tiles = int(timings["n_tiles_run"])
-                t_done = device.run(t, n_tiles, n_full)
+                resize_mpx = frame.shape[0] * frame.shape[1] / 1e6 if scale != 1.0 else 0.0
+                t_done = device.run(t, n_tiles, n_full, resize_mpx)
                 timings.update({"sim_n_tiles": n_tiles, "sim_latency_ms": device.last_latency_ms, "t_done": t_done})
             start = time.perf_counter()
             dets = [locate(d, tel, cam) for d in dets]

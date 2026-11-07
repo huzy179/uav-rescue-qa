@@ -140,6 +140,17 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in f if line.strip()]
 
 
+def timing_metrics(records: list[dict[str, Any]]) -> dict[str, float | int | None]:
+    """Chi phí tính toán từ timings.jsonl: số khung đã chạy detector, và trung vị độ trễ giả lập của thiết bị
+    (--device-profile; None khi không giả lập thiết bị)."""
+    latency = sorted(r["sim_latency_ms"] for r in records if "sim_latency_ms" in r)
+    median = None
+    if latency:
+        mid = len(latency) // 2
+        median = latency[mid] if len(latency) % 2 else (latency[mid - 1] + latency[mid]) / 2
+    return {"frames_processed": len(records), "sim_latency_ms_median": median}
+
+
 def main() -> None:
     """Đọc log và nhãn, tính chỉ số, ghi rq3_metrics.json và rq3_per_person.json."""
     args = parse_args()
@@ -151,7 +162,10 @@ def main() -> None:
     summary, per_person = compute_metrics(alerts, sends, truth, args.r_eval_m, args.tail_s)
     # Chi phí tính toán: số khung đã chạy detector (khác nhau khi tần số xử lý đổi theo độ cao, --min-views).
     timings = args.run / "timings.jsonl"
-    summary["frames_processed"] = len(read_jsonl(timings)) if timings.exists() else None
+    if timings.exists():
+        summary.update(timing_metrics(read_jsonl(timings)))
+    else:
+        summary.update({"frames_processed": None, "sim_latency_ms_median": None})
     (output / "rq3_metrics.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     (output / "rq3_per_person.json").write_text(json.dumps(per_person, indent=2, ensure_ascii=False), encoding="utf-8")
     write_run_config(output, Path(__file__).name, None, None, vars(args))

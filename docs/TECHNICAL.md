@@ -1136,7 +1136,7 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 
 ---
 
-### 14.5. Chạy RQ2 [Đã có mã, đang chạy trên T4]
+### 14.5. Chạy RQ2 [Đã có]
 
 `scripts/run_rq2.py --config configs/experiments/rq2_t4.yaml` làm trọn bốn bước; bước nào đã có kết quả thì bỏ qua:
 
@@ -1147,31 +1147,33 @@ Mỗi cấu hình (mô hình × imgsz hoặc cắt ô × FP16/INT8 × chế đ�
 
 Chạy thử 2/11 trên RTX 5060 (máy cá nhân, chỉ các biến thể PyTorch, 12 khung) để kiểm tra luồng: AP50 trên SDS trùng các lần chạy trước (`scale_by_altitude.md`). Lần thử cho thấy bước thu nhỏ khung 4K bằng `cv2.INTER_AREA` tốn đáng kể trên CPU so với suy luận; số đo chính thức chờ T4. `runs/rq2/speed/<biến thể>/timings.jsonl` của lần chạy T4 cũng là đầu vào hiệu chỉnh hồ sơ thiết bị (14.6).
 
-7/11: chạy thử trên Kaggle T4 với hai biến thể (`pt_tiled`, `fp16_tiled`) đi hết bốn bước, kể cả xuất TensorRT. Lần chạy đủ đầu tiên dừng ở bước xuất INT8: Kaggle cài TensorRT 11 mới nhất, với bản này ultralytics lượng tử hoá INT8 dạng Q/DQ qua ModelOpt và TensorRT báo không có cách cài cho lớp Conv INT8 trên T4. Sửa: notebook ghim TensorRT 10.16 (hiệu chỉnh INT8 cổ điển), ô kiểm tra dừng nếu không phải bản 10; `run_rq2.py` không dừng cả lần chạy khi một engine xuất lỗi mà ghi vào `models/run_config.json` và bỏ các biến thể dùng engine đó. 8/11: chạy thử chỉ bước xuất cho hai engine INT8 với TensorRT 10.16 thành công; lần chạy đủ bắt đầu. Số chính thức lấy từ lần chạy đủ với TensorRT 10.
+7/11: chạy thử trên Kaggle T4 với hai biến thể (`pt_tiled`, `fp16_tiled`) đi hết bốn bước, kể cả xuất TensorRT. Lần chạy đủ đầu tiên dừng ở bước xuất INT8: Kaggle cài TensorRT 11 mới nhất, với bản này ultralytics lượng tử hoá INT8 dạng Q/DQ qua ModelOpt và TensorRT báo không có cách cài cho lớp Conv INT8 trên T4. Sửa: notebook ghim TensorRT 10.16 (hiệu chỉnh INT8 cổ điển), ô kiểm tra dừng nếu không phải bản 10; `run_rq2.py` không dừng cả lần chạy khi một engine xuất lỗi mà ghi vào `models/run_config.json` và bỏ các biến thể dùng engine đó. 8/11: chạy thử chỉ bước xuất cho hai engine INT8 với TensorRT 10.16 thành công; lần chạy đủ xong 8/11 (commit `d675085`, cả bốn engine xuất được); kết quả `docs/results/rq2_t4.md`.
 
 **Sau khi tải về** (`scripts/after_rq2.py`, máy cá nhân, không cần GPU):
 
 1. So cặp bằng bootstrap theo video (`eval/compare_runs.py`, IoU 0,5 và 0,3) mọi cặp của `eval.rq2_report.comparison_pairs`: mỗi biến thể TensorRT với PyTorch cùng cách chạy (nén mất bao nhiêu, RQ2a), cắt ô thu nhỏ về 10 px với cắt ô không thu nhỏ (RQ2c), cắt ô với toàn ảnh. Kết quả ở `runs/rq2/compare/<tập>/<B>__vs__<A>_iou<iou>/`.
-2. Hiệu chỉnh bốn hồ sơ `configs/devices/*.yaml` bằng `tools/fit_device_profile.py` từ `fp16_tiled` và `fp16_full1280`, với các tỉ lệ thiết bị/T4 ở 14.6.
-3. `eval/rq2_report.py`: `report/speed.csv` (số ô, suy luận và tổng theo p50, p95, FPS theo p95, số lần nhanh hơn PyTorch cùng cách chạy, tính trong script chứ không chia tay) và `report/accuracy_diff.csv`, kèm bảng Markdown để chép vào `docs/results/rq2_t4.md`.
+2. Hiệu chỉnh bốn hồ sơ `configs/devices/*.yaml` bằng `tools/fit_device_profile.py` từ `fp16_tiled`, `fp16_full1280` và `fp16_tiled_px10` (thời gian thu nhỏ khung), với các tỉ lệ thiết bị/T4 ở 14.6.
+3. `eval/rq2_report.py`: `report/speed.csv` (số ô, suy luận và tổng theo p50, p95, FPS theo p95, số lần nhanh hơn PyTorch cùng cách chạy, tính trong script chứ không chia tay) `report/accuracy_diff.csv`, `report/pareto.csv` (biên Pareto recall vận hành theo FPS mỗi tập) và `report/conf.csv` (phân bố độ tin cậy, để thấy INT8 nén độ tin cậy), kèm bảng Markdown để chép vào `docs/results/rq2_t4.md`. 8/11 sửa lỗi bảng Markdown: biến thể được so với hai mốc (ví dụ `fp16_tiled` với `pt_tiled` và với `fp16_full1280`) bị lấy số của cặp sau cho cả hai dòng; CSV không bị ảnh hưởng.
 
-Tiếp theo là RQ2c bằng mô phỏng: `configs/experiments/rq3_device.yaml` quét độ cao 30, 50, 100 m × tần số xin 2, 4, 8 khung/giây × bốn hồ sơ đã hiệu chỉnh, thu nhỏ về 10 px; đo bỏ sót, số khung xử lý được và độ trễ cảnh báo.
+RQ2c bằng mô phỏng (xong 8/11, `rq2_t4.md` kết quả 4): `configs/experiments/rq3_device.yaml` quét độ cao 30, 50, 100 m × tần số xin 2, 4, 8 khung/giây × bốn hồ sơ đã hiệu chỉnh, thu nhỏ về 10 px; đo bỏ sót, số khung xử lý được và độ trễ cảnh báo.
 
 ### 14.6. Giả lập thời gian thiết bị biên [Đã có]
 
 Không có Jetson nên không đo được; cũng không có công cụ nào giả lập được tốc độ Jetson (QEMU không có GPU; nn-Meter cần đo trên chính thiết bị trước). Cách làm ở đây: pipeline chạy thật trên máy này, nhưng **đồng hồ mô phỏng** coi mỗi khung tốn thời gian của thiết bị đích (`edge/device_sim.py`, `--device-profile`):
 
 ```
-độ_trễ_ms = overhead_ms + số_ô × tile_ms + số_lượt_toàn_ảnh × full_ms
+độ_trễ_ms = overhead_ms + số_ô × tile_ms + số_lượt_toàn_ảnh × full_ms + megapixel_khung_gốc × resize_ms_per_mpx
 ```
+
+Số hạng cuối chỉ cộng khi khung bị thu nhỏ theo độ cao (`scale ≠ 1`); thêm 8/11 vì trên T4 đổi cỡ khung 4K bằng `cv2.INTER_AREA` mất 46,28 ms, nhiều hơn suy luận FP16 của 6 ô. Hồ sơ cũ không có khoá này đọc như 0.
 
 - Số ô tính từ kích thước khung, hệ số thu nhỏ và cách cắt ô của detector (`inference_counts`), nên chế độ phát lại (`--replay`, không chạy mô hình) cũng dùng được. Khung 1080p có 8 ô; 4K có 32 ô; thu nhỏ theo độ cao làm giảm số ô, nên **thu nhỏ theo độ cao cũng là cách để thiết bị yếu theo kịp**.
 - Thiết bị bận từ t tới t + độ trễ; khung tới trong lúc bận bị bỏ, như trên máy thật. Xác nhận vẫn tính theo thời điểm chụp t (telemetry của khung đó), nhưng cảnh báo vào hàng đợi gửi lúc xử lý xong, nên độ trễ cảnh báo gồm cả thời gian xử lý. Không có `--device-profile` thì như cũ (xử lý coi là tức thời), các kết quả RQ3 đã có không đổi.
-- `timings.jsonl` ghi thêm `sim_n_tiles`, `sim_latency_ms`, `t_done`; `run_config.json` ghi cả nội dung hồ sơ.
+- `timings.jsonl` ghi thêm `sim_n_tiles`, `sim_latency_ms`, `t_done`; `run_config.json` ghi cả nội dung hồ sơ. `eval/rq3_metrics.py` tính `sim_latency_ms_median`, nên quét mô phỏng có cột độ trễ giả lập.
 
-**Hồ sơ thiết bị** (`configs/devices/*.yaml`, đọc bằng Pydantic): T4, Orin Nano Super, Orin NX 16GB, AGX Orin 64GB. Bản hiện tại (4/11, `calibrated: false`) lấy từ bảng của Ultralytics: YOLO26s 640 trên T4 TensorRT10 2,5 ms; tỉ lệ thiết bị/T4 từ cùng một bảng YOLO26 TensorRT FP16 (Orin Nano Super 4,57, Orin NX 4,13, AGX Orin 2,62, T4 1,7 ms), tức 2,688, 2,429, 1,541. Ba giả định, ghi trong từng file: bảng Jetson nhiều khả năng là YOLO26n nhưng tỉ lệ được áp cho bản s; trang không ghi độ chính xác số của cột T4; `overhead_ms = 0` vì chưa đo, nên độ trễ đang thấp hơn thật.
+**Hồ sơ thiết bị** (`configs/devices/*.yaml`, đọc bằng Pydantic): T4, Orin Nano Super, Orin NX 16GB, AGX Orin 64GB. Bản đầu (4/11, `calibrated: false`, đã thay 8/11) lấy từ bảng của Ultralytics: YOLO26s 640 trên T4 TensorRT10 2,5 ms; tỉ lệ thiết bị/T4 từ cùng một bảng YOLO26 TensorRT FP16 (Orin Nano Super 4,57, Orin NX 4,13, AGX Orin 2,62, T4 1,7 ms), tức 2,688, 2,429, 1,541. Ba giả định, ghi trong từng file: bảng Jetson nhiều khả năng là YOLO26n nhưng tỉ lệ được áp cho bản s; trang không ghi độ chính xác số của cột T4; `overhead_ms = 0` vì chưa đo, nên độ trễ đang thấp hơn thật.
 
-**Hiệu chỉnh** sau khi chạy RQ2 trên T4: `tools/fit_device_profile.py` lấy trung vị thời gian suy luận mỗi ô, mỗi lượt toàn ảnh và phần không phải suy luận từ `runs/rq2/speed/<biến thể>/timings.jsonl`, nhân tỉ lệ trên (phần CPU nhân `--cpu-ratio`), ghi hồ sơ với `calibrated: true`. Chỉ phần T4 là số đo.
+**Hiệu chỉnh** (8/11, bản hiện tại): `tools/fit_device_profile.py` lấy trung vị thời gian suy luận mỗi ô, mỗi lượt toàn ảnh và phần không phải suy luận từ `runs/rq2/speed/<biến thể>/timings.jsonl`, và thời gian thu nhỏ mỗi megapixel từ chênh lệch chặng `tile_ms` giữa `fp16_tiled_px10` và `fp16_tiled` (`--resized`, `--resized-mpx`); nhân tỉ lệ trên (phần CPU, gồm thu nhỏ khung, nhân `--cpu-ratio`, mặc định bằng tỉ lệ suy luận: giả định chưa kiểm chứng), ghi hồ sơ với `calibrated: true`. Chỉ phần T4 là số đo; bảng hệ số ở `rq2_t4.md`. Trên chính T4, hồ sơ cho khung 4K thu nhỏ về 6 ô thấp hơn số đo một chút vì suy luận mỗi ô khi chạy ít ô chậm hơn khi chạy 32 ô.
 
 **Không mô phỏng được:** giảm xung khi nóng, chế độ công suất thấp (hồ sơ giả định MAXN), tranh chấp bộ nhớ dùng chung giữa CPU và GPU, thời gian đọc và giải mã khung từ camera. Số sinh ra từ đây là **ước lượng**, báo ở bảng riêng, không ghi như số đo trên thiết bị biên (CLAUDE.md).
 

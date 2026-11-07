@@ -15,15 +15,15 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 
 ### 1.1. Trạng thái và nhật ký
 
-**Trạng thái 7/11** (chi tiết từng khâu: TONG_QUAN mục 8; mỗi kết quả một file trong `docs/results/`):
+**Trạng thái 8/11** (chi tiết từng khâu: TONG_QUAN mục 8; mỗi kết quả một file trong `docs/results/`):
 
 | Mảng | Trạng thái |
 |---|---|
 | Dữ liệu | **Rủi ro lớn nhất.** Tập test lũ 188 khung từ 9 nguồn, **chưa gán**; gán 7–9/11, khoá **11/11** (#10). Đã rà trùng với 5 tập train (`flood_truoc_khoa.md`) |
 | Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ |
-| Câu hỏi 2 (tốc độ) | Chạy thử xuất INT8 với TensorRT 10.16 thành công (8/11); lần chạy đủ chín biến thể **đang chạy** trên Kaggle T4 (bắt đầu 8/11; lần đầu 7/11 lỗi INT8 với TensorRT 11). Xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`); khi xong: kết quả `rq2_t4.md`, chương 5 mục 5.2, hiệu chỉnh hồ sơ thiết bị, `rq3_device.yaml` |
+| Câu hỏi 2 (tốc độ) | **Xong 8/11** (`rq2_t4.md`): chín biến thể trên Kaggle T4; chọn FP16 với thu nhỏ theo độ cao; INT8 không đáng (nhanh thêm ít, nén độ tin cậy); hồ sơ thiết bị đã hiệu chỉnh, thiết bị yếu mô phỏng xong. Chương 5 mục 5.2 đã điền |
 | Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới (tần số, độ cao, GPS, la bàn, mạng, mất theo cụm, nhóm người) và ba đoạn SeaDronesSee thật |
-| Viết | Nháp chương 1–5 (7–8/11); chờ tập lũ và câu hỏi 2; chương 2 còn tra trích dẫn và đọc toàn văn; khung chương 6 |
+| Viết | Nháp chương 1–5 (7–8/11), câu hỏi 2 đã điền; chờ tập lũ; chương 2 còn tra trích dẫn và đọc toàn văn; khung chương 6 |
 | Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
 
 Từ nay tới 11/11 ưu tiên gán nhãn; mã chỉ viết khi khoá tập hoặc một thí nghiệm cần.
@@ -33,6 +33,7 @@ Từ nay tới 11/11 ưu tiên gán nhãn; mã chỉ viết khi khoá tập ho�
 - **E2e (thêm C2A) xong, âm**: kém E2c ở người nhỏ (VisDrone val −0,029 AP50, < 8 px −0,053), SeaDronesSee +0,041 không có ý nghĩa; giữ E2c, #14 khép lại (`E2e.md`).
 - Câu hỏi 2: chạy thử hai biến thể trên T4 xong; lần chạy đủ đầu lỗi xuất INT8 (TensorRT 11 trên T4), đã ghim TensorRT 10 và để `run_rq2.py` bỏ qua engine lỗi; chuẩn bị `after_rq2.py`, `rq2_report.py`, `rq3_device.yaml`.
 - 8/11: đầu một-một không NMS của YOLO26 (`nms_free.md`): mất recall vận hành trên VisDrone, không nhanh hơn trên PyTorch; giữ mặc định có NMS. Dùng lại ô không đổi khi drone đứng yên (`tile_skip.md`): bớt ô nhưng recall giảm tới 0,238 vì người bơi cử động; không dùng.
+- 8/11: **câu hỏi 2 xong** (`rq2_t4.md`): FP16 nhanh hơn PyTorch 1,833–3,028 lần gần như không mất độ chính xác; INT8 mất một nửa recall vận hành < 8 px ở conf 0,25 vì nén độ tin cậy; biên Pareto chọn FP16 + thu nhỏ theo độ cao; thu nhỏ khung 4K trên CPU (46,28 ms) chậm hơn suy luận 6 ô. Hồ sơ thiết bị thêm số hạng thu nhỏ khung; mô phỏng thiết bị yếu: Orin NX, Orin Nano Super chỉ đạt 4 khung/giây ở 30–50 m. Sửa lỗi bảng so cặp của `rq2_report.py` (cặp cùng B bị đè), thêm biên Pareto và phân bố độ tin cậy.
 - 8/11: cỡ người dự kiến so với nhãn (`person_px_check.md`): box người bơi lớn hơn giả định 0,5 m khoảng 1,8–2,6 lần; mô phỏng với người 1,0 m cho thu nhỏ theo độ cao giúp rõ hơn (30 m bỏ sót 0,867 → 0,400).
 - Cải tiến âm, giữ làm tuỳ chọn: phóng to người nhỏ (`upscale_small.md`), lượt toàn ảnh sau thu nhỏ (`full_pass.md`), đồng bộ và làm mượt gimbal (`georef_sync.md`), ngưỡng theo cỡ (`conf_by_size.md`), đếm người theo cụm hoặc theo khung trong cửa sổ (`rq3_group.md`, #18).
 - Cải tiến có lợi, tuỳ chọn (mô phỏng): định vị theo góc gimbal (`georef_pitch.md`, chưa tốt hơn tính chung), tự hiệu chỉnh la bàn (`rq3_yawcalib.md`), bán kính theo độ chính xác GPS bộ thu báo (`rq3_gpsacc.md`), mất gói theo cụm trong giả lập mạng (`rq3_burst.md`).
@@ -68,7 +69,7 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 | 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E2e (E2c + C2A) trên Kaggle; RQ2 trên T4 nếu kịp | | Chương 4 | 188; khoá lùi tới 11/11 (#10) | 6/11: tiến độ gán nhãn, lý do lùi khoá |
 | 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, không thu nhỏ: tập lũ không có độ cao bay, quyết định #13) trên tập lũ; ~~E5 (YOLO11s)~~ (cắt 7/11); E6 nếu cô duyệt; recall theo loại nhiễu; **RQ2 trên T4 bắt đầu sớm 7/11** (chạy thử hai biến thể xong; lần chạy đủ đầu lỗi xuất INT8 với TensorRT 11, đã ghim TensorRT 10 và chạy lại) | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~, ~~xử lý sau RQ2 (`scripts/after_rq2.py`)~~ (đã có); 7/11 làm thêm các mục `CAI_TIEN.md` không cần GPU (xem các khối cập nhật 7/11) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
 | 14–20/11 | | 3 seed cho cấu hình cuối (nếu đủ giờ GPU, không thì ghi giới hạn); ~~**RQ3** quét đủ lưới (mô phỏng)~~ (phần lớn xong 6–7/11) + ~~điều tra cơ chế `bytetrack_cmc` bỏ sót~~ (xong 26/10); RQ2 xong (dự kiến sớm hơn, ngay khi Kaggle chạy xong: `after_rq2.py`, `rq3_device.yaml`) | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
-| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; hiệu chỉnh hồ sơ thiết bị từ RQ2 (`scripts/after_rq2.py`) và RQ3 với `device_profile` (`rq3_device.yaml`) nếu chưa làm ở tuần 7–13/11 | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
+| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; ~~hiệu chỉnh hồ sơ thiết bị từ RQ2 và `rq3_device.yaml`~~ (xong 8/11); đổi cỡ khung trên GPU nếu còn giờ (CAI_TIEN mục 2) | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
 | 28/11–4/12 | | | **Đóng băng mã 28/11** | Bản thảo đầy đủ | | 4/12: bản thảo |
 | 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng | | 11/12: bản hoàn chỉnh |
 
@@ -81,7 +82,7 @@ Mỗi lần huấn luyện ở 1280 khoảng 8–10 giờ T4 (E2 lượt 1, 60 e
 | 21–23/10 | E2 lượt 1 | 8 |
 | 24–30/10 | E2 lượt 2 (thêm FinlandProper); thực tế: E3 | 10 |
 | 31/10–6/11 | ~~E3 (P2)~~ đã chạy trước (hai phiên); giờ trống: E2e (E2c + C2A, quyết định #14), phiên 1. Tập train gấp khoảng 1,66 lần E2c nên một phiên 12 giờ không đủ 55 epoch; phần còn lại chạy tiếp (`resume`) tuần sau | 10 |
-| 7–13/11 | ~~E2e phiên 2~~ (xong 7/11); ~~E5 (YOLO11s)~~ (cắt 7/11); xuất TensorRT, đo RQ2 | 6 + 2 |
+| 7–13/11 | ~~E2e phiên 2~~ (xong 7/11); ~~E5 (YOLO11s)~~ (cắt 7/11); ~~xuất TensorRT, đo RQ2~~ (xong 8/11) | 6 + 2 |
 | 14–20/11 | 2 seed thêm cho cấu hình cuối | 20 |
 
 Không tuần nào vượt hạn mức nếu không chạy lại. Lần chạy hỏng thì đẩy seed sang Colab (như đề cương).
@@ -265,7 +266,7 @@ Câu hỏi con của RQ1–RQ3 (RQ1a…RQ3e), trả lời bằng thí nghiệm n
 
 ### RQ2
 
-Cấu hình tốt nhất của RQ1 × {FP16, INT8} × chế độ công suất. Đo theo từng chặng (cắt ô, suy luận, gộp, `georef`, `confirm`). Đầu ra là đường recall theo FPS, đánh dấu ngưỡng 2 FPS. **Đo trên Kaggle T4** (chốt 21/10: không có Jetson); bỏ trục chế độ công suất; báo thứ hạng tương đối giữa các cấu hình, không quy đổi ra FPS trên Jetson (TECHNICAL mục 14.4). Thực hiện: `notebooks/kaggle_rq2.ipynb` (ghim TensorRT 10.16; INT8 với TensorRT 11 không build được trên T4) → tải `runs/rq2/` → `scripts/after_rq2.py` (so cặp, hiệu chỉnh hồ sơ thiết bị) → `rq3_device.yaml` (thiết bị yếu, mô phỏng) → `docs/results/rq2_t4.md`, chương 5 mục 5.2.
+Cấu hình tốt nhất của RQ1 × {FP16, INT8} × chế độ công suất. Đo theo từng chặng (cắt ô, suy luận, gộp, `georef`, `confirm`). Đầu ra là đường recall theo FPS, đánh dấu ngưỡng 2 FPS. **Đo trên Kaggle T4** (chốt 21/10: không có Jetson); bỏ trục chế độ công suất; báo thứ hạng tương đối giữa các cấu hình, không quy đổi ra FPS trên Jetson (TECHNICAL mục 14.4). Thực hiện: `notebooks/kaggle_rq2.ipynb` (ghim TensorRT 10.16; INT8 với TensorRT 11 không build được trên T4) → tải `runs/rq2/` → `scripts/after_rq2.py` (so cặp, hiệu chỉnh hồ sơ thiết bị) → `rq3_device.yaml` (thiết bị yếu, mô phỏng) → `docs/results/rq2_t4.md`, chương 5 mục 5.2. **Xong 8/11.**
 
 ### RQ3
 

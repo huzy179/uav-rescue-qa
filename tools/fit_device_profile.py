@@ -4,6 +4,8 @@ Từ timings.jsonl của edge/main.py (mỗi khung: tile_ms, infer_ms, merge_ms,
     tile_ms     = trung vị của infer_ms / n_tiles trên lần chạy cắt ô
     full_ms     = trung vị của infer_ms trên lần chạy toàn ảnh (không có thì 4 × tile_ms)
     overhead_ms = trung vị của tile_ms + merge_ms + georef_ms + confirm_ms (phần không phải suy luận)
+    resize_ms_per_mpx = (trung vị tile_ms của lần chạy có thu nhỏ theo độ cao − trung vị tile_ms của lần chạy cắt ô)
+                        / megapixel khung gốc (--resized, --resized-mpx; không có thì 0)
 rồi nhân với tỉ lệ thiết bị/T4 (--ratio, lấy từ benchmark công bố trên cùng mô hình; xem TECHNICAL mục 14.6) và tỉ lệ
 CPU (--cpu-ratio, phần không phải suy luận chạy trên CPU ARM của Jetson; mặc định bằng --ratio). Kết quả vẫn là ước
 lượng: chỉ phần T4 là số đo.
@@ -33,6 +35,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--tiled", type=Path, required=True, help="timings.jsonl của lần chạy cắt ô trên T4")
     parser.add_argument("--full", type=Path, default=None, help="timings.jsonl của lần chạy toàn ảnh trên T4")
+    parser.add_argument("--resized", type=Path, default=None, help="timings.jsonl của lần chạy có thu nhỏ theo độ cao trên T4")
+    parser.add_argument("--resized-mpx", type=float, default=None, help="Số megapixel của khung gốc trong lần chạy --resized")
     parser.add_argument("--ratio", type=float, required=True, help="Thời gian suy luận thiết bị / T4 (1 cho chính T4)")
     parser.add_argument("--cpu-ratio", type=float, default=None, help="Tỉ lệ cho phần không phải suy luận (mặc định = --ratio)")
     parser.add_argument("--ratio-source", required=True, help="Nguồn của --ratio, ghi vào hồ sơ")
@@ -61,23 +65,37 @@ def fit(tiled: list[dict[str, float]], full: list[dict[str, float]] | None) -> t
     return overhead_ms, tile_ms, full_ms
 
 
+def fit_resize(tiled: list[dict[str, float]], resized: list[dict[str, float]], mpx: float) -> float:
+    """ms thu nhỏ cho mỗi megapixel khung gốc: phần tile_ms tăng thêm khi khung bị thu nhỏ trước khi cắt ô."""
+    extra = statistics.median(r.get("tile_ms", 0.0) for r in resized) - statistics.median(r.get("tile_ms", 0.0) for r in tiled)
+    return max(0.0, extra) / mpx
+
+
 def main() -> None:
     """Đo, nhân tỉ lệ, kiểm hồ sơ bằng DeviceProfile rồi ghi YAML."""
     args = parse_args()
-    overhead, tile, full = fit(read_timings(args.tiled), read_timings(args.full) if args.full else None)
+    tiled = read_timings(args.tiled)
+    overhead, tile, full = fit(tiled, read_timings(args.full) if args.full else None)
+    if (args.resized is None) != (args.resized_mpx is None):
+        raise SystemExit("--resized và --resized-mpx phải đi cùng nhau")
+    resize = fit_resize(tiled, read_timings(args.resized), args.resized_mpx) if args.resized else 0.0
     cpu_ratio = args.ratio if args.cpu_ratio is None else args.cpu_ratio
     source = (
         f"Đo trên T4 bằng tools/fit_device_profile.py: overhead {overhead:.2f} ms, một ô {tile:.2f} ms, toàn ảnh "
-        f"{full:.2f} ms (trung vị; {args.tiled}{', ' + str(args.full) if args.full else ', toàn ảnh = 4 × ô'}). "
+        f"{full:.2f} ms, thu nhỏ khung {resize:.2f} ms mỗi megapixel (trung vị; {args.tiled}"
+        f"{', ' + str(args.full) if args.full else ', toàn ảnh = 4 × ô'}{', ' + str(args.resized) if args.resized else ''}). "
         f"Nhân tỉ lệ suy luận {args.ratio:g} và tỉ lệ CPU {cpu_ratio:g}: {args.ratio_source}."
     )
     profile = DeviceProfile(
         name=args.name, calibrated=True, source=source, power_mode=args.power_mode,
         overhead_ms=round(overhead * cpu_ratio, 2), tile_ms=round(tile * args.ratio, 2), full_ms=round(full * args.ratio, 2),
+        resize_ms_per_mpx=round(resize * cpu_ratio, 3),
     )
-    header = "# Hồ sơ thời gian thiết bị cho edge/device_sim.py: ước lượng, không phải số đo (TECHNICAL mục 14.6).\n"
+    kind = "đo trên T4" if args.ratio == 1.0 and cpu_ratio == 1.0 else "ước lượng, không phải số đo"
+    header = f"# Hồ sơ thời gian thiết bị cho edge/device_sim.py: {kind} (TECHNICAL mục 14.6).\n"
     args.output.write_text(header + yaml.safe_dump(profile.model_dump(), allow_unicode=True, sort_keys=False), encoding="utf-8")
-    print(f"{args.output}: overhead {profile.overhead_ms} ms, ô {profile.tile_ms} ms, toàn ảnh {profile.full_ms} ms")
+    print(f"{args.output}: overhead {profile.overhead_ms} ms, ô {profile.tile_ms} ms, toàn ảnh {profile.full_ms} ms, "
+          f"thu nhỏ {profile.resize_ms_per_mpx} ms/MP")
 
 
 if __name__ == "__main__":
