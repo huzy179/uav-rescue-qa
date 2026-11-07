@@ -146,3 +146,40 @@ class NadirTelemetry:
 
     def at(self, t: float) -> Telemetry:
         return self.inner.at(t).model_copy(update={"pitch_deg": -90.0, "roll_deg": 0.0})
+
+
+class ShiftedTelemetry:
+    """Bọc một nguồn telemetry, đọc giá trị ở t + lag_s: bù độ trễ giữa metadata và khung ảnh (docs/CAI_TIEN.md 3.6).
+
+    lag_s > 0 nghĩa là metadata ghi **trễ** hơn ảnh: giá trị đúng cho khung ở t nằm ở dòng t + lag_s. Trường t của
+    kết quả giữ nguyên t của khung.
+    """
+
+    def __init__(self, inner: TelemetrySource, lag_s: float) -> None:
+        self.inner, self.lag_s = inner, lag_s
+
+    def at(self, t: float) -> Telemetry:
+        return self.inner.at(t + self.lag_s).model_copy(update={"t": t})
+
+
+class SmoothedAngles:
+    """Bọc một nguồn telemetry, thay pitch và yaw bằng trung bình trong cửa sổ ±window_s/2 quanh t.
+
+    Góc gimbal trong metadata dao động vài độ giữa các mẫu; khi camera nghiêng, mỗi độ sai đẩy điểm chiếu đi xa
+    (TECHNICAL 8.3). Trung bình lấy n_samples điểm đều nhau trong cửa sổ; yaw lấy trung bình theo vectơ đơn vị để
+    359° và 1° cho 0°, không phải 180°. Vị trí và độ cao giữ nguyên.
+    """
+
+    def __init__(self, inner: TelemetrySource, window_s: float, n_samples: int = 9) -> None:
+        if window_s <= 0 or n_samples < 2:
+            raise ValueError("window_s phải > 0 và n_samples ≥ 2")
+        self.inner, self.window_s, self.n_samples = inner, window_s, n_samples
+
+    def at(self, t: float) -> Telemetry:
+        base = self.inner.at(t)
+        times = np.linspace(t - self.window_s / 2.0, t + self.window_s / 2.0, self.n_samples)
+        samples = [self.inner.at(float(s)) for s in times]
+        pitch = float(np.mean([s.pitch_deg for s in samples]))
+        yaw_rad = np.radians([s.yaw_deg for s in samples])
+        yaw = float(np.degrees(np.arctan2(np.mean(np.sin(yaw_rad)), np.mean(np.cos(yaw_rad))))) % 360.0
+        return base.model_copy(update={"pitch_deg": pitch, "yaw_deg": yaw})

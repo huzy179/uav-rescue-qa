@@ -77,3 +77,36 @@ def test_srt_file_interpolates(tmp_path: Path) -> None:
     path.write_text(SRT_NEW, encoding="utf-8")
     tel = SampledTelemetry.from_srt(path).at(0.5)
     assert (tel.lat, tel.alt_agl_m, tel.yaw_deg) == pytest.approx((21.02855, 51.0, 270.0))
+
+
+def _yaw_series(values: list[tuple[float, float, float]]) -> SampledTelemetry:
+    """Mẫu (t, yaw, pitch) tại cùng một vị trí."""
+    return SampledTelemetry([
+        {"t": t, "lat": 21.0, "lon": 105.8, "alt_agl_m": 50.0, "yaw_deg": yaw, "pitch_deg": pitch} for t, yaw, pitch in values
+    ])
+
+
+def test_shifted_telemetry_doc_o_t_cong_lag() -> None:
+    from edge.telemetry import ShiftedTelemetry
+
+    source = _yaw_series([(0.0, 10.0, -60.0), (1.0, 20.0, -50.0), (2.0, 30.0, -40.0)])
+    shifted = ShiftedTelemetry(source, 0.5)
+    tel = shifted.at(1.0)
+    assert tel.t == 1.0  # giữ t của khung
+    assert tel.yaw_deg == pytest.approx(25.0)  # giá trị ở 1,5 s
+    assert tel.pitch_deg == pytest.approx(-45.0)
+    assert ShiftedTelemetry(source, -0.5).at(1.0).yaw_deg == pytest.approx(15.0)
+
+
+def test_smoothed_angles_trung_binh_va_qua_0_do() -> None:
+    from edge.telemetry import SmoothedAngles
+
+    # pitch dao động −50/−60 quanh t = 1: trung bình cửa sổ 2 s đối xứng là −55.
+    source = _yaw_series([(0.0, 350.0, -50.0), (1.0, 10.0, -60.0), (2.0, 350.0, -50.0)])
+    tel = SmoothedAngles(source, 2.0, n_samples=3).at(1.0)
+    assert tel.pitch_deg == pytest.approx((-50.0 - 60.0 - 50.0) / 3)
+    # yaw 350, 10, 350: trung bình vectơ gần 356,7°, không phải gần 236,7° như trung bình số học.
+    assert tel.yaw_deg == pytest.approx(356.67, abs=0.05)
+    assert tel.lat == 21.0 and tel.alt_agl_m == 50.0
+    with pytest.raises(ValueError):
+        SmoothedAngles(source, 0.0)
