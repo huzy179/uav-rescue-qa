@@ -53,8 +53,8 @@ Cấu hình nào đạt tần số xử lý cần thiết (khoảng 2 khung mỗ
 
 | Mã | Câu hỏi con | Trả lời bằng | Khâu | Trạng thái | Nguồn |
 |---|---|---|---|---|---|
-| RQ2a | Nén mô hình (FP16, INT8) nhanh thêm bao nhiêu và mất bao nhiêu độ chính xác, nhất là với người nhỏ? | Đo trên Kaggle T4 (TensorRT) | Chạy trên thiết bị biên | Chờ chạy | `TECHNICAL.md` |
-| RQ2b | Cấu hình nào tốt nhất, tức không cấu hình nào khác vừa nhanh hơn vừa chính xác hơn? | Bảng recall theo FPS của RQ2 | Chạy trên thiết bị biên | Chờ chạy | `TECHNICAL.md` |
+| RQ2a | Nén mô hình (FP16, INT8) nhanh thêm bao nhiêu và mất bao nhiêu độ chính xác, nhất là với người nhỏ? | Đo trên Kaggle T4 (TensorRT) | Chạy trên thiết bị biên | Chờ kết quả (đang chạy trên Kaggle 7/11) | `TECHNICAL.md` |
+| RQ2b | Cấu hình nào tốt nhất, tức không cấu hình nào khác vừa nhanh hơn vừa chính xác hơn? | Bảng recall theo FPS của RQ2 | Chạy trên thiết bị biên | Chờ kết quả (đang chạy trên Kaggle 7/11) | `TECHNICAL.md` |
 | RQ2c | Thiết bị yếu (Orin Nano) theo kịp tần số cần thiết không; thu nhỏ theo độ cao giúp bao nhiêu? | Giả lập thời gian thiết bị, hiệu chỉnh từ số đo T4 (ước lượng) | Chạy trên thiết bị biên | Có công cụ, chờ hiệu chỉnh từ RQ2 | `TECHNICAL.md`, `DEMO_BAO_VE.md` |
 
 #### RQ3. Hệ thống báo đúng về trạm không? (hệ thống)
@@ -65,9 +65,9 @@ Khi ghép phát hiện qua nhiều khung để xác nhận rồi gửi cảnh b�
 |---|---|---|---|---|---|
 | RQ3a | Bao nhiêu khung mỗi giây là đủ, và thay đổi theo độ cao, vận tốc ra sao? | Mô phỏng tần số theo độ cao | Camera và lấy khung | Có, mô phỏng | `rq3_adaptive.md`, `rq3_altitude.md`, `rq3_altprofile.md` |
 | RQ3b | Gom theo toạ độ mặt đất hay theo dõi trên ảnh (ByteTrack) tốt hơn khi xử lý ít khung? | Video thật SeaDronesSee có telemetry | Xác nhận | Có, sơ bộ (ba đoạn video) | `sds_mot_confirm.md`, `rq3_cmc_cause.md` |
-| RQ3c | Sai số GPS và độ cao làm vị trí cảnh báo lệch bao nhiêu? | Mô hình lan truyền sai số, mô phỏng | Định vị | Có, mô phỏng | `rq3_geoerr.md` |
+| RQ3c | Sai số GPS và độ cao làm vị trí cảnh báo lệch bao nhiêu? | Mô hình lan truyền sai số, mô phỏng | Định vị | Có, mô phỏng | `rq3_geoerr.md`, `rq3_yawcalib.md`, `rq3_gpsacc.md` |
 | RQ3d | Mất sóng làm cảnh báo tới trễ bao lâu, có mất cảnh báo nào không? | Giả lập mạng (mất gói rải rác và theo cụm, mất sóng) | Gửi cảnh báo | Có, mô phỏng | `rq3_network.md`, `rq3_burst.md` |
-| RQ3e | Gộp cảnh báo thành sự cố bớt được bao nhiêu cảnh báo lặp? | Gộp theo bán kính ở trạm mặt đất | Trạm mặt đất và bản đồ | Có | `alert_memory.md` |
+| RQ3e | Gộp cảnh báo thành sự cố bớt được bao nhiêu cảnh báo lặp? | Gộp theo bán kính ở trạm mặt đất | Trạm mặt đất và bản đồ | Có | `alert_memory.md`, `rq3_group.md` |
 
 #### Luận điểm xuyên suốt
 
