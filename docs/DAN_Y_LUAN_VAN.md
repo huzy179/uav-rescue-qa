@@ -32,7 +32,7 @@ Nháp 7/11: `docs/luan_van/chuong1.md` (1.1–1.6; thêm 1.5 phạm vi và giớ
 | 2.3 Ảnh từ UAV và bộ dữ liệu | VisDrone, AFO, C2A, SeaDronesSee, HydroVigilance; vì sao chưa có bộ ảnh lũ có nhãn | TONG_QUAN 3.3, TECHNICAL 13.1 | Viết |
 | 2.4 Theo dõi đối tượng qua nhiều khung | ByteTrack, bù chuyển động camera; giả định tần số khung cao | TECHNICAL mục 9 | Viết |
 | 2.5 Thiết bị biên và nén mô hình | TensorRT, FP16, INT8; Jetson | TECHNICAL mục 14 | Viết |
-| 2.6 Khoảng trống nghiên cứu | Chưa có đánh giá theo cỡ người trong cảnh lũ; theo dõi thông dụng không hợp với xử lý ít khung; đổi cỡ ảnh theo độ cao đã có nhưng chưa được đo cùng khối lượng tính và khâu xác nhận trong một pipeline thiết bị biên; chưa nối dữ liệu bay vào khâu phát hiện | Tổng hợp 2.1–2.5 | Viết |
+| 2.6 Khoảng trống nghiên cứu | Chưa có đánh giá theo cỡ người trong cảnh lũ; theo dõi thông dụng không hợp với xử lý ít khung; đổi cỡ ảnh theo độ cao đã có nhưng chưa được đo cùng khối lượng tính và khâu xác nhận trong một pipeline thiết bị biên | Tổng hợp 2.1–2.5 | Viết |
 
 ## Chương 3. Phương pháp
 
