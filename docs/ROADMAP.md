@@ -21,7 +21,7 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 |---|---|
 | Dữ liệu | **Rủi ro lớn nhất.** Tập test lũ 188 khung từ 9 nguồn, **chưa gán**; gán 7–9/11, khoá **11/11** (#10). Đã rà trùng với 5 tập train (`flood_truoc_khoa.md`) |
 | Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ |
-| Câu hỏi 2 (tốc độ) | Đang chạy trên Kaggle T4 (7/11; lần đầu lỗi INT8 với TensorRT 11, đã ghim TensorRT 10). Xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`) |
+| Câu hỏi 2 (tốc độ) | Lần chạy đủ thứ hai **đang chạy** trên Kaggle T4 (7/11; lần đầu lỗi INT8 với TensorRT 11, đã ghim TensorRT 10). Xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`); khi xong: kết quả `rq2_t4.md`, chương 5 mục 5.2, hiệu chỉnh hồ sơ thiết bị, `rq3_device.yaml` |
 | Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới (tần số, độ cao, GPS, la bàn, mạng, mất theo cụm, nhóm người) và ba đoạn SeaDronesSee thật |
 | Viết | Nháp chương 4, 5 (7/11); chờ tập lũ và câu hỏi 2 |
 | Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
@@ -65,8 +65,8 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 | 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` (thực tế: FinlandProper tạm bỏ) | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle (thực tế: E2c = VisDrone + AFO, xong 23/10; E3 xong 28/10) | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
 | 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E2e (E2c + C2A) trên Kaggle; RQ2 trên T4 nếu kịp | | Chương 4 | 188; khoá lùi tới 11/11 (#10) | 6/11: tiến độ gán nhãn, lý do lùi khoá |
 | 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, không thu nhỏ: tập lũ không có độ cao bay, quyết định #13) trên tập lũ; ~~E5 (YOLO11s)~~ (cắt 7/11); E6 nếu cô duyệt; recall theo loại nhiễu; **RQ2 trên T4 bắt đầu sớm 7/11** (chạy thử hai biến thể xong; lần chạy đủ đầu lỗi xuất INT8 với TensorRT 11, đã ghim TensorRT 10 và chạy lại) | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~, ~~xử lý sau RQ2 (`scripts/after_rq2.py`)~~ (đã có); 7/11 làm thêm các mục `CAI_TIEN.md` không cần GPU (xem các khối cập nhật 7/11) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
-| 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
-| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; hiệu chỉnh hồ sơ thiết bị từ RQ2 (`scripts/after_rq2.py`), RQ3 với `device_profile` (`rq3_device.yaml`) | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
+| 14–20/11 | | 3 seed cho cấu hình cuối (nếu đủ giờ GPU, không thì ghi giới hạn); ~~**RQ3** quét đủ lưới (mô phỏng)~~ (phần lớn xong 6–7/11) + ~~điều tra cơ chế `bytetrack_cmc` bỏ sót~~ (xong 26/10); RQ2 xong (dự kiến sớm hơn, ngay khi Kaggle chạy xong: `after_rq2.py`, `rq3_device.yaml`) | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
+| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; hiệu chỉnh hồ sơ thiết bị từ RQ2 (`scripts/after_rq2.py`) và RQ3 với `device_profile` (`rq3_device.yaml`) nếu chưa làm ở tuần 7–13/11 | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
 | 28/11–4/12 | | | **Đóng băng mã 28/11** | Bản thảo đầy đủ | | 4/12: bản thảo |
 | 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng | | 11/12: bản hoàn chỉnh |
 
@@ -263,7 +263,7 @@ Câu hỏi con của RQ1–RQ3 (RQ1a…RQ3e), trả lời bằng thí nghiệm n
 
 ### RQ2
 
-Cấu hình tốt nhất của RQ1 × {FP16, INT8} × chế độ công suất. Đo theo từng chặng (cắt ô, suy luận, gộp, `georef`, `confirm`). Đầu ra là đường recall theo FPS, đánh dấu ngưỡng 2 FPS. **Đo trên Kaggle T4** (chốt 21/10: không có Jetson); bỏ trục chế độ công suất; báo thứ hạng tương đối giữa các cấu hình, không quy đổi ra FPS trên Jetson (TECHNICAL mục 14.4).
+Cấu hình tốt nhất của RQ1 × {FP16, INT8} × chế độ công suất. Đo theo từng chặng (cắt ô, suy luận, gộp, `georef`, `confirm`). Đầu ra là đường recall theo FPS, đánh dấu ngưỡng 2 FPS. **Đo trên Kaggle T4** (chốt 21/10: không có Jetson); bỏ trục chế độ công suất; báo thứ hạng tương đối giữa các cấu hình, không quy đổi ra FPS trên Jetson (TECHNICAL mục 14.4). Thực hiện: `notebooks/kaggle_rq2.ipynb` (ghim TensorRT 10.16; INT8 với TensorRT 11 không build được trên T4) → tải `runs/rq2/` → `scripts/after_rq2.py` (so cặp, hiệu chỉnh hồ sơ thiết bị) → `rq3_device.yaml` (thiết bị yếu, mô phỏng) → `docs/results/rq2_t4.md`, chương 5 mục 5.2.
 
 ### RQ3
 
