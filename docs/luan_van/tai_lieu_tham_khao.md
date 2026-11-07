@@ -39,6 +39,6 @@
 
 ## Còn phải tra
 
-- Bài gốc YOLO (Redmon và cộng sự, CVPR 2016), FPN (Lin và cộng sự, CVPR 2017), TensorRT (tài liệu NVIDIA).
+- Bài gốc YOLO (Redmon và cộng sự, CVPR 2016), FPN (Lin và cộng sự, CVPR 2017), TensorRT (tài liệu NVIDIA), Hartley và Zisserman *Multiple View Geometry in Computer Vision* (mô hình camera lỗ kim).
 - Mô hình kênh Gilbert–Elliott (Gilbert 1960; Elliott 1963), nhiễu Gauss–Markov (Brown và Hwang), luật xác nhận M trên N trong theo dõi radar (Blackman; Bar-Shalom).
 - Công trình chiếu phát hiện lên mặt đất và gom qua nhiều khung để xác nhận người: hai lần tìm 7/11 thấy ghép theo toạ độ thế giới cho theo dõi xe ([MIDDTD]) và định vị phát hiện từ UAV ([Rudol08]), chưa thấy bài nào làm trọn chuỗi chiếu lên mặt đất, gom qua khung, xác nhận N lần **ở tần số xử lý thấp** và so với ByteTrack có bù chuyển động. Đóng góp 3 vì vậy nên viết hẹp: phân tích và đo vì sao ghép trên ảnh gãy ở vài khung mỗi giây, và xác nhận theo mặt đất cho cứu nạn; không khẳng định "lần đầu ghép theo toạ độ thế giới". Cần tìm thêm theo "multi-view person localization", "ground-plane track-before-detect", "geo-referenced detection fusion".
