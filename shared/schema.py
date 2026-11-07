@@ -111,6 +111,8 @@ class UavState(BaseModel):
     done: bool = False  # chuyến bay đã kết thúc
     # Tự hiệu chỉnh la bàn (--yaw-calib): lệch đang trừ (độ, 0 khi chưa đủ mẫu) và số mẫu bay thẳng đã dùng; None khi tắt.
     yaw_bias_deg: float | None = None
+    # Độ chính xác GPS bộ thu tự báo lúc gửi (σ mỗi trục, m); None khi telemetry không có.
+    gps_acc_m: float | None = None
     yaw_calib_samples: int | None = None
     # Điểm đường bay của các gói trạng thái chưa tới trạm (mất sóng), cũ trước mới; gửi bù để vùng đã quét trên bản đồ
     # không bị thủng ở đoạn mất sóng. Rỗng khi gói trước tới đủ.

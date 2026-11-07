@@ -60,7 +60,8 @@ Cập nhật 7/11/2026.
 
 - **Vấn đề.** Khi GPS σ 3 m đúng giả định, chỉ 0,278 số người nằm trong vòng 1σ (`rq3_geoerr.md`).
 - **Đã làm:** bản đồ vẽ vùng tìm 95% (2,448 × 1σ), chứa 1,000 khi GPS σ ≤ 3 m.
-- **Đề xuất (không cần GPU):** GPS thật kém hơn giả định (σ 5 m) thì vùng 95% chỉ còn chứa 0,763–0,833: lấy độ chính xác do bộ thu GPS báo (HDOP hoặc độ chính xác ngang trong log bay DJI) thay cho `--gps-sigma-m` cố định. Kiểm chứng: `rq3_geoerr.yaml` với σ đổi theo thời gian.
+- **Đã làm, tuỳ chọn (7/11): bán kính theo độ chính xác GPS do bộ thu báo** (cột `gps_acc_m`, `--gps-sigma-from-telemetry`, TECHNICAL 8.4). Mô phỏng (`rq3_gpsacc.md`): bộ thu báo đúng thì vùng 95% chứa 1,000 ở mọi ô, kể cả GPS kém đi giữa chuyến (σ cố định: 0,763–0,933); GPS tốt thì vùng hẹp lại (50 m, σ 1 m: bán kính 8,069 → 4,141 m). Bộ thu báo lạc quan (nửa σ thật) thì chỉ còn 0,652–0,963. Thẻ drone hiện độ chính xác GPS.
+- **Đề xuất:** đọc độ chính xác từ log bay thật (MAVLink `h_acc`, HDOP) và kiểm tra nó với RTK trước khi tin.
 
 ### 3.3. La bàn lệch làm một người thành nhiều cảnh báo
 

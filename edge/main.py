@@ -276,7 +276,7 @@ def main() -> None:
             t_now, tel, cam, force=force, speed_mps=speed, fps=device.achieved_fps(t_now) if device else fps_now,
             pending_alerts=outbox.pending(), alerts_total=len(confirmed),
             device=device.profile.name if device else None, telemetry_real=not (synthetic or args.simulated_flight), done=done,
-            yaw_bias_deg=yaw_calib.bias_at(t_now) if yaw_calib else None,
+            yaw_bias_deg=yaw_calib.bias_at(t_now) if yaw_calib else None, gps_acc_m=tel.gps_acc_m,
             yaw_calib_samples=yaw_calib.n_samples if yaw_calib else None,
         )
 

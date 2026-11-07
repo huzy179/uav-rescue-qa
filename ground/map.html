@@ -286,6 +286,7 @@
         <dt>Xử lý</dt><dd>${fmt(u.fps)} khung/giây</dd>
         <dt>Thiết bị</dt><dd>${u.device ? esc(u.device.replace(/\s*\(.*\)\s*$/, "")) + " · giả lập thời gian" : "máy chạy demo"}</dd>
         <dt>Telemetry</dt><dd>${u.telemetry_real ? "thật (từ file bay)" : "giả lập"}</dd>
+        ${u.gps_acc_m == null ? "" : `<dt title="Độ chính xác ngang do bộ thu GPS tự báo (1σ); vùng tìm 95% rộng khoảng 2,45 lần">GPS</dt><dd style="color:${u.gps_acc_m > 3 ? "var(--warn)" : "inherit"}">±${fmt(u.gps_acc_m)} m</dd>`}
         ${compassRow(u)}
         <dt>Cảnh báo tạo trên drone</dt><dd>${created}</dd>
         <dt>Đã tới trạm</dt><dd>${got}</dd>

@@ -50,6 +50,8 @@ Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặ
 
 **Cập nhật 7/11 (la bàn):** tự hiệu chỉnh lệch la bàn trên UAV (`--yaw-calib`, TECHNICAL 8.4): mô phỏng cho tách nhầm và báo giả do la bàn lệch giảm mạnh (`rq3_yawcalib.md`); tuỳ chọn, chưa kiểm chứng trên log thật. Thẻ drone ở trạm hiện lệch đang trừ.
 
+**Cập nhật 7/11 (độ chính xác GPS):** bán kính sai số theo độ chính xác GPS do bộ thu báo (`--gps-sigma-from-telemetry`): mô phỏng cho vùng tìm 95% chứa đủ người khi GPS kém đi giữa chuyến và hẹp lại khi GPS tốt; rủi ro khi bộ thu báo lạc quan (`rq3_gpsacc.md`). Tuỳ chọn; thẻ drone hiện độ chính xác GPS.
+
 **Cập nhật 7/11 (sân thử):** tab **Sân thử** của `python -m console` (TECHNICAL 11.4): chỉnh tham số chuyến bay, mô hình, thiết bị, mạng hoặc chọn một trong tám câu hỏi "nếu… thì sao" dựng sẵn; một lần chạy sinh kịch bản, xoá trạm (`POST /api/reset`), nạp đáp án, bay và gửi về trạm, chấm bằng `eval/rq3_metrics.py`; bảng so sánh các lần chạy, kết quả ở `runs/sandbox/`. Dùng để trả lời câu hỏi của hội đồng tại chỗ (DEMO_BAO_VE). `--link-probe-s 0` tắt thăm dò khi file cấu hình đã bật.
 
 **Cập nhật 6/11 (RQ3c, RQ3d, mô phỏng):**
