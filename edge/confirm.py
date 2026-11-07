@@ -131,6 +131,26 @@ def with_cluster_group_sizes(
     return out
 
 
+def with_window_group_sizes(
+    confirmed: list[Confirmation], recent_frames: list[list[tuple[float, float]]], radius_m: float = GROUP_RADIUS_M,
+) -> list[Confirmation]:
+    """Nâng group_size lên số người thấy cùng lúc trong radius_m ở ít nhất hai khung của cửa sổ xác nhận.
+
+    Mỗi khung đếm số phát hiện trong radius_m quanh xác nhận; lấy số lớn thứ hai (thấy ở ít nhất hai khung, loại báo
+    nhầm một khung). Một người chỉ cho một phát hiện mỗi khung, nên cụm tách nhầm của cùng một người (vị trí trôi theo
+    GPS) không bị đếm thêm như ở with_cluster_group_sizes. docs/results/rq3_group.md.
+    """
+    out = []
+    for c in confirmed:
+        counts = sorted(
+            (sum(1 for lat, lon in frame if ground_distance_m(c.lat, c.lon, lat, lon) <= radius_m) for frame in recent_frames),
+            reverse=True,
+        )
+        n = counts[1] if len(counts) >= 2 else 0
+        out.append(c.model_copy(update={"group_size": max(c.group_size, n)}))
+    return out
+
+
 class GeoConfirmer:
     """Gom phát hiện theo vị trí mặt đất (chiến lược `geo`, TECHNICAL mục 9.4).
 
@@ -143,10 +163,11 @@ class GeoConfirmer:
         self, radius_m: float = 3.0, n_confirm: int = 3, window_s: float = 5.0, expire_s: float = 6.0, suppress_s: float = 0.0,
         group_count: str = "frame",
     ) -> None:
-        if group_count not in ("frame", "clusters"):
-            raise ValueError(f"group_count phải là 'frame' hoặc 'clusters', nhận được: {group_count}")
+        if group_count not in ("frame", "clusters", "frames"):
+            raise ValueError(f"group_count phải là 'frame', 'clusters' hoặc 'frames', nhận được: {group_count}")
         self.radius_m, self.n_confirm, self.window_s, self.expire_s = radius_m, n_confirm, window_s, expire_s
         self.group_count = group_count
+        self._recent: list[tuple[float, list[tuple[float, float]]]] = []  # (t, vị trí các phát hiện) trong window_s
         self.memory = AlertMemory(suppress_s, radius_m)
         self._clusters: list[_Cluster] = []
         self._next_id = 0
@@ -155,6 +176,9 @@ class GeoConfirmer:
         """Cập nhật với phát hiện của một khung; trả về các cụm vừa đủ điều kiện ở khung này."""
         self._clusters = [c for c in self._clusters if t - c.last.t <= self.expire_s]
         located = [d for d in dets if d.lat is not None and d.lon is not None]
+        if self.group_count == "frames":
+            self._recent = [(ft, f) for ft, f in self._recent if t - ft <= self.window_s]
+            self._recent.append((t, [(d.lat, d.lon) for d in located]))  # type: ignore[misc]
 
         pairs = sorted(
             (ground_distance_m(c.lat, c.lon, d.lat, d.lon), ci, di)  # type: ignore[arg-type]
@@ -182,6 +206,8 @@ class GeoConfirmer:
         confirmed = with_group_sizes(_newly_confirmed(self._clusters, t, self.n_confirm, self.window_s, self.memory), located)
         if self.group_count == "clusters":
             confirmed = with_cluster_group_sizes(confirmed, self._clusters, t, self.window_s)
+        elif self.group_count == "frames":
+            confirmed = with_window_group_sizes(confirmed, [f for _, f in self._recent])
         return confirmed
 
 

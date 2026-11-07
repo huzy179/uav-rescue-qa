@@ -7,7 +7,7 @@
 - **Đếm theo cụm** (`--group-count clusters`, `edge.confirm.with_cluster_group_sizes`): số cụm còn sống trong 5 m quanh người được báo có ít nhất 2 lần thấy trong cửa sổ xác nhận (5 s), lấy số lớn hơn giữa cách này và đếm theo khung. Điều kiện "ít nhất 2 lần" đặt trước khi chạy, để loại báo nhầm một khung; không thử giá trị khác. Mặc định vẫn là đếm theo khung (`frame`).
 - **Kịch bản có nhóm** (`sim/make_rq3.py --group-size K --group-spread-m 2`): tâm nhóm rải như người lẻ, mỗi nhóm K người nằm đều trong hình tròn bán kính 2 m quanh tâm. K = 1 giữ đúng kịch bản cũ.
 - **Chỉ số** (`eval/rq3_metrics.py`): với mỗi cảnh báo đúng, số người thật trong 5 m quanh người được báo (lúc cảnh báo) so với `group_size`: tỉ lệ cảnh báo đúng số người, sai số trung bình (âm là đếm thiếu), sai số tuyệt đối trung bình.
-- 12 người, 60 s, GPS σ 0,5 m, 0,5 báo nhầm mỗi khung, xác nhận geo N = 3; nhóm {1, 2, 4} × recall detector {0,7; 0,9} × cách đếm {theo khung, theo cụm}; 5 seed. Cấu hình `configs/experiments/rq3_group.yaml`, kết quả `runs/rq3/group/summary.csv` (trung bình 5 seed, "±" là độ lệch chuẩn qua seed). Chạy ở commit `7e04d86`, `dirty: true` vì mã đếm theo cụm và kịch bản có nhóm lúc đó chưa commit (commit ngay sau, cùng nội dung).
+- 12 người, 60 s, GPS σ 0,5 m, 0,5 báo nhầm mỗi khung, xác nhận geo N = 3; nhóm {1, 2, 4} × recall detector {0,7; 0,9} × cách đếm {theo khung, theo cụm}; 5 seed. Cấu hình `configs/experiments/rq3_group.yaml`, kết quả `runs/rq3/group/summary.csv` (trung bình 5 seed, "±" là độ lệch chuẩn qua seed). Chạy lần đầu ở commit `7e04d86`; chạy lại toàn lưới ở commit `b2f4e71` (`dirty: true`, mã đếm theo khung trong cửa sổ chưa commit) khi thêm cách đếm thứ ba: các ô của hai cách đầu ra giống hệt lần trước.
 
 ## Kết quả
 
@@ -26,6 +26,17 @@
 | 4 | 0,900 | theo khung | 0,533 ± 0,321 | −0,500 | 0,500 | 0,200 |
 | 4 | 0,900 | theo cụm | 0,900 ± 0,070 | −0,100 | 0,100 | 0,200 |
 
+Cách đếm thứ ba, thêm sau khi thấy đếm theo cụm đếm thừa trên video thật (xem dưới): **theo khung trong cửa sổ** (`--group-count frames`, `with_window_group_sizes`): mỗi khung trong cửa sổ xác nhận đếm số phát hiện trong 5 m, lấy số lớn thứ hai (thấy cùng lúc ở ít nhất hai khung), so với khung xác nhận lấy số lớn hơn. Một người chỉ cho một phát hiện mỗi khung, nên cụm tách nhầm không bị đếm thêm. Quy tắc đặt trước khi chạy.
+
+| Người mỗi nhóm | Recall detector | Cách đếm | Cảnh báo đúng số người | Sai số trung bình | Sai số tuyệt đối | Người không có cảnh báo riêng |
+|---|---|---|---|---|---|---|
+| 1 | 0,700 | theo khung trong cửa sổ | 1,000 ± 0,000 | 0,000 | 0,000 | 0,000 |
+| 1 | 0,900 | theo khung trong cửa sổ | 0,983 ± 0,037 | 0,017 | 0,017 | 0,000 |
+| 2 | 0,700 | theo khung trong cửa sổ | 0,850 ± 0,109 | −0,150 | 0,150 | 0,133 |
+| 2 | 0,900 | theo khung trong cửa sổ | 0,900 ± 0,037 | −0,067 | 0,100 | 0,100 |
+| 4 | 0,700 | theo khung trong cửa sổ | 0,412 ± 0,224 | −0,678 | 0,678 | 0,250 |
+| 4 | 0,900 | theo khung trong cửa sổ | 0,750 ± 0,167 | −0,250 | 0,250 | 0,200 |
+
 Cột cuối là `missed_rate`: người không có cảnh báo của riêng mình (cảnh báo gần nhất thuộc về người khác trong nhóm). Với người theo nhóm, con số này không có nghĩa là bỏ sót, vì người đó nằm trong số `group_size` của cảnh báo bên cạnh; nó như nhau giữa hai cách đếm.
 
 ## Nhận xét
@@ -37,21 +48,23 @@ Cột cuối là `missed_rate`: người không có cảnh báo của riêng mì
 
 ## Kiểm chứng trên video thật (SeaDronesSee)
 
-- Phát lại phát hiện đã lưu của lần chạy geo (`runs/sds/<đoạn>/geo/detections.jsonl`, 2 khung/giây, cấu hình `configs/edge.yaml`) trên ba đoạn của `alert_memory.md`, với hai cách đếm (`runs/sds/<đoạn>/group_frame`, `group_clusters`; commit `5a2eff1`).
+- Phát lại phát hiện đã lưu của lần chạy geo (`runs/sds/<đoạn>/geo/detections.jsonl`, 2 khung/giây, cấu hình `configs/edge.yaml`) trên ba đoạn của `alert_memory.md`, với các cách đếm (`runs/sds/<đoạn>/group_frame`, `group_clusters` ở commit `5a2eff1`; `group_frames` ở `b2f4e71`, `dirty: true` vì mã chưa commit).
 - Chấm bằng `eval/group_count_eval.py`: với mỗi cảnh báo, khung nhãn ở thời điểm cảnh báo, nhãn khớp box của cảnh báo (IoU ≥ 0,3; không khớp thì bỏ qua), chiếu mọi nhãn của khung xuống mặt đất bằng telemetry, đếm người trong 5 m quanh người được báo. Kết quả `runs/sds/<đoạn>/group_count.csv`.
 
 | Đoạn | Cách đếm | Cảnh báo khớp nhãn | Đúng số người | Sai số trung bình | Đếm thừa | Đếm thiếu |
 |---|---|---|---|---|---|---|
 | v21 (người thật mỗi cảnh báo: 1 người ×15, 2 ×8, 3 ×1) | theo khung | 24/37 | 0,792 | −0,250 | 0 | 5 |
 | | theo cụm | 24/37 | 0,583 | +0,292 | 8 | 2 |
-| v5 (1 người ×6) | theo khung | 6/9 | 0,667 | +0,333 | 2 | 0 |
-| | theo cụm | 6/9 | 0,667 | +0,333 | 2 | 0 |
+| | theo khung trong cửa sổ | 24/37 | 0,750 | −0,208 | 1 | 5 |
+| v5 (1 người ×6) | cả ba cách | 6/9 | 0,667 | +0,333 | 2 | 0 |
 | v13 (2 người ×2) | theo khung | 2/4 | 0,000 | −1,000 | 0 | 2 |
 | | theo cụm | 2/4 | 0,500 | −0,500 | 0 | 1 |
+| | theo khung trong cửa sổ | 2/4 | 0,000 | −1,000 | 0 | 2 |
 
 5. **Trên v21, đoạn đông người nhất, đếm theo cụm kém hơn**: đúng số người 0,792 → 0,583, đếm thừa ở 8/24 cảnh báo thay vì 0. Nguyên nhân hợp lý nhất là điều mô phỏng không có: trên v21 vị trí một người trôi theo GPS nên **một người bị tách thành nhiều cụm** (37 cảnh báo cho 12 người, `alert_memory.md`); các cụm thừa đó đã thấy vài lần nên bị đếm như người khác. Mô phỏng dùng GPS σ 0,5 m nên gần như không tách cụm.
 6. Hai đoạn thưa người quá ít cảnh báo (6 và 2) để kết luận; v13 đi theo chiều mô phỏng (2 cảnh báo, đếm thiếu 2 → 1).
-7. **Quyết định #18 (chốt 7/11): không bật**, giữ `--group-count clusters` làm tuỳ chọn, mặc định đếm theo khung. Muốn đếm theo cụm dùng được thì phải phân biệt cụm tách nhầm của cùng một người với người khác trong nhóm; một hướng chưa thử: chỉ đếm các cụm từng được thấy **cùng một khung** với người được báo (một người không xuất hiện hai lần trong cùng khung).
+7. **Đếm theo khung trong cửa sổ hết đếm thừa do tách cụm nhưng không có lợi trên video thật**: v21 đếm thừa 1/24 (theo cụm 8/24), nhưng đúng số người 0,750, vẫn dưới đếm theo khung (0,792); v13 không đỡ được cảnh báo nào. Trong mô phỏng nó nằm giữa hai cách kia (nhóm 4 người, recall 0,7: 0,303 → 0,412). Người bị bỏ sót ở v21 là người đứng sát nhau mà detector gộp hoặc bỏ ở mọi khung, điều đếm lại không sửa được.
+8. **Quyết định #18 (chốt 7/11): không bật cách nào**, mặc định đếm theo khung xác nhận; `clusters` và `frames` giữ làm tuỳ chọn để tái lập. Ba đoạn video, 32 cảnh báo khớp nhãn là quá ít để chọn tiếp; muốn làm tiếp cần thêm video có nhóm người và nhãn.
 
 ## Giới hạn
 
@@ -64,12 +77,12 @@ Cột cuối là `missed_rate`: người không có cảnh báo của riêng mì
 ```bash
 .venv/bin/python -m sim.sweep_rq3 --config configs/experiments/rq3_group.yaml --jobs 12
 for V in val-m100-DJI_0001-v21 val-mavic-DJI_0065-v5 train-mavic-DJI_0064-v13; do
-  for M in frame clusters; do
+  for M in frame clusters frames; do
     .venv/bin/python edge/main.py --config configs/edge.yaml --source data/processed/sds_mot/$V/frames --source-fps 30 --fps 2 \
       --replay runs/sds/$V/geo/detections.jsonl --telemetry data/processed/sds_mot/$V/telemetry.csv \
       --confirm geo --group-count $M --output runs/sds/$V/group_$M --drain-s 0
   done
   .venv/bin/python eval/group_count_eval.py --sds data/processed/sds_mot/$V \
-      --runs runs/sds/$V/group_frame runs/sds/$V/group_clusters --output runs/sds/$V/group_count.csv
+      --runs runs/sds/$V/group_frame runs/sds/$V/group_clusters runs/sds/$V/group_frames --output runs/sds/$V/group_count.csv
 done
 ```

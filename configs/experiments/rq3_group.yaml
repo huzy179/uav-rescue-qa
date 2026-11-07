@@ -1,6 +1,6 @@
 # RQ3 mô phỏng: ước tính số người quanh mỗi cảnh báo (group_size) khi người đứng theo nhóm. 12 người, rời từng người
 # hoặc nhóm 2, 4 người trong bán kính 2 m; detector giả recall 0,7 hoặc 0,9. So đếm theo khung xác nhận (frame, mặc
-# định) với đếm thêm cụm đã thấy ≥ 2 lần trong cửa sổ (clusters). Chỉ số: tỉ lệ cảnh báo đúng số người, sai số trung bình.
+# định) với đếm thêm cụm đã thấy ≥ 2 lần trong cửa sổ (clusters) và số người thấy cùng lúc ở ≥ 2 khung (frames). Chỉ số: tỉ lệ cảnh báo đúng số người, sai số trung bình.
 # Kịch bản như rq3_network.yaml (GPS σ 0,5 m). docs/results/rq3_group.md.
 output: runs/rq3/group
 seeds: [0, 1, 2, 3, 4]
@@ -17,4 +17,4 @@ pipeline:
 grid:
   scenario.group_size: [1, 2, 4]
   scenario.recall: [0.7, 0.9]
-  pipeline.group_count: [frame, clusters]
+  pipeline.group_count: [frame, clusters, frames]

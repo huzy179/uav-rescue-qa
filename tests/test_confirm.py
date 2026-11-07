@@ -195,3 +195,27 @@ def test_group_count_rejects_unknown_mode() -> None:
 
     with pytest.raises(ValueError):
         GeoConfirmer(group_count="tracks")
+
+
+def test_group_count_frames_ignores_split_cluster_of_same_person() -> None:
+    """Một người, vị trí nhảy 4 m giữa các khung (GPS trôi) nên tách thành hai cụm; đếm theo cụm cho 2, đếm theo
+    khung trong cửa sổ cho 1 vì mỗi khung chỉ có một phát hiện."""
+    frames = [[det(0, 0.0)], [det(1, 4.0)], [det(2, 0.0)], [det(3, 4.0)], [det(4, 0.0)]]
+    sizes = {}
+    for mode in ("clusters", "frames"):
+        confirmer = GeoConfirmer(radius_m=1.0, n_confirm=3, window_s=5.0, group_count=mode)
+        out = []
+        for k, dets in enumerate(frames):
+            out += confirmer.update(dets, k * 0.5)
+        sizes[mode] = [c.group_size for c in out]
+    assert sizes["clusters"][0] == 2
+    assert sizes["frames"][0] == 1
+
+
+def test_group_count_frames_recovers_member_missed_in_confirming_frame() -> None:
+    frames = [[det(0, 0.0), det(0, 2.0)], [det(1, 0.0), det(1, 2.0)], [det(2, 0.0)]]
+    confirmer = GeoConfirmer(radius_m=1.0, n_confirm=3, group_count="frames")
+    out = []
+    for k, dets in enumerate(frames):
+        out += confirmer.update(dets, k * 0.5)
+    assert [c.group_size for c in out] == [2]
