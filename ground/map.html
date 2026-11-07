@@ -258,6 +258,16 @@
   const DRONE_SVG = '<svg width="16" height="16" viewBox="-8 -8 16 16" style="vertical-align:-2px"><path d="M0,-7 L5,6 L0,3 L-5,6 Z" fill="#39c5e0"/></svg>';
   const SIGNAL_SVG = '<svg width="18" height="14" viewBox="0 0 18 14" style="vertical-align:-1px"><path d="M1 13h2M6 13V9M10 13V5M14 13V1" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M1 1l16 12" stroke="#fff" stroke-width="2"/></svg>';
 
+  // Tự hiệu chỉnh la bàn trên drone (--yaw-calib): chưa bật thì không hiện dòng này.
+  function compassRow(u) {
+    if (u.yaw_bias_deg == null) return "";
+    const learned = u.yaw_bias_deg !== 0;
+    const text = learned ? `lệch ${fmt(u.yaw_bias_deg)}°, đã trừ` : `đang học (${u.yaw_calib_samples} mẫu bay thẳng)`;
+    const warn = learned && Math.abs(u.yaw_bias_deg) >= 3;
+    return `<dt title="Drone so hướng bay tính từ GPS với hướng la bàn khi bay thẳng, rồi trừ phần lệch">La bàn</dt>
+      <dd style="color:${warn ? "var(--warn)" : "inherit"}">${text}</dd>`;
+  }
+
   function uavCard(u, stale) {
     // Số đã tới trạm đếm trực tiếp, số tạo trên drone lấy từ gói trạng thái gần nhất (mỗi giây): cảnh báo có thể tới
     // trước gói trạng thái kế tiếp, nên số tạo không nhỏ hơn số đã tới.
@@ -276,6 +286,7 @@
         <dt>Xử lý</dt><dd>${fmt(u.fps)} khung/giây</dd>
         <dt>Thiết bị</dt><dd>${u.device ? esc(u.device.replace(/\s*\(.*\)\s*$/, "")) + " · giả lập thời gian" : "máy chạy demo"}</dd>
         <dt>Telemetry</dt><dd>${u.telemetry_real ? "thật (từ file bay)" : "giả lập"}</dd>
+        ${compassRow(u)}
         <dt>Cảnh báo tạo trên drone</dt><dd>${created}</dd>
         <dt>Đã tới trạm</dt><dd>${got}</dd>
         <dt>Còn kẹt trên drone</dt><dd style="color:${waiting ? "var(--warn)" : "inherit"}">${waiting}</dd>

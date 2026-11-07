@@ -66,7 +66,8 @@ Cập nhật 7/11/2026.
 
 - **Vấn đề.** Lệch hướng 5° ở 100 m: tách nhầm 5,333 mỗi kịch bản (ở 50 m: 0,333) (`rq3_geoerr.md`).
 - **Đã làm:** trạm gộp cảnh báo gần nhau thành sự cố (`alert_memory.md`).
-- **Đề xuất (không cần GPU):** ước lượng lệch la bàn khi bay thẳng bằng cách so hướng di chuyển từ GPS với hướng ghi trong telemetry, rồi hiệu chỉnh; kiểm chứng bằng `rq3_geoerr.yaml` có `yaw_bias_deg`.
+- **Đã làm, tuỳ chọn (7/11): tự hiệu chỉnh lệch la bàn** (`--yaw-calib`, TECHNICAL 8.4): so hướng di chuyển từ GPS với yaw khi bay thẳng, trừ trung vị. Mô phỏng (`rq3_yawcalib.md`): 100 m, GPS σ 1 m, lệch 5°, bay thẳng: tách nhầm 5,333 → 0,333; quét luống lệch 10°: báo giả mỗi phút 13,667 → 1,333. Khi la bàn không lệch, sai số vị trí tăng nhẹ (1,387 → 1,538 m). Thẻ drone ở trạm hiện lệch đang trừ.
+- **Đề xuất:** thử trên log bay thật có drone quét thẳng; ước lượng thêm gió đẩy lệch (mũi máy khác hướng bay).
 
 ### 3.4. Cảnh báo chờ lâu sau khi có sóng lại
 

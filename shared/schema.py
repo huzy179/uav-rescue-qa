@@ -107,6 +107,9 @@ class UavState(BaseModel):
     device: str | None = None  # tên hồ sơ thiết bị giả lập, nếu có
     telemetry_real: bool = True  # False khi pipeline dùng đường bay giả lập
     done: bool = False  # chuyến bay đã kết thúc
+    # Tự hiệu chỉnh la bàn (--yaw-calib): lệch đang trừ (độ, 0 khi chưa đủ mẫu) và số mẫu bay thẳng đã dùng; None khi tắt.
+    yaw_bias_deg: float | None = None
+    yaw_calib_samples: int | None = None
     # Điểm đường bay của các gói trạng thái chưa tới trạm (mất sóng), cũ trước mới; gửi bù để vùng đã quét trên bản đồ
     # không bị thủng ở đoạn mất sóng. Rỗng khi gói trước tới đủ.
     trail: list[TrailPoint] = []

@@ -273,6 +273,8 @@ def main() -> None:
             t_now, tel, cam, force=force, speed_mps=speed, fps=device.achieved_fps(t_now) if device else fps_now,
             pending_alerts=outbox.pending(), alerts_total=len(confirmed),
             device=device.profile.name if device else None, telemetry_real=not (synthetic or args.simulated_flight), done=done,
+            yaw_bias_deg=yaw_calib.bias_at(t_now) if yaw_calib else None,
+            yaw_calib_samples=yaw_calib.n_samples if yaw_calib else None,
         )
 
     def status(t_now: float) -> tuple[list[str], str | None]:
