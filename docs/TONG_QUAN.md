@@ -78,7 +78,7 @@ Khi ghép phát hiện qua nhiều khung để xác nhận rồi gửi cảnh b�
 *(Đề xuất 6/11, quyết định #16, chờ cô; bản bốn đóng góp trước đó xem lịch sử git của file này.)*
 
 1. **Tập đánh giá ảnh lũ từ UAV và cách đánh giá theo cỡ người**: 188 khung tự gán nhãn từ 9 nguồn (`flood_truoc_khoa.md`), kết quả chia theo nhóm kích thước (dưới 8, 8–16, 16–32, trên 32 px), khoảng tin cậy lấy mẫu theo video. Chưa có bộ công khai nào chụp người trong lũ từ UAV có nhãn sẵn; tập nhỏ là giới hạn phải ghi rõ.
-2. **Thu nhỏ theo độ cao bay**: dùng độ cao ước lượng người sẽ to bao nhiêu pixel rồi thu nhỏ khung trước khi phát hiện, vừa đưa người về cỡ mô hình làm tốt (RQ1d), vừa giảm số ô cần chạy trên máy yếu (RQ2c). Đánh giá trên SeaDronesSee và mô phỏng; không đánh giá được trên tập lũ vì video lũ không có độ cao bay (quyết định #13).
+2. **Thu nhỏ theo độ cao bay** (**7/11: đã có công trình trước** làm đúng ý này, Messmer và cộng sự ICPR 2022, Ahmed và Pizarro OCEANS 2025 trên chính SeaDronesSee; xem `luan_van/tai_lieu_tham_khao.md`, quyết định #19): dùng độ cao ước lượng người sẽ to bao nhiêu pixel rồi thu nhỏ khung trước khi phát hiện, vừa đưa người về cỡ mô hình làm tốt (RQ1d), vừa giảm số ô cần chạy trên máy yếu (RQ2c). Đánh giá trên SeaDronesSee và mô phỏng; không đánh giá được trên tập lũ vì video lũ không có độ cao bay (quyết định #13).
 3. **Xác nhận theo toạ độ mặt đất khi xử lý ít khung**: chỉ ra vì sao theo dõi thông dụng (ByteTrack) gãy khi UAV xử lý ít khung mỗi giây, và cách gom theo toạ độ mặt đất khắc phục (RQ3b, mục 3.9).
 
 **Hiện thực hoá** (sản phẩm kỹ thuật, không tính là đóng góp khoa học): hệ thống hoàn chỉnh từ video tới cảnh báo trên bản đồ, mã nguồn mở có kiểm thử; giả lập thời gian thiết bị biên; demo bảo vệ chạy không cần GPU và Internet.

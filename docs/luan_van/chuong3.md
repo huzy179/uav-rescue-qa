@@ -2,7 +2,7 @@
 
 > **Ghi chú bản nháp (xoá khi đưa vào quyển).** Nháp 7/11/2026 theo `docs/DAN_Y_LUAN_VAN.md` mục chương 3. Nguồn: `docs/TECHNICAL.md` mục 2, 4, 7–12, 14.6; `docs/THUAT_TOAN.md` (thuật toán từng bước, ví dụ tính tay); mã trong `edge/`, `ground/`, `sim/`. Chương này mô tả **cách làm**; số đo nằm ở chương 5, ở đây chỉ dẫn vài con số làm động lực, mỗi số ghi file nguồn trong `docs/results/`. Thuật ngữ theo `docs/THUAT_NGU.md`. Tham số ghi là giá trị mặc định trong `configs/edge.yaml`. Số hình, số bảng đánh lại khi dàn trang.
 
-Chương này trình bày hệ thống phát hiện và báo vị trí người trong vùng ngập từ UAV: kiến trúc tổng thể (3.1), hình học camera và cách đổi vị trí trên ảnh sang toạ độ mặt đất (3.2), khâu phát hiện (3.3) cùng đóng góp thu nhỏ khung theo độ cao bay (3.4), tần số xử lý theo độ cao (3.5), đóng góp xác nhận theo toạ độ mặt đất (3.6), và khâu gửi cảnh báo cùng trạm mặt đất (3.7). Mục 3.8 mô tả các công cụ giả lập dùng để đánh giá những phần không đo được trên thiết bị và chuyến bay thật.
+Chương này trình bày hệ thống phát hiện và báo vị trí người trong vùng ngập từ UAV: kiến trúc tổng thể (3.1), hình học camera và cách đổi vị trí trên ảnh sang toạ độ mặt đất (3.2), khâu phát hiện (3.3) cùng bước thu nhỏ khung theo độ cao bay (3.4), tần số xử lý theo độ cao (3.5), đóng góp xác nhận theo toạ độ mặt đất (3.6), và khâu gửi cảnh báo cùng trạm mặt đất (3.7). Mục 3.8 mô tả các công cụ giả lập dùng để đánh giá những phần không đo được trên thiết bị và chuyến bay thật.
 
 Xuyên suốt chương là một ý: **dữ liệu bay sẵn có của UAV (độ cao, GPS, hướng) được đưa vào cả ba khâu**, phát hiện, tính toán và xác nhận, thay cho các giả định cố định.
 
@@ -128,7 +128,7 @@ Dùng IOS (giao trên box nhỏ) thay IoU vì box nửa người nằm gọn tro
 
 Pipeline giữ box có conf ≥ 0,1, thấp hơn ngưỡng 0,25 dùng cho recall vận hành ở chương 5. Ngưỡng thấp để ít bỏ sót; báo nhầm do ngưỡng thấp sinh ra được lọc ở khâu xác nhận (mục 3.6), vì báo nhầm hiếm khi lặp lại ở cùng một chỗ trên mặt đất qua nhiều khung. Đặt ngưỡng riêng cho từng cỡ box đã được thử và không có lợi (`conf_by_size.md`).
 
-## 3.4. Đóng góp: thu nhỏ khung theo độ cao bay
+## 3.4. Thu nhỏ khung theo độ cao bay
 
 ### 3.4.1. Động lực
 
@@ -153,7 +153,7 @@ Thu nhỏ theo độ cao có hai tác dụng, ứng với hai câu hỏi nghiên
 - **Độ chính xác (câu hỏi 1):** đưa người về cỡ mô hình làm tốt nhất. Trên SeaDronesSee, AP50 của cắt ô từ 0,235 lên 0,531 với p* = 10 px (`scale_by_altitude.md`; chương 5, mục 5.1.4).
 - **Khối lượng tính (câu hỏi 2):** khung nhỏ đi thì số ô giảm theo bình phương hệ số s. Ví dụ ở 30 m, người khoảng 42 px; với p* = 10 px thì s = 4,2, khung 3840 × 2160 còn khoảng 914 × 514 và chỉ cần 2 ô thay vì 32. Trên thiết bị yếu, đây là cách để theo kịp tần số cần thiết khi bay thấp (mục 3.8.3; chương 5, mục 5.2).
 
-Ý tưởng gần với "khớp thang kích thước" (scale match) của TinyPerson, khác ở chỗ làm **lúc chạy, theo telemetry**, chứ không lúc huấn luyện. Giới hạn: tập ảnh lũ lấy từ video công khai không có độ cao bay, nên đóng góp này chỉ đánh giá được trên SeaDronesSee (có độ cao từ metadata) và trong mô phỏng (quyết định #13).
+**Công trình liên quan.** Đổi cỡ ảnh theo độ cao chụp không phải ý tưởng mới: Messmer và cộng sự đổi cỡ ảnh UAV theo độ cao trước khi phát hiện (Adaptive Resizing, ICPR 2022), và Ahmed và Pizarro kết hợp thu nhỏ theo độ cao với số ô động, đánh giá trên chính SeaDronesSee (OCEANS 2025); ý "khớp thang kích thước" lúc huấn luyện có từ TinyPerson (WACV 2020). Phần của luận văn là **đưa bước này vào pipeline chạy trên thiết bị biên theo telemetry từng khung** và đo hai tác dụng cùng lúc trên một mô hình đã tinh chỉnh cho người nhỏ: độ chính xác theo nhóm cỡ người (bootstrap cặp theo video) và số ô phải tính, nối với giả lập thời gian thiết bị và với khâu xác nhận. [CHỜ ĐỌC TOÀN VĂN hai bài để so cách tính hệ số và kết quả.] Giới hạn: tập ảnh lũ lấy từ video công khai không có độ cao bay, nên đóng góp này chỉ đánh giá được trên SeaDronesSee (có độ cao từ metadata) và trong mô phỏng (quyết định #13).
 
 ## 3.5. Tần số xử lý theo độ cao
 
@@ -278,4 +278,4 @@ với số ô tính từ kích thước khung sau khi thu nhỏ theo độ cao (
 
 ## Tóm tắt chương
 
-Hệ thống phát hiện người ở độ phân giải gốc bằng cắt ô theo lô, đổi vị trí sang toạ độ mặt đất bằng telemetry, và chỉ cảnh báo khi một vị trí trên mặt đất được thấy lặp lại; cảnh báo được ghi trước khi gửi, gửi toạ độ trước, và gộp thành sự cố ở trạm. Hai đóng góp phương pháp đều dùng dữ liệu bay sẵn có của UAV: **thu nhỏ khung theo độ cao bay** (đưa người về cỡ mô hình làm tốt và giảm số ô phải tính) và **xác nhận theo toạ độ mặt đất** (ghép các lần thấy ở nơi người đứng yên, thay cho ghép trên ảnh vốn gãy khi UAV bay nhanh và xử lý ít khung). Chương 4 mô tả dữ liệu và cách đo; chương 5 trình bày kết quả.
+Hệ thống phát hiện người ở độ phân giải gốc bằng cắt ô theo lô, đổi vị trí sang toạ độ mặt đất bằng telemetry, và chỉ cảnh báo khi một vị trí trên mặt đất được thấy lặp lại; cảnh báo được ghi trước khi gửi, gửi toạ độ trước, và gộp thành sự cố ở trạm. Hai thành phần phương pháp chính đều dùng dữ liệu bay sẵn có của UAV: **thu nhỏ khung theo độ cao bay** (đã có công trình trước; luận văn đưa vào pipeline thiết bị biên và đo cả độ chính xác lẫn khối lượng tính) và **xác nhận theo toạ độ mặt đất** (đóng góp chính) (ghép các lần thấy ở nơi người đứng yên, thay cho ghép trên ảnh vốn gãy khi UAV bay nhanh và xử lý ít khung). Chương 4 mô tả dữ liệu và cách đo; chương 5 trình bày kết quả.

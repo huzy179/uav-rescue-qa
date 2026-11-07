@@ -396,7 +396,7 @@ Cột "Trạng thái" cho biết nguồn đã được tra trên mạng trong qu
 - **Kế thừa có cải tiến:** cắt ô theo lô; fine-tune và đánh giá theo nhóm kích thước người.
 - **Phân tích có cơ sở:** vì sao tracking trên ảnh gãy khi UAV bay nhanh và xử lý ít khung, có chứng minh bằng kiểm thử và mô phỏng.
 - **Đề xuất của dự án:** xác nhận bằng gom theo toạ độ mặt đất, ghép từ phép chiếu ảnh lên mặt đất và luật xác nhận M trên N. **Chưa khảo sát tài liệu một cách có hệ thống**, nên chưa khẳng định được đây là cách mới; cần tìm công trình gần nhất để trích dẫn và so sánh.
-- **Đề xuất** (quyết định #13 của ROADMAP, chốt 4/11: đánh giá trên SDS và mô phỏng RQ3, tập lũ không có độ cao bay): chọn thang ảnh theo độ cao bay (bước 2d), tức nối khối phát hiện với telemetry. Ý tưởng gần với "khớp thang kích thước" của TinyPerson (bảng trên), nhưng làm lúc chạy thay vì lúc huấn luyện; cũng cần tìm công trình gần nhất.
+- **Không mới** (tra 7/11): chọn thang ảnh theo độ cao bay (bước 2d) đã có ở Messmer, Kiefer, Zell, "Gaining Scale Invariance in UAV Bird's Eye View Object Detection by Adaptive Resizing" (ICPR 2022) và Ahmed, Pizarro, "Maritime Small Object Detection from UAVs using Deep Learning with Altitude-Aware Dynamic Tiling" (OCEANS 2025, đánh giá trên SeaDronesSee). Phần của dự án: đưa vào pipeline thiết bị biên theo telemetry từng khung, đo cả độ chính xác theo nhóm cỡ lẫn số ô (quyết định #19). Danh mục đã tra: `luan_van/tai_lieu_tham_khao.md`.
 
 ---
 

@@ -28,11 +28,11 @@ Nháp 7/11: `docs/luan_van/chuong1.md` (1.1–1.6; thêm 1.5 phạm vi và giớ
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
 | 2.1 Phát hiện đối tượng và YOLO26 | Backbone, neck, head; đầu một-một không cần NMS (tuỳ chọn; đề tài dùng mặc định có NMS); vì sao người nhỏ bị mất qua các tầng | TECHNICAL mục 3, THUAT_TOAN mục 7 (nguồn tham khảo) | Viết |
-| 2.2 Phát hiện vật nhỏ | Cắt ô (SAHI), tầng P2, khớp tỉ lệ (TinyPerson) | TECHNICAL mục 4, THUAT_TOAN mục 7 | Viết |
+| 2.2 Phát hiện vật nhỏ | Cắt ô (SAHI), tầng P2, khớp tỉ lệ (TinyPerson), đổi cỡ ảnh theo độ cao (Messmer và cộng sự 2022; Ahmed, Pizarro 2025) | TECHNICAL mục 4, `luan_van/tai_lieu_tham_khao.md` | Viết |
 | 2.3 Ảnh từ UAV và bộ dữ liệu | VisDrone, AFO, C2A, SeaDronesSee, HydroVigilance; vì sao chưa có bộ ảnh lũ có nhãn | TONG_QUAN 3.3, TECHNICAL 13.1 | Viết |
 | 2.4 Theo dõi đối tượng qua nhiều khung | ByteTrack, bù chuyển động camera; giả định tần số khung cao | TECHNICAL mục 9 | Viết |
 | 2.5 Thiết bị biên và nén mô hình | TensorRT, FP16, INT8; Jetson | TECHNICAL mục 14 | Viết |
-| 2.6 Khoảng trống nghiên cứu | Chưa có đánh giá theo cỡ người trong cảnh lũ; theo dõi thông dụng không hợp với xử lý ít khung; chưa nối dữ liệu bay vào khâu phát hiện | Tổng hợp 2.1–2.5 | Viết |
+| 2.6 Khoảng trống nghiên cứu | Chưa có đánh giá theo cỡ người trong cảnh lũ; theo dõi thông dụng không hợp với xử lý ít khung; đổi cỡ ảnh theo độ cao đã có nhưng chưa được đo cùng khối lượng tính và khâu xác nhận trong một pipeline thiết bị biên; chưa nối dữ liệu bay vào khâu phát hiện | Tổng hợp 2.1–2.5 | Viết |
 
 ## Chương 3. Phương pháp
 
@@ -43,7 +43,7 @@ Nháp đầy đủ 7/11: `docs/luan_van/chuong3.md` (3.1–3.8 và tóm tắt; c
 | 3.1 Kiến trúc hệ thống | Sơ đồ sáu khâu từ camera tới bản đồ; trên UAV và ở trạm | TONG_QUAN mục 2, THUAT_TOAN mục 2–3 | Nháp |
 | 3.2 Hình học camera và định vị | Pixel → GPS, hàm ngược, lan truyền sai số | TECHNICAL mục 2, 8; THUAT_TOAN ví dụ tính tay | Nháp |
 | 3.3 Phát hiện: tinh chỉnh và cắt ô | Dữ liệu trộn, bộ cắt ô riêng, gộp theo IOS | TECHNICAL mục 4, 13 | Nháp |
-| 3.4 **Đóng góp: thu nhỏ theo độ cao bay** | Công thức số pixel dự kiến, hệ số thu nhỏ, ảnh hưởng tới số ô | THUAT_TOAN bước 2d, `scale_by_altitude.md`, TECHNICAL 14.6 | Nháp |
+| 3.4 Thu nhỏ theo độ cao bay (có công trình trước, quyết định #19) | Công thức số pixel dự kiến, hệ số thu nhỏ, ảnh hưởng tới số ô | THUAT_TOAN bước 2d, `scale_by_altitude.md`, TECHNICAL 14.6 | Nháp |
 | 3.5 Tần số theo độ cao | Số lần nhìn mỗi người, công thức tần số | TECHNICAL 7.5, THUAT_TOAN | Nháp |
 | 3.6 **Đóng góp: xác nhận theo toạ độ mặt đất** | Gom theo vị trí mặt đất, N lần trong cửa sổ; vì sao ByteTrack gãy ở 2 khung/giây | TECHNICAL mục 9, THUAT_TOAN | Nháp |
 | 3.7 Gửi cảnh báo và trạm mặt đất | Hàng đợi gửi, gửi lại, gộp sự cố, xếp ưu tiên | TECHNICAL mục 10, 12 | Nháp |
