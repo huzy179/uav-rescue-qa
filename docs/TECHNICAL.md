@@ -279,6 +279,8 @@ Tối ưu tiềm năng (nếu RQ2 cần): chỉ chạy ô có nước hoặc có
 
 ---
 
+
+**[Đã có, tuỳ chọn] Dùng lại ô không đổi khi drone đứng yên** (8/11, `edge/tile_cache.py`, `--skip-static-tiles`): khi telemetry cho thấy drone gần như đứng yên, ô gần như không đổi so với lần chạy gần nhất (ảnh xám 32 × 32) dùng lại box cũ, tối đa 4 lần liên tiếp; `timings.jsonl` ghi thêm `n_tiles_run`, và giả lập thiết bị dùng số này. Trên bốn đoạn SDS đứng yên: số ô còn 0,518–0,852 nhưng recall giảm tới 0,238, vì người bơi cử động mà ảnh thu nhỏ không thấy (`results/tile_skip.md`); không dùng.
 ## 5. Đo độ chính xác
 
 **[Đã có]** trong `eval/metrics.py` và `eval/eval_by_size.py`; đã đối chiếu với `yolo val` của ultralytics (lệch dưới 1%).
@@ -405,6 +407,7 @@ sampler ──(frame_id, t, ảnh)──► detector ──Detection──► ge
 | `eval/recall_by_pixels.py` | E6: gộp người của mọi mức thu nhỏ, recall theo cạnh ngắn sau thu nhỏ (13.6) |
 | `eval/rq2_tradeoff.py` | RQ2: ghép độ chính xác và thời gian các biến thể thành bảng và hình recall theo FPS (14.5) |
 | `eval/rq2_report.py` | RQ2: bảng tốc độ (số lần nhanh hơn PyTorch) và hiệu độ chính xác theo cặp, dạng CSV và Markdown (14.5) |
+| `eval/frame_recall_mot.py` | Recall, precision từng khung của lần chạy pipeline trên SDS-MOT so với nhãn, số ô thật sự chạy, hiệu số bootstrap theo khối thời gian (`results/tile_skip.md`) |
 | `eval/conf_by_size.py` | Ngưỡng tin cậy theo cỡ box: chọn trên một tập, kiểm chứng bằng bootstrap cặp trên tập khác (kết quả âm, `conf_by_size.md`) |
 | `eval/frames.py` | Chọn khung từ video để gán nhãn: lấy mẫu theo thời gian, bỏ khung gần trùng bằng dHash, rải đều |
 | `eval/rq3_metrics.py` | Chỉ số RQ3 từ log pipeline và nhãn theo thời gian (15.4) |

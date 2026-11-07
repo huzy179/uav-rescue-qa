@@ -49,7 +49,7 @@ Cập nhật 7/11/2026.
 - **Đề xuất (cần GPU T4, khoảng 2 giờ):** chạy RQ2, rồi hiệu chỉnh hồ sơ bằng `scripts/after_rq2.py`.
 - **Đã thử, bỏ (8/11): đầu một-một không cần NMS của YOLO26** (`--nms-free`, `nms_free.md`). Cùng trọng số E2c, recall ở conf 0,25 giảm có ý nghĩa trên VisDrone (val −0,034, dưới 8 px −0,056; test-dev −0,030), AP50 gần như không đổi; trên PyTorch không nhanh hơn (15,2 ms/ảnh ở 1280 cả hai cách). Giữ mặc định có NMS.
 - **Đề xuất (chỉ nếu còn giờ T4):** đo thời gian đầu một-một trên TensorRT; nếu nhanh hơn rõ thì chọn lại ngưỡng conf trên val để lấy lại recall.
-- **Đề xuất (không cần GPU):** bỏ qua ô không có gì thay đổi so với khung trước khi drone gần như đứng yên (so độ khác biệt ảnh trên ô đã căn theo telemetry); kiểm chứng: số ô chạy và recall trên SDS v21 (drone gần như đứng yên).
+- **Đã thử, bỏ (8/11): dùng lại kết quả ô không đổi khi drone đứng yên** (`--skip-static-tiles`, `edge/tile_cache.py`, `tile_skip.md`). Bốn đoạn SDS drone đứng yên: chỉ còn chạy 0,518–0,852 số ô nhưng recall giảm 0,035–0,238 (có ý nghĩa ở val v21 và train v9), precision cũng giảm: người bơi vẫn cử động mà ảnh ô thu nhỏ không thấy, box cũ bị dùng lại sai chỗ. Không dùng.
 
 ## 3. Xác nhận, định vị, gửi cảnh báo (câu hỏi 3)
 

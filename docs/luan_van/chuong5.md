@@ -191,7 +191,7 @@ Câu hỏi 2 đo trên GPU Tesla T4 của Kaggle với TensorRT, vì đề tài 
 
 ### 5.2.1. Nén mô hình và cấu hình tốt nhất (RQ2a, RQ2b)
 
-Một lựa chọn đã thử trước khi đo trên T4: YOLO26 có đầu ra một-một không cần NMS, được giới thiệu là đơn giản cho thiết bị biên. Cùng trọng số mô hình chính, đầu này làm recall vận hành giảm có ý nghĩa trên VisDrone, nhiều nhất ở người dưới 8 px (val −0,056, test-dev −0,029), trong khi AP50 gần như giữ và thời gian trên PyTorch không đổi (`nms_free.md`). Mọi cấu hình dưới đây dùng đầu mặc định có NMS.
+Một lựa chọn đã thử trước khi đo trên T4: YOLO26 có đầu ra một-một không cần NMS, được giới thiệu là đơn giản cho thiết bị biên. Cùng trọng số mô hình chính, đầu này làm recall vận hành giảm có ý nghĩa trên VisDrone, nhiều nhất ở người dưới 8 px (val −0,056, test-dev −0,029), trong khi AP50 gần như giữ và thời gian trên PyTorch không đổi (`nms_free.md`). Mọi cấu hình dưới đây dùng đầu mặc định có NMS. Một cách giảm khối lượng tính khác cũng đã thử và bỏ: khi drone đứng yên, dùng lại kết quả của ô gần như không đổi làm số ô phải chạy còn 0,518–0,852 so với chạy đủ, nhưng recall giảm tới 0,238 vì người bơi vẫn cử động mà phép so ô thu nhỏ không thấy (`tile_skip.md`).
 
 
 [CHỜ RQ2] Bảng cho mỗi cấu hình (PyTorch FP32, TensorRT FP16, TensorRT INT8; toàn ảnh 1280 và cắt ô; có và không thu nhỏ theo độ cao): thời gian từng khâu (giải mã, cắt ô, suy luận, gộp box) theo trung vị và p95, số khung mỗi giây, AP50 và recall vận hành theo nhóm cỡ. Câu hỏi cần trả lời:

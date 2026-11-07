@@ -22,6 +22,7 @@ from edge.alerts import FakeTransport, HttpTransport, Outbox, Transport, crop_jp
 from edge.confirm import Confirmer, GeoConfirmer, TrackConfirmer
 from edge.detector import ByteTracker, Detector, ReplayDetector, YoloDetector, person_scale
 from edge.device_sim import BusyDevice, inference_counts, load_profile
+from edge.tile_cache import TileCache, is_hovering
 from edge.georef import (
     Camera, ErrorModel, expected_person_px, frame_motion, gps_to_pixel, ground_distance_m, locate, position_error_m,
 )
@@ -96,6 +97,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ground-url", default=None, help="Địa chỉ trạm mặt đất; không có thì dùng transport giả luôn ack")
     parser.add_argument("--net-loss", type=float, default=0.0, help="Giả lập: xác suất mất mỗi lần gửi")
     parser.add_argument("--net-outage", type=float, nargs=2, action="append", default=None, metavar=("START", "END"), help="Giả lập: khoảng mất sóng (giây), lặp được")
+    parser.add_argument("--skip-static-tiles", action="store_true",
+                        help="Khi drone gần như đứng yên (theo telemetry), dùng lại kết quả của ô gần như không đổi thay vì chạy lại mô hình (edge/tile_cache.py, docs/results/tile_skip.md)")
+    parser.add_argument("--skip-diff", type=float, default=4.0, help="Ngưỡng chênh trung bình (mức xám, ảnh ô thu về 32×32) để coi ô là không đổi")
+    parser.add_argument("--skip-max-age", type=int, default=4, help="Số lần dùng lại liên tiếp tối đa của một ô trước khi bắt buộc chạy lại")
+    parser.add_argument("--hover-speed-mps", type=float, default=0.5, help="Vận tốc mặt đất dưới mức này (trong 1 s qua) thì coi là đứng yên")
+    parser.add_argument("--hover-yaw-deg", type=float, default=2.0, help="Hướng đổi dưới mức này (trong 1 s qua) thì coi là đứng yên")
     parser.add_argument("--net-burst", type=float, nargs=2, default=None, metavar=("BAD_S", "GOOD_S"),
                         help="Giả lập mất theo cụm (Gilbert–Elliott): thời gian trung bình ở trạng thái xấu và tốt (giây); tỉ lệ mất trung bình BAD/(BAD+GOOD) khi --net-burst-loss 1")
     parser.add_argument("--net-burst-loss", type=float, default=1.0, help="Xác suất mất mỗi lần gửi khi ở trạng thái xấu của --net-burst")
@@ -229,7 +236,8 @@ def main() -> None:
     detector: Detector = (
         ReplayDetector(args.replay)
         if args.replay
-        else YoloDetector(args.model, args.mode, args.imgsz, args.tile, args.overlap, args.conf, args.max_det, args.device)
+        else YoloDetector(args.model, args.mode, args.imgsz, args.tile, args.overlap, args.conf, args.max_det, args.device,
+                          tile_cache=TileCache(args.skip_diff, args.skip_max_age) if args.skip_static_tiles else None)
     )
     transport: Transport = HttpTransport(args.ground_url) if args.ground_url else FakeTransport()
     netem = args.net_loss > 0 or bool(args.net_outage) or args.net_burst is not None
@@ -369,10 +377,17 @@ def main() -> None:
                 continue
             if pacer:
                 pacer.wait_until(t)
+            if args.skip_static_tiles and isinstance(detector, YoloDetector):
+                before = telemetry.at(max(t - 1.0, 0.0))
+                hover_speed = ground_distance_m(before.lat, before.lon, tel.lat, tel.lon) / max(min(t, 1.0), 1e-9) if t > 0 else None
+                yaw_change = (tel.yaw_deg - before.yaw_deg + 180.0) % 360.0 - 180.0 if t > 0 else None
+                detector.allow_tile_reuse = is_hovering(hover_speed, yaw_change, args.hover_speed_mps, args.hover_yaw_deg)
             dets, timings = detector.detect(frame, frame_id, t, scale)
             t_done = t
             if device:
                 n_tiles, n_full = inference_counts(frame.shape[1], frame.shape[0], scale, args.mode, args.tile, args.overlap)
+                if "n_tiles_run" in timings:  # dùng lại ô không đổi: thiết bị chỉ chạy số ô thật sự chạy
+                    n_tiles = int(timings["n_tiles_run"])
                 t_done = device.run(t, n_tiles, n_full)
                 timings.update({"sim_n_tiles": n_tiles, "sim_latency_ms": device.last_latency_ms, "t_done": t_done})
             start = time.perf_counter()

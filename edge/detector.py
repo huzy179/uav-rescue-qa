@@ -15,6 +15,7 @@ import cv2
 import numpy as np
 
 from edge.device import pick_device
+from edge.tile_cache import TileCache
 from shared.schema import Detection
 
 PERSON_CLASS_ID = 0  # COCO và mô hình fine-tune một lớp đều để người ở lớp 0
@@ -245,6 +246,7 @@ class YoloDetector:
         device: str | None = None,
         full_pass: bool = False,
         nms_free: bool = False,
+        tile_cache: TileCache | None = None,
     ) -> None:
         from ultralytics import YOLO
 
@@ -258,6 +260,9 @@ class YoloDetector:
         )
         if nms_free:
             self._kwargs["nms"] = False
+        # Dùng lại kết quả ô không đổi (edge/tile_cache.py); bên gọi bật allow_tile_reuse khi drone đứng yên.
+        self.tile_cache = tile_cache
+        self.allow_tile_reuse = False
         self._warmed_up = False
 
     def _predict(self, images: list[np.ndarray], imgsz: int) -> list[tuple[np.ndarray, np.ndarray]]:
@@ -297,7 +302,15 @@ class YoloDetector:
                 self._predict([frame], self.imgsz)
             self._warmed_up = True
         t_tile = time.perf_counter()
-        outputs = self._predict(images, imgsz)
+        n_run = len(images)
+        if self.tile_cache is not None and self.mode == "tiled":
+            keys = [(frame.shape[1], frame.shape[0], x, y) for x, y in offsets]
+            run = self.tile_cache.begin(keys, images, self.allow_tile_reuse)
+            to_run = [im for im, r in zip(images, run) if r]
+            n_run = len(to_run)
+            outputs = self.tile_cache.finish(self._predict(to_run, imgsz) if to_run else [])
+        else:
+            outputs = self._predict(images, imgsz)
         if full_pass:
             # Lượt toàn ảnh có imgsz khác ô nên gọi riêng; ultralytics đã quy box về ảnh gốc.
             outputs += self._predict([frame], self.imgsz)
@@ -321,6 +334,7 @@ class YoloDetector:
             "infer_ms": (t_infer - t_tile) * 1000.0,
             "merge_ms": (t_merge - t_infer) * 1000.0,
             "n_tiles": float(len(offsets)),
+            "n_tiles_run": float(n_run + (1 if full_pass else 0)),
             "scale": scale,
         }
         return detections, timings
