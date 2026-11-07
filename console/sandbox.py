@@ -47,6 +47,8 @@ class SandboxRequest(BaseModel):
     duration_s: float = Field(120.0, ge=30, le=300)
     n_people: int = Field(12, ge=1, le=60)
     gps_sigma_m: float = Field(1.0, ge=0, le=10)
+    gps_sigma_late_m: float | None = Field(None, ge=0, le=10)  # GPS đổi sang σ này từ giữa chuyến (mất vệ tinh)
+    gps_from_receiver: bool = False  # bán kính theo độ chính xác GPS bộ thu báo (--gps-sigma-from-telemetry)
     yaw_bias_deg: float = Field(0.0, ge=0, le=15)
     yaw_calib: bool = False  # tự hiệu chỉnh lệch la bàn trên drone (--yaw-calib, rq3_yawcalib.md)
     recall_model: Literal["E1", "E2c"] = "E2c"
@@ -88,6 +90,11 @@ def scenario_args(req: SandboxRequest, out: Path) -> list[str]:
     ]
     if req.pattern == "straight":
         cmd += ["--lateral-m", "25"]
+    # Bộ thu luôn báo độ chính xác (cột gps_acc_m); pipeline chỉ dùng khi gps_from_receiver.
+    cmd += ["--gps-acc-report"]
+    if req.gps_sigma_late_m is not None:
+        mid = req.duration_s / 2.0
+        cmd += ["--gps-sigma-profile", f"0:{req.gps_sigma_m},{mid - 2.5:g}:{req.gps_sigma_m},{mid + 2.5:g}:{req.gps_sigma_late_m}"]
     if req.target_person_px:
         cmd += ["--target-person-px", str(req.target_person_px)]
     if req.render:
@@ -108,6 +115,8 @@ def pipeline_args(req: SandboxRequest, scenario: Path, out: Path, ground_url: st
         cmd += ["--target-person-px", str(req.target_person_px)]
     if req.yaw_calib:
         cmd += ["--yaw-calib"]
+    if req.gps_from_receiver:
+        cmd += ["--gps-sigma-from-telemetry"]
     if req.device:
         cmd += ["--device-profile", str(DEVICES / f"{req.device}.yaml")]
     if req.net_loss:

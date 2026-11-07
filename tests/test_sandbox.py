@@ -60,3 +60,16 @@ def test_sandbox_yaw_calib_flag(tmp_path: Path) -> None:
     scen, out = tmp_path / "s", tmp_path / "o"
     assert "--yaw-calib" not in pipeline_args(SandboxRequest(), scen, out, None)
     assert "--yaw-calib" in pipeline_args(SandboxRequest(yaw_calib=True), scen, out, None)
+
+
+def test_sandbox_gps_receiver_and_profile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    scen, out = tmp_path / "s", tmp_path / "o"
+    curve = tmp_path / "curve.csv"
+    curve.write_text("x", encoding="utf-8")
+    monkeypatch.setattr(sb, "RECALL_CURVE", curve)
+    req = SandboxRequest(gps_sigma_m=1, gps_sigma_late_m=5, gps_from_receiver=True, duration_s=60)
+    cmd = scenario_args(req, scen)
+    assert cmd[cmd.index("--gps-sigma-profile") + 1] == "0:1.0,27.5:1.0,32.5:5.0"
+    assert "--gps-acc-report" in cmd
+    assert "--gps-sigma-from-telemetry" in pipeline_args(req, scen, out, None)
+    assert "--gps-sigma-from-telemetry" not in pipeline_args(SandboxRequest(), scen, out, None)
