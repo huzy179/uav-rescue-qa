@@ -17,7 +17,7 @@ Chưa có bộ ảnh lũ nhìn từ UAV nào được công bố kèm nhãn ngư
 | VisDrone2019-DET | Ảnh UAV đô thị, nhiều người rất nhỏ; không có nước | 6.471 ảnh, 106.396 người | Học người nhỏ nhìn từ trên cao |
 | AFO (Aerial dataset of Floating Objects) | Người bơi, ván, thuyền trên hồ và biển, nhìn từ drone | 2.787 ảnh, 22.272 người | Học người dưới nước |
 | C2A | Ảnh thảm hoạ thật (lũ, cháy, nhà sập) có ghép thêm hình người | 6.129 ảnh, 215.821 người | Thí nghiệm thêm người cỡ to (chỉ huấn luyện) |
-| HydroVigilance | Người bơi nhô đầu trên sông nước đục | 627 ảnh train, 179 ảnh val | Có cấu hình, chưa dùng trong mô hình chính |
+| HydroVigilance | Người bơi nhô đầu trên sông nước đục | 627 ảnh train, 179 ảnh val | Đã chuyển nhãn, không dùng (thí nghiệm bỏ vì lịch) |
 
 Tập kiểm định dùng trong lúc huấn luyện (để chọn trọng số tốt nhất) là VisDrone val cộng AFO val: 887 ảnh.
 

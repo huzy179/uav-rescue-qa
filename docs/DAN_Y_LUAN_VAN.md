@@ -2,7 +2,7 @@
 
 Khung sáu chương theo đề xuất ngày 6/11 (quyết định #16 của ROADMAP: giữ ba câu hỏi của đề cương, thêm câu hỏi con và luận điểm xuyên suốt; chờ cô). Mỗi mục ghi: viết gì, lấy nội dung từ tài liệu nào của dự án, dùng kết quả nào và kết quả đó **đã có** hay **còn chờ**. Lịch viết theo ROADMAP mục 1.3: chương 4 và 5 từ 7/11, bản thảo đầy đủ 4/12. Thuật ngữ dùng theo `THUAT_NGU.md`; mục "Danh mục thuật ngữ và chữ viết tắt" ở đầu quyển chép từ đó.
 
-Ký hiệu trạng thái: **Có** (có file kết quả), **Chờ** (chưa chạy hoặc chờ tập lũ), **Viết** (không cần số liệu, chỉ cần viết).
+Ký hiệu trạng thái: **Có** (có file kết quả), **Chờ** (chưa chạy hoặc chờ tập lũ), **Viết** (không cần số liệu, chỉ cần viết), **Nháp** (đã có bản nháp trong `docs/luan_van/`).
 
 ## Phần đầu quyển
 
@@ -34,15 +34,17 @@ Ký hiệu trạng thái: **Có** (có file kết quả), **Chờ** (chưa chạ
 
 ## Chương 3. Phương pháp
 
+Nháp đầy đủ 7/11: `docs/luan_van/chuong3.md` (3.1–3.8 và tóm tắt; còn **[CHỜ RQ2]** cho hồ sơ thiết bị đã hiệu chỉnh ở 3.8.3, hình 3.1 vẽ khi dàn trang). Thêm mục 3.8 (công cụ giả lập) so với dàn ý ban đầu.
+
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
-| 3.1 Kiến trúc hệ thống | Sơ đồ sáu khâu từ camera tới bản đồ; trên UAV và ở trạm | TONG_QUAN mục 2, THUAT_TOAN mục 2–3 | Viết |
-| 3.2 Hình học camera và định vị | Pixel → GPS, hàm ngược, lan truyền sai số | TECHNICAL mục 2, 8; THUAT_TOAN ví dụ tính tay | Viết |
-| 3.3 Phát hiện: tinh chỉnh và cắt ô | Dữ liệu trộn, bộ cắt ô riêng, gộp theo IOS | TECHNICAL mục 4, 13 | Viết |
-| 3.4 **Đóng góp: thu nhỏ theo độ cao bay** | Công thức số pixel dự kiến, hệ số thu nhỏ, ảnh hưởng tới số ô | THUAT_TOAN bước 2d, `scale_by_altitude.md`, TECHNICAL 14.6 | Viết |
-| 3.5 Tần số theo độ cao | Số lần nhìn mỗi người, công thức tần số | TECHNICAL 7.5, THUAT_TOAN | Viết |
-| 3.6 **Đóng góp: xác nhận theo toạ độ mặt đất** | Gom theo vị trí mặt đất, N lần trong cửa sổ; vì sao ByteTrack gãy ở 2 khung/giây | TECHNICAL mục 9, THUAT_TOAN | Viết |
-| 3.7 Gửi cảnh báo và trạm mặt đất | Hàng đợi gửi, gửi lại, gộp sự cố, xếp ưu tiên | TECHNICAL mục 10, 12 | Viết |
+| 3.1 Kiến trúc hệ thống | Sơ đồ sáu khâu từ camera tới bản đồ; trên UAV và ở trạm | TONG_QUAN mục 2, THUAT_TOAN mục 2–3 | Nháp |
+| 3.2 Hình học camera và định vị | Pixel → GPS, hàm ngược, lan truyền sai số | TECHNICAL mục 2, 8; THUAT_TOAN ví dụ tính tay | Nháp |
+| 3.3 Phát hiện: tinh chỉnh và cắt ô | Dữ liệu trộn, bộ cắt ô riêng, gộp theo IOS | TECHNICAL mục 4, 13 | Nháp |
+| 3.4 **Đóng góp: thu nhỏ theo độ cao bay** | Công thức số pixel dự kiến, hệ số thu nhỏ, ảnh hưởng tới số ô | THUAT_TOAN bước 2d, `scale_by_altitude.md`, TECHNICAL 14.6 | Nháp |
+| 3.5 Tần số theo độ cao | Số lần nhìn mỗi người, công thức tần số | TECHNICAL 7.5, THUAT_TOAN | Nháp |
+| 3.6 **Đóng góp: xác nhận theo toạ độ mặt đất** | Gom theo vị trí mặt đất, N lần trong cửa sổ; vì sao ByteTrack gãy ở 2 khung/giây | TECHNICAL mục 9, THUAT_TOAN | Nháp |
+| 3.7 Gửi cảnh báo và trạm mặt đất | Hàng đợi gửi, gửi lại, gộp sự cố, xếp ưu tiên | TECHNICAL mục 10, 12 | Nháp |
 
 ## Chương 4. Dữ liệu và thiết lập thí nghiệm
 
