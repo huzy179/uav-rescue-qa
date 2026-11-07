@@ -84,7 +84,8 @@ Cập nhật 7/11/2026.
 
 - **Vấn đề.** Phép chiếu giả định nhìn thẳng xuống; mọi đoạn SeaDronesSee có drone di chuyển đều quay với gimbal nghiêng 20–78°.
 - **Đã làm, tuỳ chọn (7/11):** phép chiếu tính góc gimbal (`--use-pitch`, TECHNICAL 8.3, có hàm ngược và test đi một vòng). Kiểm chứng bằng độ tản vị trí của cùng một người qua các khung (`georef_pitch.md`): tốt hơn rõ ở các đoạn drone di chuyển với camera nghiêng vừa phải (v8: 4,982 → 1,301 m), nhưng kém hơn khi camera gần chân trời hoặc drone đứng yên; tính chung chưa tốt hơn (1,336 → 1,603 m), nên chưa bật mặc định.
-- **Đề xuất (không cần GPU):** tìm độ trễ giữa metadata gimbal và khung ảnh (`tools/shift_telemetry.py`) và góc nhìn thật của từng camera; làm mượt góc gimbal theo thời gian; thêm thước đo thấy được lệch đều (một người đứng yên nhìn từ hai hướng bay). Nếu ổn, bật cho các đoạn camera nghiêng và dùng một đoạn drone di chuyển thật cho phần quét vùng của demo thay cho mô phỏng.
+- **Đã thử, bỏ (7/11): đồng bộ thời gian metadata gimbal và làm mượt góc** (`ShiftedTelemetry`, `SmoothedAngles`). Lưới 11 độ trễ × 4 cửa sổ, chọn trên phần train của SeaDronesSee: ô tốt nhất (trễ +0,3 s, làm mượt 2 s) vẫn kém nhìn thẳng trên train (1,512 so với 1,146 m), trên val chỉ nhỉnh (1,397 so với 1,441 m) (`georef_sync.md`).
+- **Đề xuất (không cần GPU):** góc nhìn thật của từng camera (Mavic, M210, M100 khác nhau), quy ước góc gimbal của từng drone, và một thước đo thấy được lệch đều (một người đứng yên nhìn từ hai hướng bay). Nếu ổn, bật cho các đoạn camera nghiêng và dùng một đoạn drone di chuyển thật cho phần quét vùng của demo.
 
 ## 4. Trạm mặt đất và demo
 
@@ -109,5 +110,5 @@ Cập nhật 7/11/2026.
 1. RQ2 trên T4 rồi hiệu chỉnh hồ sơ thiết bị (mục 2): mở khoá câu hỏi 2, khoảng 2 giờ GPU.
 2. Hai seed cho E2c (mục 1.5): cần cho chương 5, khoảng 20 giờ GPU.
 3. ~~Phóng to khi người dưới 8 px và lượt toàn ảnh cho người to~~ (7/11, cả hai kết quả âm: `upscale_small.md`, `full_pass.md`).
-4. Đồng bộ thời gian metadata gimbal (mục 3.6): không cần GPU; mở được video thật cho phần quét vùng.
+4. ~~Đồng bộ thời gian metadata gimbal~~ (7/11, kết quả âm, `georef_sync.md`); còn lại ở mục 3.6: góc nhìn thật từng camera.
 5. Lấy mẫu C2A một phần (mục 1.1): chỉ khi còn khoảng 10 giờ GPU sau mục 1 và 2.

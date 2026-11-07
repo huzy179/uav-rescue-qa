@@ -46,6 +46,8 @@ Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặ
 - **Số người ước tính mỗi sự cố** (`group_size`): UAV đếm phát hiện cùng khung trong 5 m khi xác nhận; trạm và bản đồ hiện "nhóm khoảng N người", GPX ghi kèm.
 - **Định vị theo góc gimbal** (`--use-pitch`, TECHNICAL 8.3; tuỳ chọn, mặc định tắt): kiểm chứng bằng độ tản vị trí trên track SeaDronesSee (`georef_pitch.md`): tốt hơn rõ khi drone di chuyển với camera nghiêng vừa phải, kém hơn khi camera gần chân trời hoặc drone đứng yên; tính chung chưa tốt hơn.
 
+**Cập nhật 7/11 (ba cải thiện thử và bỏ):** theo thứ tự ở `CAI_TIEN.md`: phóng to khung khi người dự kiến dưới 8 px (`--min-person-px`, `upscale_small.md`), cắt ô kèm lượt toàn ảnh sau khi thu nhỏ (`full_pass.md`), đồng bộ thời gian và làm mượt góc gimbal (`georef_sync.md`). Cả ba không cải thiện có ý nghĩa; mã giữ làm tuỳ chọn, cấu hình cuối không đổi.
+
 **Cập nhật 7/11 (sân thử):** tab **Sân thử** của `python -m console` (TECHNICAL 11.4): chỉnh tham số chuyến bay, mô hình, thiết bị, mạng hoặc chọn một trong tám câu hỏi "nếu… thì sao" dựng sẵn; một lần chạy sinh kịch bản, xoá trạm (`POST /api/reset`), nạp đáp án, bay và gửi về trạm, chấm bằng `eval/rq3_metrics.py`; bảng so sánh các lần chạy, kết quả ở `runs/sandbox/`. Dùng để trả lời câu hỏi của hội đồng tại chỗ (DEMO_BAO_VE). `--link-probe-s 0` tắt thăm dò khi file cấu hình đã bật.
 
 **Cập nhật 6/11 (RQ3c, RQ3d, mô phỏng):**

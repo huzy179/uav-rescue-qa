@@ -37,6 +37,8 @@ Các đoạn còn lại (1–6 track mỗi đoạn) ở `summary.csv`.
 3. Tính chung, trung vị độ tản tăng (1,336 → 1,603 m) và chỉ 0,515 số track tốt hơn: **chưa bật mặc định**. Giữ `--use-pitch` cho đoạn drone di chuyển với camera nghiêng vừa phải.
 4. Hướng kiểm tra tiếp (`docs/CAI_TIEN.md` mục 3.6): độ trễ giữa metadata gimbal và khung ảnh (`tools/shift_telemetry.py`), quy ước góc của từng loại drone, góc nhìn thật của từng camera (Mavic, M210, M100 khác nhau), làm mượt góc gimbal theo thời gian; và một thước đo thấy được lệch đều (vị trí người đứng yên nhìn từ hai hướng bay khác nhau).
 
+**Cập nhật 7/11:** đồng bộ thời gian và làm mượt góc gimbal không sửa được (`georef_sync.md`).
+
 ## Giới hạn
 
 - Người bơi có di chuyển thật; độ tản gồm cả chuyển động đó và sai số GPS, như nhau ở hai cách.
