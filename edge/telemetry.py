@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import csv
+import math
 import re
 from pathlib import Path
 from typing import Protocol
 
 import numpy as np
 
+from edge.georef import ground_offset_m
 from shared.schema import Telemetry
 
 CSV_FIELDS = ["lat", "lon", "alt_agl_m", "yaw_deg", "pitch_deg", "roll_deg"]
@@ -183,3 +185,99 @@ class SmoothedAngles:
         yaw_rad = np.radians([s.yaw_deg for s in samples])
         yaw = float(np.degrees(np.arctan2(np.mean(np.sin(yaw_rad)), np.mean(np.cos(yaw_rad))))) % 360.0
         return base.model_copy(update={"pitch_deg": pitch, "yaw_deg": yaw})
+
+
+def _wrap180(deg: float) -> float:
+    """Đưa góc về [−180°, 180°)."""
+    return (deg + 180.0) % 360.0 - 180.0
+
+
+class YawCalibrated:
+    """Bọc một nguồn telemetry, ước lượng và trừ lệch cố định của la bàn (docs/CAI_TIEN.md 3.3, TECHNICAL 8.4).
+
+    Khi drone bay thẳng đủ nhanh, hướng di chuyển tính từ hai điểm GPS cách nhau baseline_s giây bằng hướng mũi máy
+    (máy bay quét theo đường thẳng, camera nhìn theo hướng bay). Hiệu yaw − hướng di chuyển ở mỗi điểm như vậy là một
+    mẫu của lệch la bàn; lệch ước lượng là trung vị các mẫu gần nhất. Nhiễu GPS làm mỗi mẫu sai vài độ (σ GPS chia
+    quãng đường baseline), trung vị nhiều mẫu khử phần đó.
+
+    Chỉ dùng telemetry đến thời điểm hỏi (không nhìn trước): mẫu lấy trên lưới thời gian cố định step_s, nên kết quả
+    không phụ thuộc thứ tự gọi at(). Điểm bị bỏ khi: chậm hơn min_speed_mps (đứng yên, GPS trôi cho hướng ngẫu
+    nhiên), hướng di chuyển hoặc yaw đổi quá max_turn_deg giữa hai đoạn liên tiếp (đang rẽ). Chưa đủ min_samples mẫu,
+    hoặc các mẫu tản quá max_spread_deg (yaw thật khác hướng bay, ví dụ drone bay ngang), thì không hiệu chỉnh.
+    """
+
+    def __init__(
+        self,
+        inner: TelemetrySource,
+        baseline_s: float = 2.0,
+        step_s: float = 0.5,
+        min_speed_mps: float = 3.0,
+        max_turn_deg: float = 5.0,
+        min_samples: int = 10,
+        max_samples: int = 120,
+        max_spread_deg: float = 10.0,
+        max_bias_deg: float = 30.0,
+    ) -> None:
+        self.inner = inner
+        self.baseline_s, self.step_s = baseline_s, step_s
+        self.min_speed_mps, self.max_turn_deg = min_speed_mps, max_turn_deg
+        self.min_samples, self.max_samples = min_samples, max_samples
+        self.max_spread_deg, self.max_bias_deg = max_spread_deg, max_bias_deg
+        self._residuals: list[float] = []
+        self._history: list[tuple[float, float]] = []  # (thời điểm lưới, lệch ước lượng tại đó)
+        self._next_k = 0  # chỉ số lưới tiếp theo chưa xét: thời điểm = k·step_s
+
+    def _course(self, t0: float, t1: float) -> tuple[float, float]:
+        """Hướng di chuyển (độ, 0 = Bắc) và vận tốc (m/s) từ t0 tới t1."""
+        a, b = self.inner.at(t0), self.inner.at(t1)
+        north, east = ground_offset_m(a.lat, a.lon, b.lat, b.lon)
+        return math.degrees(math.atan2(east, north)) % 360.0, math.hypot(north, east) / (t1 - t0)
+
+    def _residual(self, tau: float) -> float | None:
+        b = self.baseline_s
+        if tau < 2 * b:
+            return None
+        course, speed = self._course(tau - b, tau)
+        prev_course, prev_speed = self._course(tau - 2 * b, tau - b)
+        if min(speed, prev_speed) < self.min_speed_mps or abs(_wrap180(course - prev_course)) > self.max_turn_deg:
+            return None
+        yaw, prev_yaw = self.inner.at(tau).yaw_deg, self.inner.at(tau - b).yaw_deg
+        if abs(_wrap180(yaw - prev_yaw)) > self.max_turn_deg:
+            return None
+        return _wrap180(yaw - course)
+
+    def _estimate(self) -> float:
+        recent = self._residuals[-self.max_samples :]
+        if len(recent) < self.min_samples:
+            return 0.0
+        median = float(np.median(recent))
+        spread = float(np.median([abs(r - median) for r in recent]))
+        if spread > self.max_spread_deg or abs(median) > self.max_bias_deg:
+            return 0.0
+        return median
+
+    def _advance(self, t: float) -> None:
+        while self._next_k * self.step_s <= t + 1e-9:
+            tau = self._next_k * self.step_s
+            residual = self._residual(tau)
+            if residual is not None:
+                self._residuals.append(residual)
+            self._history.append((tau, self._estimate()))
+            self._next_k += 1
+
+    def bias_at(self, t: float) -> float:
+        """Lệch la bàn ước lượng được, chỉ từ telemetry đến t (độ; dương là la bàn chỉ lệch theo chiều kim đồng hồ)."""
+        self._advance(t)
+        if not self._history:
+            return 0.0
+        index = int(math.floor(t / self.step_s + 1e-9))
+        return self._history[max(0, min(index, len(self._history) - 1))][1]
+
+    @property
+    def n_samples(self) -> int:
+        return len(self._residuals)
+
+    def at(self, t: float) -> Telemetry:
+        tel = self.inner.at(t)
+        bias = self.bias_at(t)
+        return tel if bias == 0.0 else tel.model_copy(update={"yaw_deg": (tel.yaw_deg - bias) % 360.0})

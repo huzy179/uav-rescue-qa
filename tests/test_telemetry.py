@@ -110,3 +110,45 @@ def test_smoothed_angles_trung_binh_va_qua_0_do() -> None:
     assert tel.lat == 21.0 and tel.alt_agl_m == 50.0
     with pytest.raises(ValueError):
         SmoothedAngles(source, 0.0)
+
+
+class _Biased:
+    """Chuyến bay thẳng, la bàn lệch cố định bias_deg, GPS nhiễu trắng sigma_m (seed cố định)."""
+
+    def __init__(self, bias_deg: float, sigma_m: float = 0.0, speed: float = 10.0, yaw: float = 30.0) -> None:
+        import random
+
+        self.flight = StraightFlight(21.0, 105.8, 50.0, speed, yaw)
+        self.bias, self.sigma, self.rng, self.cache = bias_deg, sigma_m, random.Random(0), {}
+
+    def at(self, t: float):
+        from edge.georef import offset_gps
+
+        tel = self.flight.at(t)
+        if t not in self.cache:
+            self.cache[t] = (self.rng.gauss(0, self.sigma), self.rng.gauss(0, self.sigma))
+        lat, lon = offset_gps(tel.lat, tel.lon, *self.cache[t])
+        return tel.model_copy(update={"lat": lat, "lon": lon, "yaw_deg": (tel.yaw_deg + self.bias) % 360.0})
+
+
+def test_yaw_calibrated_khu_lech_la_ban_khi_bay_thang() -> None:
+    from edge.telemetry import YawCalibrated
+
+    calib = YawCalibrated(_Biased(5.0))
+    # Chưa đủ mẫu (cần 2 baseline rồi 10 mẫu mỗi 0,5 s): chưa hiệu chỉnh.
+    assert calib.bias_at(3.0) == 0.0
+    assert calib.at(3.0).yaw_deg == pytest.approx(35.0)
+    assert calib.bias_at(30.0) == pytest.approx(5.0, abs=1e-3)  # xấp xỉ mặt đất phẳng
+    assert calib.at(30.0).yaw_deg == pytest.approx(30.0, abs=1e-3)
+    # Không nhìn trước: hỏi lại thời điểm sớm sau khi đã đi xa vẫn cho giá trị cũ.
+    assert calib.bias_at(3.0) == 0.0
+
+
+def test_yaw_calibrated_chiu_nhieu_gps_va_bo_qua_dung_yen() -> None:
+    from edge.telemetry import YawCalibrated
+
+    calib = YawCalibrated(_Biased(-4.0, sigma_m=0.5))
+    assert calib.bias_at(60.0) == pytest.approx(-4.0, abs=1.0)
+    # Đứng yên: GPS trôi cho hướng ngẫu nhiên, không lấy mẫu nào, không hiệu chỉnh.
+    still = YawCalibrated(_Biased(5.0, sigma_m=0.5, speed=0.0))
+    assert still.bias_at(60.0) == 0.0 and still.n_samples == 0
