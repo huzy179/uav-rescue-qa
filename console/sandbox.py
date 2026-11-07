@@ -48,6 +48,7 @@ class SandboxRequest(BaseModel):
     n_people: int = Field(12, ge=1, le=60)
     gps_sigma_m: float = Field(1.0, ge=0, le=10)
     yaw_bias_deg: float = Field(0.0, ge=0, le=15)
+    yaw_calib: bool = False  # tự hiệu chỉnh lệch la bàn trên drone (--yaw-calib, rq3_yawcalib.md)
     recall_model: Literal["E1", "E2c"] = "E2c"
     target_person_px: float | None = Field(None, ge=4, le=40)
     fps: float = Field(4.0, ge=0.5, le=8)
@@ -105,6 +106,8 @@ def pipeline_args(req: SandboxRequest, scenario: Path, out: Path, ground_url: st
     ]
     if req.target_person_px:
         cmd += ["--target-person-px", str(req.target_person_px)]
+    if req.yaw_calib:
+        cmd += ["--yaw-calib"]
     if req.device:
         cmd += ["--device-profile", str(DEVICES / f"{req.device}.yaml")]
     if req.net_loss:

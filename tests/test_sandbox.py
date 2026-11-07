@@ -54,3 +54,9 @@ def test_compare_keeps_only_changed_params() -> None:
     table = compare([a, b, running])
     assert table["param_keys"] == ["alt_m"]
     assert [r["metrics"]["missed_rate"] for r in table["rows"]] == [0.1, 0.2]
+
+
+def test_sandbox_yaw_calib_flag(tmp_path: Path) -> None:
+    scen, out = tmp_path / "s", tmp_path / "o"
+    assert "--yaw-calib" not in pipeline_args(SandboxRequest(), scen, out, None)
+    assert "--yaw-calib" in pipeline_args(SandboxRequest(yaw_calib=True), scen, out, None)
