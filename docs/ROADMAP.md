@@ -21,7 +21,7 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 |---|---|
 | Dữ liệu | **Rủi ro lớn nhất.** Tập test lũ 188 khung từ 9 nguồn, **chưa gán**; gán 7–9/11, khoá **11/11** (#10). Đã rà trùng với 5 tập train (`flood_truoc_khoa.md`) |
 | Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ |
-| Câu hỏi 2 (tốc độ) | Lần chạy đủ thứ hai **đang chạy** trên Kaggle T4 (7/11; lần đầu lỗi INT8 với TensorRT 11, đã ghim TensorRT 10). Xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`); khi xong: kết quả `rq2_t4.md`, chương 5 mục 5.2, hiệu chỉnh hồ sơ thiết bị, `rq3_device.yaml` |
+| Câu hỏi 2 (tốc độ) | Chạy thử xuất INT8 với TensorRT 10.16 thành công (8/11); lần chạy đủ chín biến thể **đang chạy** trên Kaggle T4 (bắt đầu 8/11; lần đầu 7/11 lỗi INT8 với TensorRT 11). Xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`); khi xong: kết quả `rq2_t4.md`, chương 5 mục 5.2, hiệu chỉnh hồ sơ thiết bị, `rq3_device.yaml` |
 | Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới (tần số, độ cao, GPS, la bàn, mạng, mất theo cụm, nhóm người) và ba đoạn SeaDronesSee thật |
 | Viết | Nháp chương 1, 3, 4, 5 (7/11); chờ tập lũ và câu hỏi 2; còn chương 2 (cần tra lại trích dẫn) và 6 |
 | Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
