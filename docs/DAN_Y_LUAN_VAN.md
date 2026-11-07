@@ -60,6 +60,8 @@ Nháp đầy đủ 7/11: `docs/luan_van/chuong4.md` (còn chỗ **[CHỜ KHOÁ]*
 
 Theo ba câu hỏi; mỗi câu hỏi con một tiểu mục ngắn: bảng, hình, nhận xét. Kết quả âm (nhánh P2) và kết quả sơ bộ giữ nguyên nhãn.
 
+Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDronesSee và VisDrone), RQ3a–e, mục 5.6; còn chỗ **[CHỜ KHOÁ]** (RQ1a phần lũ, RQ1e, RQ1f, 5.5), **[CHỜ RQ2]** (5.2, một ý ở 5.3.1 và 5.4); 5.4 và tóm tắt chương mới có khung.
+
 | Mục | Câu hỏi con | Kết quả | Trạng thái |
 |---|---|---|---|
 | 5.1 Câu hỏi 1 | RQ1a cỡ người và bỏ sót | `visdrone_E2.md`, `e6_sds_pilot.md`; tập lũ | Có một phần; tập lũ **Chờ** |

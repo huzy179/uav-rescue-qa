@@ -38,7 +38,7 @@ Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặ
 
 **Cập nhật 6/11:** E2e phiên 1 xong trên Kaggle: 33/55 epoch, 19,1 phút mỗi epoch (E2c: 10,0 phút), mAP50 val ngang E2c ở cùng epoch (`docs/results/E2e.md`). Phiên 2 (22 epoch, khoảng 7 giờ) chạy tiếp bằng `MODE = "resume"`.
 
-**Cập nhật 7/11 (viết):** nháp chương 4 (`docs/luan_van/chuong4.md`): dữ liệu huấn luyện và đánh giá, tập ảnh lũ, cách đo, các thí nghiệm của ba câu hỏi, môi trường; còn chờ thống kê tập ảnh lũ sau khi khoá.
+**Cập nhật 7/11 (viết):** nháp chương 4 (`docs/luan_van/chuong4.md`): dữ liệu huấn luyện và đánh giá, tập ảnh lũ, cách đo, các thí nghiệm của ba câu hỏi, môi trường; còn chờ thống kê tập ảnh lũ sau khi khoá. Nháp chương 5 (`docs/luan_van/chuong5.md`): kết quả câu hỏi 1 trên VisDrone, AFO, SeaDronesSee và toàn bộ câu hỏi 3; chờ tập lũ và RQ2.
 
 **Cập nhật 7/11 (E2e, cải thiện):**
 - **E2e xong, kết quả âm** (`docs/results/E2e.md`): phiên 2 chạy tiếp đúng từ epoch 34 (55 epoch liên tục). So với E2c: kém có ý nghĩa ở người nhỏ (VisDrone val tất cả −0,029 AP50, < 8 px −0,053; test-dev −0,041), tốt hơn trên AFO (+0,057), SeaDronesSee +0,041 không có ý nghĩa. **Giữ E2c**; quyết định #14 khép lại. `E2e_flood.yaml` không chạy trên tập lũ trừ khi cô yêu cầu (mỗi cấu hình trên tập lũ chạy một lần).
