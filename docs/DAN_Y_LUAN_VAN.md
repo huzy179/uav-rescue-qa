@@ -46,6 +46,8 @@ Ký hiệu trạng thái: **Có** (có file kết quả), **Chờ** (chưa chạ
 
 ## Chương 4. Dữ liệu và thiết lập thí nghiệm
 
+Nháp đầy đủ 7/11: `docs/luan_van/chuong4.md` (còn chỗ **[CHỜ KHOÁ]** cho thống kê tập ảnh lũ và kết quả gán lại, **[CẬP NHẬT]** cho seed).
+
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
 | 4.1 Dữ liệu huấn luyện | Bốn bộ, cách chuyển về một lớp người, thống kê cỡ người | TONG_QUAN 3.3, TECHNICAL 13.1, 13.4 | Có |
