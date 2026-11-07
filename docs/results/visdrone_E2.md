@@ -169,7 +169,7 @@ Cùng kiến trúc và imgsz; chênh lệch nhỏ có thể do đầu ra một l
 - Một seed (seed 0); cấu hình cuối cần 3 seed (mục 15.2 của TECHNICAL).
 - Huấn luyện 60 epoch thay vì 100 như file cấu hình; chưa biết 100 epoch có tốt hơn không.
 - Lượt 1 chỉ có VisDrone; lượt 2 thêm dữ liệu người dưới nước và C2A.
-- Báo cáo trên test-dev là đề xuất, đang chờ thầy duyệt (quyết định #11).
+- Báo cáo trên test-dev là đề xuất, đang chờ cô duyệt (quyết định #11).
 
 ## Tái lập
 

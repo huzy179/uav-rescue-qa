@@ -1,6 +1,6 @@
 # FloodEye: tổng quan dự án từ đầu đến cuối
 
-Tài liệu này giải thích **toàn bộ dự án theo trình tự các bước**: mỗi bước làm gì, vì sao cần, có cách nào khác và vì sao không chọn, đang ở trạng thái nào. Mục đích là nắm được cả dự án và trình bày lại được cho thầy và hội đồng.
+Tài liệu này giải thích **toàn bộ dự án theo trình tự các bước**: mỗi bước làm gì, vì sao cần, có cách nào khác và vì sao không chọn, đang ở trạng thái nào. Mục đích là nắm được cả dự án và trình bày lại được cho cô và hội đồng.
 
 Tài liệu không thay cho ba tài liệu kia:
 
@@ -197,7 +197,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | Chỉ dùng bộ có sẵn (AFO, SeaDronesSee) làm tập test | Đó là người bơi ngoài biển, không phải cảnh lũ (mái nhà, nước đục, rác); vẫn dùng làm tập đánh giá phụ cho người dưới nước |
 | Tự bay UAV quay | Không có thiết bị, không có lũ đúng lúc |
 
-**Trạng thái.** **Chưa bắt đầu gán. Đây là rủi ro lớn nhất của đồ án** (ROADMAP 1.1). Đã trích và lọc tay 212 khung từ 10 video, đóng gói sẵn 10 task CVAT; 4/11 gộp hai video cùng nguồn San Angelo, còn 188 khung; công cụ chuyển nhãn và chấm (`scripts/eval_flood.sh`) đã sẵn sàng. 4 trong 10 video dưới 1080p (hai video 480p, hai video 720p), trái với LABELING mục 1: cần quyết giữ hay tải lại **trước khi** gán các video đó. Phương án dự phòng nếu không kịp: khoá với tối thiểu 150 khung, hoặc lùi khoá tối đa tới 11/11 (quyết định #10, hỏi thầy).
+**Trạng thái.** **Chưa bắt đầu gán. Đây là rủi ro lớn nhất của đồ án** (ROADMAP 1.1). Đã trích và lọc tay 212 khung từ 10 video, đóng gói sẵn 10 task CVAT; 4/11 gộp hai video cùng nguồn San Angelo, còn 188 khung; công cụ chuyển nhãn và chấm (`scripts/eval_flood.sh`) đã sẵn sàng. 4 trong 10 video dưới 1080p (hai video 480p, hai video 720p), trái với LABELING mục 1: cần quyết giữ hay tải lại **trước khi** gán các video đó. Phương án dự phòng nếu không kịp: khoá với tối thiểu 150 khung, hoặc lùi khoá tối đa tới 11/11 (quyết định #10, hỏi cô).
 
 **Ở đâu:** `docs/LABELING.md`, `tools/extract_frames.py` (logic ở `eval/frames.py`), `tools/convert_cvat.py`, `tools/check_leakage.py`; dữ liệu ở `data/raw/flood/`, `data/processed/flood/`.
 
@@ -266,7 +266,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | E3 | E2c + nhánh phát hiện P2 (thêm tầng phát hiện ở bước nhảy 4 thay vì 8) | Người 8 px chiếm 2×2 ô đặc trưng thay vì 1 ô: có tăng recall người rất nhỏ không, đáng với chi phí tính toán không? | **Xong 28/10, kết quả âm**: dưới 8 px chỉ +0,012 (val) và +0,013 (test-dev) AP50, mất ở IoU 0,3; kém hơn ở người to; 115,0 so với 93,9 GFLOPs. Giữ E2c (`E3.md`) |
 | E4 | E2c + cắt ô, trên dữ liệu độ phân giải cao | Cắt ô có lợi khi ảnh thật sự lớn không? | Trên SDS 4K: cắt ô ở độ phân giải gốc **kém** toàn ảnh (0,235 so với 0,468) vì E2c yếu với người to; **thu nhỏ theo độ cao** rồi cắt ô cho 0,531 (`scale_by_altitude.md`). Trên tập lũ: có cấu hình `E4tiled_flood.yaml` (cắt ô không thu nhỏ, vì không có độ cao bay), chờ nhãn |
 | E5 | E2c nhưng dùng YOLO11s | Kết quả có phụ thuộc đời mô hình không? | Có cấu hình (`E5_s0.yaml`), chưa huấn luyện |
-| E6 | Thu nhỏ ảnh theo nhiều mức, vẽ recall theo số pixel trên người | Bay cao tối đa bao nhiêu thì còn phát hiện được? Nối thẳng vào khuyến nghị độ cao bay | **Chạy thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt với người trên 45 px; dưới 4 px không mô hình nào thấy. Bản chính thức chờ thầy duyệt (quyết định #1) |
+| E6 | Thu nhỏ ảnh theo nhiều mức, vẽ recall theo số pixel trên người | Bay cao tối đa bao nhiêu thì còn phát hiện được? Nối thẳng vào khuyến nghị độ cao bay | **Chạy thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt với người trên 45 px; dưới 4 px không mô hình nào thấy. Bản chính thức chờ cô duyệt (quyết định #1) |
 
 Cấu hình cuối chạy **3 seed** (khởi tạo ngẫu nhiên khác nhau), báo trung bình ± độ lệch chuẩn: chênh lệch nhỏ hơn độ lệch chuẩn giữa các seed thì không kết luận được.
 
@@ -442,7 +442,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | RQ3 dựa trên mô phỏng | Trung bình | Ghi rõ là mô phỏng; đã kiểm chứng sơ bộ trên video thật SeaDronesSee (`sds_mot_confirm.md`); nếu kịp, chạy pipeline trên video lũ thật để minh hoạ |
 | Mô hình chính (E2c) yếu với người to | Trung bình | Thu nhỏ khung theo độ cao (`scale_by_altitude.md`); thêm toàn bộ C2A (E2e) không giúp có ý nghĩa và làm kém người nhỏ (`E2e.md`); cách khác ở `CAI_TIEN.md` mục 1.1 |
 | E2c, E3 mới có một seed | Trung bình | 3 seed cho cấu hình cuối (ROADMAP 1.3, tuần 14–20/11) |
-| Video lũ có bản quyền; C2A không ghi giấy phép | Cần hỏi | Chỉ công bố nhãn và nguồn; hỏi thầy (quyết định #12) |
+| Video lũ có bản quyền; C2A không ghi giấy phép | Cần hỏi | Chỉ công bố nhãn và nguồn; hỏi cô (quyết định #12) |
 | Hạn mức GPU Kaggle | Thấp | Ngân sách theo tuần (ROADMAP 1.4); máy Windows nếu có GPU NVIDIA |
 
 ---

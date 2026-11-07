@@ -68,3 +68,9 @@ Không sửa số của thí nghiệm không được chạy lại. Thí nghiệ
 ## 6. Báo lại
 
 Đưa bảng của thí nghiệm vừa chạy cạnh mốc so sánh gần nhất, và một hai nhận xét. Nêu rõ nếu kết quả trái với dự đoán trong ROADMAP hoặc với thí nghiệm trước, vì đó thường là dấu hiệu lỗi cấu hình hoặc lỗi nhãn chứ chưa chắc là phát hiện mới.
+
+## Không thuộc skill này
+
+- Đo tốc độ (câu hỏi 2): chạy trên Kaggle bằng `notebooks/kaggle_rq2.ipynb` (ghim TensorRT 10, xem TECHNICAL 14.5), tải `runs/rq2/` về rồi `scripts/after_rq2.py`; ghi vào `docs/results/rq2_t4.md`.
+- Mô phỏng câu hỏi 3: `sim/sweep_rq3.py` với một `configs/experiments/rq3_*.yaml`; mọi số là **mô phỏng**, ghi nhãn đó trong `docs/results/`.
+- Thử một cải tiến của `docs/CAI_TIEN.md`: dùng `/try-improvement`.

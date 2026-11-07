@@ -68,6 +68,8 @@ Luôn kèm tên tiếng Anh khi gặp lần đầu, để hội đồng đối c
 | nhóm kích thước | size group | Chia người theo cạnh ngắn của box: dưới 8, 8–16, 16–32, trên 32 px | COCO chia khác (nhỏ là dưới 32×32); dự án chia mịn hơn vì người rất nhỏ |
 | hàng đợi gửi (outbox) | transactional outbox | Lưu cảnh báo vào SQLite trên UAV trước, gửi khi có mạng, gửi lại khi lỗi | Thuật ngữ kỹ thuật phần mềm |
 | thăm dò đường truyền | link probing | Khi mọi cảnh báo đang chờ gửi lại, cứ vài giây thử một gói nhỏ; gửi được thì gửi ngay cả hàng đợi | Tuỳ chọn `--link-probe-s` |
+| mất gói rải rác, mất theo cụm | independent (Bernoulli) loss, bursty loss (Gilbert–Elliott) | Mỗi lần gửi mất độc lập; hoặc đường truyền đổi qua lại giữa trạng thái tốt và xấu, mất liền nhiều gói khi xấu | Tuỳ chọn `--net-loss`, `--net-burst` |
+| ước tính số người (nhóm) | group size estimate | Số người trong 5 m quanh một cảnh báo, để đội cứu hộ mang đủ phao; đếm theo khung xác nhận (mặc định) hoặc theo cụm (tuỳ chọn) | Trường `group_size` |
 | vùng tìm 95% | 95% search area | Vòng tròn quanh vị trí cảnh báo chứa người thật với xác suất 95%, bán kính 2,448 lần sai số 1σ | Bản đồ trạm vẽ vòng này, không vẽ 1σ |
 | vùng đã quét | covered area | Hợp các vùng mặt đất camera đã nhìn qua trong chuyến bay, tô trên bản đồ trạm; chỗ đã quét mà không có cảnh báo thì khỏi tìm lại | |
 | gói trạng thái | status message, heartbeat | Gói nhỏ drone gửi mỗi giây: vị trí, vùng camera nhìn, cảnh báo đang chờ; trạm dựa vào đó biết drone mất liên lạc | Không qua hàng đợi gửi, hỏng thì bỏ |
@@ -104,7 +106,7 @@ Chỉ dự án này dùng. Trong luận văn, bảng kết quả ghi tên mô t�
 | E2b | Tinh chỉnh trên VisDrone + C2A | Có cấu hình, không chạy |
 | E2c | Tinh chỉnh trên VisDrone + AFO (người dưới nước) | Xong, mô hình chính |
 | E2d | Như E2c, thêm HydroVigilance | Có cấu hình |
-| E2e | Như E2c, thêm C2A (thêm người cỡ to) | Phiên 1 xong 33/55 epoch, chờ phiên 2 |
+| E2e | Như E2c, thêm C2A (thêm người cỡ to) | Xong, kết quả âm (kém với người nhỏ); không dùng |
 | E3 | Như E2c, thêm nhánh phát hiện P2 | Xong, không đáng chi phí |
 | E4 | Mô hình chính + cắt ô (SAHI hoặc bộ cắt ô riêng `E4tiled`) | Xong trên VisDrone và SeaDronesSee |
 | E5 | Như E2c nhưng dùng YOLO11s | Có cấu hình |

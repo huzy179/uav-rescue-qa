@@ -111,12 +111,12 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 
 | Tuần | Dữ liệu | Thí nghiệm | Code (chỉ khi cần) | Viết | Gán nhãn | Báo cáo thứ Sáu |
 |---|---|---|---|---|---|---|
-| 21–23/10 | Gom video lũ, ghi `sources.csv`; dựng dự án CVAT theo LABELING.md; gán thử | E2 lượt 1 xong → `eval_by_size` trên VisDrone val, `compare_runs` với E1 | Push, xem CI chạy | Chương 2 | 30–50 | 23/10: bảng VisDrone (E0, E1, E4, cắt ô riêng); E2 nếu kịp; demo pipeline + trạm mặt đất (telemetry giả lập); RQ3 chạy thử; hỏi thầy quyết định #1, #7, #10 |
+| 21–23/10 | Gom video lũ, ghi `sources.csv`; dựng dự án CVAT theo LABELING.md; gán thử | E2 lượt 1 xong → `eval_by_size` trên VisDrone val, `compare_runs` với E1 | Push, xem CI chạy | Chương 2 | 30–50 | 23/10: bảng VisDrone (E0, E1, E4, cắt ô riêng); E2 nếu kịp; demo pipeline + trạm mặt đất (telemetry giả lập); RQ3 chạy thử; hỏi cô quyết định #1, #7, #10 |
 | 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` (thực tế: FinlandProper tạm bỏ) | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle (thực tế: E2c = VisDrone + AFO, xong 23/10; E3 xong 28/10) | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
 | 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E2e (E2c + C2A) trên Kaggle; RQ2 trên T4 nếu kịp | | Chương 4 | 188; khoá lùi tới 11/11 (#10) | 6/11: tiến độ gán nhãn, lý do lùi khoá |
-| 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, không thu nhỏ: tập lũ không có độ cao bay, quyết định #13) trên tập lũ; E5 (YOLO11s); E6 nếu thầy duyệt; recall theo loại nhiễu; **RQ2 bắt đầu 9/11**: xuất TensorRT FP16/INT8 trên T4, đo từng chặng | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~ (đã có) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
+| 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, không thu nhỏ: tập lũ không có độ cao bay, quyết định #13) trên tập lũ; E5 (YOLO11s); E6 nếu cô duyệt; recall theo loại nhiễu; **RQ2 trên T4 bắt đầu sớm 7/11** (chạy thử hai biến thể xong; lần chạy đủ đầu lỗi xuất INT8 với TensorRT 11, đã ghim TensorRT 10 và chạy lại) | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~, ~~xử lý sau RQ2 (`scripts/after_rq2.py`)~~ (đã có); 7/11 làm thêm các mục `CAI_TIEN.md` không cần GPU (xem các khối cập nhật 7/11) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
 | 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
-| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; hiệu chỉnh hồ sơ thiết bị từ RQ2 (`tools/fit_device_profile.py`), RQ3 với `device_profile` | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
+| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; hiệu chỉnh hồ sơ thiết bị từ RQ2 (`scripts/after_rq2.py`), RQ3 với `device_profile` (`rq3_device.yaml`) | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
 | 28/11–4/12 | | | **Đóng băng mã 28/11** | Bản thảo đầy đủ | | 4/12: bản thảo |
 | 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng | | 11/12: bản hoàn chỉnh |
 
@@ -138,7 +138,7 @@ Không tuần nào vượt hạn mức nếu không chạy lại. Lần chạy h
 
 Thứ tự cắt của đề cương giữ nguyên: phần mở rộng (nhiều drone, xếp ưu tiên) → độ đẹp trạm mặt đất → E3 → `sim/netem`. Đã cắt: mọi việc cần Jetson (`docker/edge-jetson.Dockerfile`, đo điện năng thật).
 
-Riêng tập test lũ, nếu tới 4/11 chưa đủ 200 khung đã rà: **giữ khoá với số khung đang có nếu từ 150 trở lên** (khoảng tin cậy rộng hơn, ghi vào giới hạn), hoặc lùi khoá tối đa tới 11/11. Lùi quá 11/11 thì RQ1 trên tập lũ không kịp báo cáo 13/11. Chọn cách nào là quyết định #10, hỏi thầy ngày 23/10. **Chốt 4/11: lùi khoá tới 11/11** (chưa gán khung nào nên không thể khoá với 150).
+Riêng tập test lũ, nếu tới 4/11 chưa đủ 200 khung đã rà: **giữ khoá với số khung đang có nếu từ 150 trở lên** (khoảng tin cậy rộng hơn, ghi vào giới hạn), hoặc lùi khoá tối đa tới 11/11. Lùi quá 11/11 thì RQ1 trên tập lũ không kịp báo cáo 13/11. Chọn cách nào là quyết định #10, hỏi cô ngày 23/10. **Chốt 4/11: lùi khoá tới 11/11** (chưa gán khung nào nên không thể khoá với 150).
 
 Không cắt tập test lũ và phần đánh giá.
 
@@ -362,7 +362,7 @@ Chưa thấy bộ dữ liệu công khai nào có ảnh 48 MP từ UAV kèm nhã
 3. Chạy cùng mô hình, vẽ đường **recall theo kích thước người tính bằng pixel**.
 4. 48 MP và 4K chỉ là hai điểm trên đường cong (chênh khoảng 2,1 lần mỗi chiều). Ghép với bảng GSD, cùng đường cong đó trả lời câu "bay cao tối đa bao nhiêu", nên E6 nối thẳng vào khuyến nghị độ cao bay.
 
-Giới hạn phải ghi rõ: thu nhỏ ảnh không tái tạo được nhiễu cảm biến, độ nhòe và mức nén của camera thật. Có thể thêm làm mờ và nén JPEG ở mỗi mức để gần thực tế hơn, nhưng vẫn gọi là mô phỏng. Hỏi thầy hôm thứ Sáu.
+Giới hạn phải ghi rõ: thu nhỏ ảnh không tái tạo được nhiễu cảm biến, độ nhòe và mức nén của camera thật. Có thể thêm làm mờ và nén JPEG ở mỗi mức để gần thực tế hơn, nhưng vẫn gọi là mô phỏng. Hỏi cô hôm thứ Sáu.
 
 Đã chạy thử 26/10 trên SeaDronesSee 4K (thu nhỏ 1, 2, 3, 4, 6 lần; `docs/results/e6_sds_pilot.md`). Phát hiện phụ quan trọng hơn dự kiến: mô hình fine-tune yếu với người **to**, dẫn tới thu nhỏ khung theo độ cao (quyết định #13).
 
@@ -383,18 +383,18 @@ Mỗi lần fine-tune ở 1280 trên T4 có thể mất nhiều giờ. Ba seed �
 
 | # | Câu hỏi | Ai quyết | Hạn |
 |---|---|---|---|
-| 1 | Đồng ý đặt lại E6 thành khảo sát recall theo số pixel trên người (mục 5.3)? | Thầy | 23/10 |
-| 2 | ~~Lab có hỗ trợ mua Jetson không?~~ → chốt 21/10: không có; RQ2 trên Kaggle T4 | Thầy | Xong |
-| 3 | Có bắt buộc bài báo trước khi bảo vệ không? | Thầy, khoa | 16/10 |
+| 1 | Đồng ý đặt lại E6 thành khảo sát recall theo số pixel trên người (mục 5.3)? | Cô | 23/10 |
+| 2 | ~~Lab có hỗ trợ mua Jetson không?~~ → chốt 21/10: không có; RQ2 trên Kaggle T4 | Cô | Xong |
+| 3 | Có bắt buộc bài báo trước khi bảo vệ không? | Cô, khoa | 16/10 |
 | 4 | Hạn nộp quyển? | Khoa | 16/10 |
 | 5 | Có video DJI kèm `.SRT` nào để thử `telemetry` với dữ liệu thật không? | Học viên | 23/10 |
 | 6 | ~~Tài khoản Kaggle đã xác minh số điện thoại chưa?~~ → xong (E2 chạy được với Internet) | Học viên | Xong |
-| 7 | ~~Khoảng tin cậy trên tập test lũ lấy mẫu theo video (cluster bootstrap) thay vì theo ảnh?~~ → chốt 4/11: **theo video** (TECHNICAL 15.3); báo thầy 6/11 | Học viên, hỏi thầy | Xong |
+| 7 | ~~Khoảng tin cậy trên tập test lũ lấy mẫu theo video (cluster bootstrap) thay vì theo ảnh?~~ → chốt 4/11: **theo video** (TECHNICAL 15.3); báo cô 6/11 | Học viên, hỏi cô | Xong |
 | 8 | ~~Đặt bộ bọc ByteTrack ở đâu~~ → đã chốt 21/10: bọc trong `detector.py` | Học viên | Xong |
 | 9 | RQ3: ByteTrack giữ ngưỡng tạo track 0,25 như bài gốc, hay hạ về bằng conf detector để cùng đầu vào với `geo`? (TECHNICAL 9.2) **Đề xuất 4/11 (chờ học viên chốt):** hạ về bằng conf detector (0,1) cho bảng chính, để hai chiến lược cùng đầu vào; báo 0,25 làm phân tích độ nhạy. Trên SDS v21, v5, v13 hai ngưỡng cho cùng số người được cảnh báo (`sds_mot_confirm.md`), nên chọn cách công bằng không làm đổi kết luận | Học viên | Trước RQ3 (14/11) |
-| 10 | ~~Tới 4/11 chưa đủ 200 khung đã rà: khoá với số đang có (tối thiểu 150) hay lùi khoá tới 11/11?~~ → chốt 4/11: **lùi khoá tới 11/11** (mục 1.5); báo thầy 6/11 | Thầy | Xong |
-| 11 | So E2 với E0/E1 trên VisDrone test-dev thay vì val? E2 chọn `best.pt` theo val nên val thiên vị E2 (TECHNICAL 13.5). Đã chạy cả hai tập cho E1, E2: mức tăng giữ nguyên trên test-dev (`docs/results/visdrone_E2.md`); cần thầy chọn tập nào là bảng chính | Học viên, hỏi thầy | 23/10 |
-| 12 | Dùng video lũ có bản quyền (YouTube, báo chí) cho tập test, chỉ công bố nhãn và nguồn, không phát hành lại ảnh: có được chấp nhận? C2A không ghi giấy phép trên GitHub (bản Kaggle ghi MIT, `flood_truoc_khoa.md`): dùng để huấn luyện có ổn? | Thầy | 23/10 |
+| 10 | ~~Tới 4/11 chưa đủ 200 khung đã rà: khoá với số đang có (tối thiểu 150) hay lùi khoá tới 11/11?~~ → chốt 4/11: **lùi khoá tới 11/11** (mục 1.5); báo cô 6/11 | Cô | Xong |
+| 11 | So E2 với E0/E1 trên VisDrone test-dev thay vì val? E2 chọn `best.pt` theo val nên val thiên vị E2 (TECHNICAL 13.5). Đã chạy cả hai tập cho E1, E2: mức tăng giữ nguyên trên test-dev (`docs/results/visdrone_E2.md`); cần cô chọn tập nào là bảng chính | Học viên, hỏi cô | 23/10 |
+| 12 | Dùng video lũ có bản quyền (YouTube, báo chí) cho tập test, chỉ công bố nhãn và nguồn, không phát hành lại ảnh: có được chấp nhận? C2A không ghi giấy phép trên GitHub (bản Kaggle ghi MIT, `flood_truoc_khoa.md`): dùng để huấn luyện có ổn? | Cô | 23/10 |
 | 13 | ~~Đưa "thu nhỏ khung theo độ cao" thành một đóng góp, đánh giá trên tập lũ cạnh E4?~~ → chốt 4/11: **chỉ đánh giá trên SDS** (có độ cao từ metadata) và trong mô phỏng RQ3. 188 khung lũ lấy từ video YouTube, không có độ cao bay; suy độ cao từ nhãn là dùng nhãn test để đặt tham số. Tập lũ chạy E4 cắt ô không thu nhỏ; ghi giới hạn | Học viên | Xong |
 | 14 | ~~Tuần 31/10–6/11 dư khoảng 10 giờ GPU vì E3 xong sớm: seed thứ hai của E2c, E2d, hay E2c + C2A?~~ → chốt 4/11: **E2e = E2c + C2A** (`E2e_s0.yaml`), vì E2c yếu với người to (`e6_sds_pilot.md`) | Học viên | Xong |
 | 15 | ~~4/10 video lũ dưới 1080p: tải lại hay giữ?~~ → chốt 4/11: **giữ** (74 khung sau khi gộp San Angelo; bỏ thì còn 114, dưới mức 150), ngoại lệ ghi ở LABELING mục 6 và phần giới hạn của luận văn | Học viên | Xong |

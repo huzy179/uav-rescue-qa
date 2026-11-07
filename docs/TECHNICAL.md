@@ -820,7 +820,7 @@ class Transport(Protocol):
 ```
 
 - `HttpTransport`: `POST` tới `ground/`; HTTP 200 kèm `msg_id` là ack. Đơn giản, dễ demo.
-- MQTT (QoS 1) là lựa chọn tự nhiên cho IoT, nhưng thêm một broker cần chạy; chỉ làm nếu thầy yêu cầu.
+- MQTT (QoS 1) là lựa chọn tự nhiên cho IoT, nhưng thêm một broker cần chạy; chỉ làm nếu cô yêu cầu.
 - `FakeTransport` cho kiểm thử; `NetemTransport` (mục 11) bọc bên ngoài cả hai.
 
 ### 10.6. Trạng thái drone và video xem trực tiếp [Đã có]

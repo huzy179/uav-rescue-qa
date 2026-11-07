@@ -23,10 +23,12 @@
 .venv/bin/python scripts/run_tiled.py --config configs/experiments/E4tiled_visdrone.yaml   # cấu hình có khoá tile:
 .venv/bin/python eval/eval_by_size.py --help
 scripts/eval_flood.sh <thư mục file xuất CVAT>   # cả chuỗi trên tập test lũ, chỉ sau khi khoá
+.venv/bin/python -m sim.sweep_rq3 --config configs/experiments/rq3_<tên>.yaml --jobs 12   # quét mô phỏng câu hỏi 3
+.venv/bin/python scripts/after_rq2.py --rq2 runs/rq2   # sau khi tải kết quả đo tốc độ từ Kaggle về
 .venv/bin/python -m console                      # giao diện thử nghiệm, http://localhost:8501
 ```
 
-Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Chạy cả một thí nghiệm thì dùng skill `/run-experiment`.
+Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Skill: `/run-experiment` (chạy và chấm một thí nghiệm E0–E6), `/try-improvement` (thử một mục của `CAI_TIEN.md` từ đầu tới khi ghi kết quả), `/friday-report` (báo cáo tuần gửi cô hướng dẫn).
 
 ## Quy ước
 
@@ -41,6 +43,6 @@ Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Ch�
 
 - Không đưa `data/`, `runs/`, trọng số (`*.pt`, `*.onnx`, `*.engine`) lên git.
 - Không ghi số liệu vào tài liệu nếu số đó không đọc được từ một file trong `runs/`. Không làm tròn hay ước lượng thay cho số đo.
-- Không sửa nhãn hay thành phần tập test lũ sau khi đã khoá (dự kiến 4/11/2026, `MANIFEST.sha256`).
+- Không sửa nhãn hay thành phần tập test lũ sau khi đã khoá (khoá 11/11/2026, lùi từ 4/11; `MANIFEST.sha256`).
 - Không dùng mô hình gán nhãn trước cho tập test lũ, và không chọn tham số (conf, `--target-person-px`, N…) trên tập đó.
 - Không coi thời gian đo trên máy cá nhân (Mac MPS, RTX 5060 trên WSL) là số liệu cho thiết bị biên; chỉ dùng để so sánh tương đối.

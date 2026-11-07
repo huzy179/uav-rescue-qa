@@ -1,6 +1,6 @@
 # E6 thử trên SeaDronesSee: recall theo số pixel trên người
 
-**Bản thử, chưa phải E6 chính thức**: E6 đặt lại thành khảo sát recall theo số pixel (ROADMAP mục 5.3) còn chờ thầy duyệt (quyết định #1). Chạy trước trên SDS vì đây là tập 4K có nhãn duy nhất trong tay; người ở đây phần lớn to (cạnh ngắn trung vị 65 px, `sds_det.md`), nên thu nhỏ ra được đủ dải từ 4 tới hơn 90 px.
+**Bản thử, chưa phải E6 chính thức**: E6 đặt lại thành khảo sát recall theo số pixel (ROADMAP mục 5.3) còn chờ cô duyệt (quyết định #1). Chạy trước trên SDS vì đây là tập 4K có nhãn duy nhất trong tay; người ở đây phần lớn to (cạnh ngắn trung vị 65 px, `sds_det.md`), nên thu nhỏ ra được đủ dải từ 4 tới hơn 90 px.
 
 ## Cách làm
 

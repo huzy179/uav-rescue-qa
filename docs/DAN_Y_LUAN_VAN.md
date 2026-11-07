@@ -66,17 +66,17 @@ Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDr
 |---|---|---|---|
 | 5.1 Câu hỏi 1 | RQ1a cỡ người và bỏ sót | `visdrone_E2.md`, `e6_sds_pilot.md`; tập lũ | Có một phần; tập lũ **Chờ** |
 | | RQ1b dữ liệu huấn luyện | `visdrone_E2.md`, `E2c.md`, `afo_E1_E2.md`, `E2e.md` (kết quả âm: thêm người to làm kém người nhỏ) | Có |
-| | RQ1c cắt ô, nhánh P2 | `visdrone_baseline.md`, `visdrone_tiled_vs_sahi.md`, `E3.md` | Có |
-| | RQ1d thu nhỏ theo độ cao | `scale_by_altitude.md` | Có, sơ bộ |
+| | RQ1c cắt ô, nhánh P2 | `visdrone_baseline.md`, `visdrone_tiled_vs_sahi.md`, `E3.md`; ngưỡng theo cỡ (âm, `conf_by_size.md`) | Có |
+| | RQ1d thu nhỏ theo độ cao | `scale_by_altitude.md`; biến thể âm: `upscale_small.md`, `full_pass.md` | Có, sơ bộ |
 | | RQ1e nhiễu của cảnh lũ | recall theo thẻ ảnh trên tập lũ | **Chờ** tập lũ |
 | | RQ1f chuyển sang cảnh lũ | `sds_det.md` và tập lũ | **Chờ** tập lũ |
-| 5.2 Câu hỏi 2 | RQ2a, RQ2b nén mô hình, cấu hình tốt nhất | Bảng recall theo FPS trên T4 | **Chờ** chạy |
-| | RQ2c thiết bị yếu | Giả lập thời gian thiết bị, hiệu chỉnh từ RQ2 (ước lượng, bảng riêng) | **Chờ** hiệu chỉnh |
+| 5.2 Câu hỏi 2 | RQ2a, RQ2b nén mô hình, cấu hình tốt nhất | Bảng recall theo FPS trên T4 (`rq2_t4.md`, bảng in sẵn bởi `scripts/after_rq2.py`) | **Đang chạy** trên Kaggle (7/11) |
+| | RQ2c thiết bị yếu | Giả lập thời gian thiết bị, hiệu chỉnh từ RQ2 (ước lượng, bảng riêng; mô phỏng `rq3_device.yaml`) | **Chờ** hiệu chỉnh |
 | 5.3 Câu hỏi 3 | RQ3a số khung mỗi giây | `rq3_adaptive.md`, `rq3_altitude.md`, `rq3_altprofile.md` | Có, mô phỏng |
 | | RQ3b xác nhận | `sds_mot_confirm.md`, `rq3_cmc_cause.md` | Có, sơ bộ |
-| | RQ3c sai số GPS | `rq3_geoerr.md` | Có, mô phỏng |
-| | RQ3d mất sóng | `rq3_network.md` | Có, mô phỏng |
-| | RQ3e gộp sự cố | `alert_memory.md` | Có |
+| | RQ3c sai số GPS | `rq3_geoerr.md`, `rq3_yawcalib.md`, `rq3_gpsacc.md`; video thật: `georef_pitch.md`, `georef_sync.md` (âm) | Có, mô phỏng |
+| | RQ3d mất sóng | `rq3_network.md`, `rq3_burst.md` (mất theo cụm) | Có, mô phỏng |
+| | RQ3e gộp sự cố, số người mỗi sự cố | `alert_memory.md`, `rq3_group.md` (mô phỏng tốt, video thật kém: không bật) | Có |
 | 5.4 Luận điểm xuyên suốt | Nối RQ1d, RQ2c, RQ3b | Các mục trên | Viết sau khi đủ 5.1–5.3 |
 | 5.5 Phân tích lỗi | Ảnh bỏ sót, báo nhầm tiêu biểu theo nhóm cỡ và thẻ ảnh | Báo cáo phân tích lỗi của giao diện (`python -m console`) | **Chờ** tập lũ |
 | 5.6 Demo hệ thống | Ảnh chụp bản đồ, video so hai thiết bị | `DEMO_BAO_VE.md` | Có công cụ |
@@ -93,6 +93,6 @@ Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDr
 
 1. Gán và khoá tập ảnh lũ (11/11), rồi chấm mọi mô hình: mở khoá RQ1a (phần lũ), RQ1e, RQ1f, mục 5.5.
 2. ~~E2e phiên 2, rồi chấm trên SeaDronesSee~~ (xong 7/11, `E2e.md`): RQ1b đủ.
-3. Chạy RQ2 trên T4: RQ2a, RQ2b; sau đó hiệu chỉnh giả lập thiết bị: RQ2c.
+3. Chạy RQ2 trên T4 (đang chạy 7/11, lần đầu lỗi INT8 với TensorRT 11, đã ghim TensorRT 10): RQ2a, RQ2b; sau đó `scripts/after_rq2.py` hiệu chỉnh giả lập thiết bị và `rq3_device.yaml`: RQ2c.
 4. ~~Một lần chạy tổng hợp sai số GPS và mất sóng thành bảng: RQ3c, RQ3d~~ (xong 6/11, `rq3_geoerr.md`, `rq3_network.md`).
 5. Ba seed cho mô hình cuối (tuần 14–20/11) nếu còn giờ GPU; không đủ thì ghi một seed vào giới hạn.
