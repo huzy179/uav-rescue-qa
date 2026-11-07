@@ -26,12 +26,25 @@ class Detector(Protocol):
     ) -> tuple[list[Detection], dict[str, float]]: ...
 
 
-def person_scale(expected_px: float, target_px: float | None) -> float:
-    """Hệ số thu nhỏ khung để người dự kiến còn khoảng target_px; không phóng to (phóng to không thêm thông tin).
+def person_scale(
+    expected_px: float, target_px: float | None, min_px: float | None = None, max_upscale: float = 2.0
+) -> float:
+    """Hệ số đổi cỡ khung trước khi phát hiện: > 1 là thu nhỏ, < 1 là phóng to, 1 là giữ nguyên.
 
-    Lý do (docs/results/e6_sds_pilot.md): E2c bắt tốt nhất người khoảng 10–30 px và tụt mạnh với người trên 45 px,
-    vì dữ liệu huấn luyện hầu như không có người to. target_px=None thì giữ nguyên khung.
+    Thu nhỏ (target_px): người dự kiến to hơn target_px thì thu nhỏ để còn khoảng target_px. Lý do
+    (docs/results/e6_sds_pilot.md): E2c bắt tốt nhất người khoảng 10–30 px và tụt mạnh với người trên 45 px.
+
+    Phóng to (min_px): người dự kiến nhỏ hơn min_px thì phóng to để lên khoảng min_px, tối đa max_upscale lần.
+    Phóng to không thêm chi tiết của cảm biến, nhưng mạng có bước lưới nhỏ nhất 8 px nên người 4–6 px chiếm
+    quá ít ô lưới; dưới khoảng 6 px recall của E2c gần bằng 0 (e6_sds_pilot.md). Đổi lại số ô tăng theo bình phương
+    hệ số. Không bật (min_px=None) thì giữ hành vi cũ.
     """
+    if min_px is not None and target_px is not None and min_px > target_px:
+        raise ValueError(f"min_px ({min_px}) phải không lớn hơn target_px ({target_px})")
+    if max_upscale < 1.0:
+        raise ValueError(f"max_upscale phải ≥ 1, nhận được: {max_upscale}")
+    if min_px is not None and 0 < expected_px < min_px:
+        return max(expected_px / min_px, 1.0 / max_upscale)
     if target_px is None or expected_px <= target_px:
         return 1.0
     return expected_px / target_px
@@ -250,12 +263,14 @@ class YoloDetector:
     ) -> tuple[list[Detection], dict[str, float]]:
         """Trả về phát hiện trên toạ độ ảnh gốc và thời gian từng phần (ms): cắt ô, suy luận, gộp.
 
-        scale > 1: thu nhỏ khung theo hệ số này trước khi cắt ô hay suy luận (xem person_scale), box quy về ảnh gốc.
+        scale ≠ 1: đổi cỡ khung theo hệ số này trước khi cắt ô hay suy luận (> 1 thu nhỏ, < 1 phóng to;
+        xem person_scale), box quy về ảnh gốc.
         """
         start = time.perf_counter()
-        if scale > 1.0:
+        if scale != 1.0:
             size = (max(1, round(frame.shape[1] / scale)), max(1, round(frame.shape[0] / scale)))
-            frame = cv2.resize(frame, size, interpolation=cv2.INTER_AREA)
+            interpolation = cv2.INTER_AREA if scale > 1.0 else cv2.INTER_LINEAR
+            frame = cv2.resize(frame, size, interpolation=interpolation)
         if self.mode == "full":
             images, offsets, imgsz = [frame], [(0, 0)], self.imgsz
         else:
@@ -288,7 +303,7 @@ class YoloDetector:
         if len(offsets) > 1:
             keep = merge_boxes(boxes, confs)
             boxes, confs = boxes[keep], confs[keep]
-        if scale > 1.0:
+        if scale != 1.0:
             boxes = boxes * scale
         detections = [
             Detection(frame_id=frame_id, t=t, box_px=(x1, y1, x2, y2), conf=conf)

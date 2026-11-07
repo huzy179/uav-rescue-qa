@@ -37,6 +37,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-images", action="store_true", help="Không lưu ảnh có vẽ box (nên dùng khi conf rất thấp)")
     parser.add_argument("--altitude-csv", type=Path, default=None, help="CSV image, alt_agl_m (tools/make_sds_det.py) để thu nhỏ theo độ cao")
     parser.add_argument("--target-person-px", type=float, default=None, help="Như edge/main.py: thu nhỏ để người dự kiến còn khoảng số px này")
+    parser.add_argument("--min-person-px", type=float, default=None, help="Phóng to khi người dự kiến dưới số px này (tối đa --max-upscale lần)")
+    parser.add_argument("--max-upscale", type=float, default=2.0, help="Hệ số phóng to tối đa")
     parser.add_argument("--person-m", type=float, default=0.5, help="Cỡ người nhìn từ trên xuống (m)")
     parser.add_argument("--fov-deg", type=float, default=82.0, help="Góc nhìn camera, để tính số px dự kiến")
     parser.add_argument("--fov-type", choices=["diagonal", "horizontal"], default="diagonal", help="Kiểu góc nhìn")
@@ -55,25 +57,27 @@ def main() -> None:
     print(f"Model: {args.model} | thiết bị: {detector.device} | nguồn: {args.source}")
 
     altitude = {}
-    if args.target_person_px is not None:
+    if args.target_person_px is not None or args.min_person_px is not None:
         if args.altitude_csv is None:
-            raise SystemExit("--target-person-px cần --altitude-csv")
+            raise SystemExit("--target-person-px và --min-person-px cần --altitude-csv")
         altitude = dict(pd.read_csv(args.altitude_csv)[["image", "alt_agl_m"]].itertuples(index=False))
     box_records: list[dict[str, Any]] = []
     image_records: list[dict[str, Any]] = []
     for index, (name, frame) in enumerate(iter_frames(args.source, max_frames=args.max_frames)):
         scale = 1.0
-        if args.target_person_px is not None:
+        if args.target_person_px is not None or args.min_person_px is not None:
             cam = Camera.from_fov(args.fov_deg, args.fov_type, frame.shape[1], frame.shape[0])
             tel = Telemetry(t=0.0, lat=0.0, lon=0.0, alt_agl_m=altitude[name], yaw_deg=0.0, pitch_deg=-90.0)
-            scale = person_scale(expected_person_px(tel, cam, args.person_m), args.target_person_px)
+            scale = person_scale(
+                expected_person_px(tel, cam, args.person_m), args.target_person_px, args.min_person_px, args.max_upscale
+            )
         dets, timings = detector.detect(frame, index, 0.0, scale)
         boxes_xyxy = [d.box_px for d in dets]
         confs = [d.conf for d in dets]
         box_records.extend(box_rows(name, METHOD, args.tile, boxes_xyxy, confs))
         infer_ms = timings["tile_ms"] + timings["infer_ms"] + timings["merge_ms"]
         image_records.append(
-            {"image": name, "method": METHOD, "imgsz": args.tile, "n_persons": len(confs), "infer_ms": round(infer_ms, 2), "scale": scale}
+            {"image": name, "method": METHOD, "imgsz": args.tile, "n_persons": len(confs), "infer_ms": round(infer_ms, 2), "scale": scale, "n_tiles": int(timings.get("n_tiles", 1))}
         )
         if not args.no_images:
             cv2.imwrite(str((image_dir / name).with_suffix(".jpg")), draw_boxes(frame, boxes_xyxy, confs))

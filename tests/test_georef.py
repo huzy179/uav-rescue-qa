@@ -69,6 +69,26 @@ def test_co_nguoi_du_kien_va_he_so_thu_nho() -> None:
     assert person_scale(40.0, None) == 1.0
 
 
+def test_he_so_phong_to_khi_nguoi_qua_nho() -> None:
+    from edge.detector import person_scale
+
+    # Người dự kiến 4 px, muốn tối thiểu 8 px: phóng to 2 lần (hệ số 0,5).
+    assert person_scale(4.0, 10.0, min_px=8.0) == pytest.approx(0.5)
+    # 6 px lên 8 px: hệ số 0,75.
+    assert person_scale(6.0, 10.0, min_px=8.0) == pytest.approx(0.75)
+    # 2 px: cần 4 lần nhưng chặn ở max_upscale 2.
+    assert person_scale(2.0, 10.0, min_px=8.0, max_upscale=2.0) == pytest.approx(0.5)
+    # Ở giữa min_px và target_px: giữ nguyên; to hơn target_px: thu nhỏ như cũ.
+    assert person_scale(9.0, 10.0, min_px=8.0) == 1.0
+    assert person_scale(40.0, 10.0, min_px=8.0) == pytest.approx(4.0)
+    # Chỉ phóng to, không thu nhỏ.
+    assert person_scale(40.0, None, min_px=8.0) == 1.0
+    with pytest.raises(ValueError):
+        person_scale(4.0, 6.0, min_px=8.0)
+    with pytest.raises(ValueError):
+        person_scale(4.0, 10.0, min_px=8.0, max_upscale=0.5)
+
+
 def test_sai_so_vi_tri_tinh_tay() -> None:
     # Ảnh rộng 1000 px, góc ngang 90°: f = 500 px; ở 50 m GSD = 0,1 m/px.
     cam = Camera(1000, 1000, 90.0)
