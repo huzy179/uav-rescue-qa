@@ -364,6 +364,8 @@ Bán kính 5 m được chọn làm mặc định: hai đoạn thưa người g�
 
 Giới hạn: ba đoạn video, đối chiếu với nhãn trong không gian ảnh; luật gộp theo sai số ghi kèm cảnh báo chưa thử được vì lúc chạy bán kính sai số còn là hằng số.
 
+**Số người mỗi sự cố.** Gộp ở trạm làm một nhóm người thành một sự cố, nên mỗi cảnh báo mang ước tính số người trong 5 m (chương 3); sự cố giữ số lớn nhất. Đếm theo phát hiện của khung xác nhận hụt khi detector bỏ sót vài người của nhóm ở đúng khung đó; đếm thêm các cụm đã thấy ít nhất hai lần gần đây sửa được phần lớn. Trong mô phỏng người theo nhóm 4 người, recall 0,7, tỉ lệ cảnh báo đúng số người tăng từ 0,303 lên 0,524 (recall 0,9: 0,533 lên 0,900), với người lẻ không đổi (`rq3_group.md`, **mô phỏng**).
+
 ## 5.4. Luận điểm xuyên suốt: dữ liệu bay giúp cả ba khâu
 
 [Viết sau khi đủ 5.1–5.3. Khung dự kiến dưới đây.]

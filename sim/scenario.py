@@ -73,12 +73,25 @@ class Person:
 
 def place_people(
     flight: StraightFlight | ZigzagFlight, n: int, along_m: tuple[float, float], lateral_m: float, drift_mps: float,
-    seed: int, right_m: tuple[float, float] | None = None,
+    seed: int, right_m: tuple[float, float] | None = None, group_size: int = 1, group_spread_m: float = 2.0,
 ) -> list[Person]:
     """Rải n người: cách điểm xuất phát along_m (mét, theo hướng bay), lệch ngang tối đa ±lateral_m.
 
     right_m (bay zig-zag): lệch ngang lấy đều trong khoảng này thay cho ±lateral_m, để phủ cả vùng quét.
+    group_size > 1: rải tâm nhóm như trên, mỗi nhóm group_size người (nhóm cuối có thể ít hơn) nằm đều trong hình tròn
+    bán kính group_spread_m quanh tâm, trôi cùng vận tốc. group_size = 1 giữ đúng chuỗi ngẫu nhiên cũ.
     """
+    if group_size > 1:
+        centers = place_people(flight, math.ceil(n / group_size), along_m, lateral_m, drift_mps, seed, right_m)
+        rng = random.Random(seed + 7)
+        people = []
+        for center in centers:
+            for _ in range(min(group_size, n - len(people))):
+                r = group_spread_m * math.sqrt(rng.random())
+                a = rng.uniform(0.0, 2.0 * math.pi)
+                lat, lon = offset_gps(center.lat, center.lon, r * math.cos(a), r * math.sin(a))
+                people.append(Person(len(people), lat, lon, center.drift_n_mps, center.drift_e_mps))
+        return people
     rng = random.Random(seed)
     yaw = math.radians(flight.yaw_deg)
     people = []

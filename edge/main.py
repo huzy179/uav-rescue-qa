@@ -77,6 +77,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--confirm", choices=["geo", "bytetrack", "bytetrack_cmc"], default="geo", help="Chiến lược xác nhận (TECHNICAL mục 9)")
     parser.add_argument("--radius-m", type=float, default=3.0, help="Bán kính gom của confirm geo")
     parser.add_argument("--n-confirm", type=int, default=3, help="Số lần thấy để xác nhận")
+    parser.add_argument("--group-count", choices=["frame", "clusters"], default="frame",
+                        help="Ước tính số người quanh cảnh báo (geo): frame = số phát hiện của khung xác nhận trong 5 m; clusters = thêm số cụm đã thấy ≥ 2 lần gần đây trong 5 m (docs/results/rq3_group.md)")
     parser.add_argument("--suppress-s", type=float, default=0.0, help="Không cảnh báo lại trong --radius-m quanh vị trí đã cảnh báo trong số giây này (0: tắt)")
     parser.add_argument("--track-thresh", type=float, default=0.25,
                         help="ByteTrack: ngưỡng conf để mở track mới và ghép vòng đầu (mặc định 0,25 như bytetrack.yaml); đặt bằng --conf để cùng đầu vào với geo (ROADMAP quyết định #9)")
@@ -200,7 +202,7 @@ def draw_status(canvas: Any, lines: list[str], banner: str | None = None) -> Any
 def build_confirmer(args: argparse.Namespace, telemetry: TelemetrySource, cam: Camera) -> Confirmer:
     """Chọn chiến lược xác nhận; bytetrack_cmc bù chuyển động camera bằng telemetry của hai khung liên tiếp."""
     if args.confirm == "geo":
-        return GeoConfirmer(args.radius_m, args.n_confirm, args.window_s, args.expire_s, args.suppress_s)
+        return GeoConfirmer(args.radius_m, args.n_confirm, args.window_s, args.expire_s, args.suppress_s, args.group_count)
     motion = (lambda t0, t1: frame_motion(telemetry.at(t0), telemetry.at(t1), cam)) if args.confirm == "bytetrack_cmc" else None
     tracker = ByteTracker(track_high_thresh=args.track_thresh, new_track_thresh=args.track_thresh,
                           track_low_thresh=min(0.1, args.track_thresh))

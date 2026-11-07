@@ -163,3 +163,35 @@ def test_group_size_counts_neighbours_in_same_frame() -> None:
         confirmed += confirmer.update(dets, k * 0.5)
     sizes = sorted(c.group_size for c in confirmed)
     assert sizes == [1, 3, 3, 3]
+
+
+def test_group_count_clusters_recovers_member_missed_in_confirming_frame() -> None:
+    """Nhóm hai người cách 2 m. Người A thấy ở khung 0, 1, 2 (xác nhận ở khung 2); người B thấy ở khung 0, 1 nhưng
+    bị bỏ sót ở khung 2. Đếm theo khung cho A 1 người; đếm theo cụm (B đã thấy 2 lần gần đây) cho 2."""
+    frames = [[det(0, 0.0), det(0, 2.0)], [det(1, 0.0), det(1, 2.0)], [det(2, 0.0)]]
+    sizes = {}
+    for mode in ("frame", "clusters"):
+        confirmer = GeoConfirmer(radius_m=1.0, n_confirm=3, group_count=mode)
+        out = []
+        for k, dets in enumerate(frames):
+            out += confirmer.update(dets, k * 0.5)
+        assert len(out) == 1
+        sizes[mode] = out[0].group_size
+    assert sizes == {"frame": 1, "clusters": 2}
+
+
+def test_group_count_clusters_ignores_single_sighting() -> None:
+    """Báo nhầm một khung cạnh người (thấy 1 lần) không được đếm thêm."""
+    frames = [[det(0, 0.0)], [det(1, 0.0)], [det(2, 0.0), det(2, 2.0)]]
+    confirmer = GeoConfirmer(radius_m=1.0, n_confirm=3, group_count="clusters")
+    out = []
+    for k, dets in enumerate(frames):
+        out += confirmer.update(dets, k * 0.5)
+    assert [c.group_size for c in out] == [2]  # đếm theo khung đã thấy 2 (cùng khung); đếm cụm không thêm
+
+
+def test_group_count_rejects_unknown_mode() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        GeoConfirmer(group_count="tracks")

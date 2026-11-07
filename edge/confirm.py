@@ -109,6 +109,28 @@ def with_group_sizes(confirmed: list[Confirmation], located: list[Detection], ra
     return out
 
 
+def with_cluster_group_sizes(
+    confirmed: list[Confirmation], clusters: list[_Cluster], t: float, window_s: float, min_sightings: int = 2,
+    radius_m: float = GROUP_RADIUS_M,
+) -> list[Confirmation]:
+    """Nâng group_size lên số cụm còn sống trong radius_m quanh mỗi xác nhận có ≥ min_sightings lần thấy trong window_s.
+
+    Đếm theo khung (with_group_sizes) hụt khi detector bỏ sót vài người của nhóm ở đúng khung xác nhận (recall 0,7 thì
+    nhóm 4 người thường chỉ thấy 2–3). Mỗi người của nhóm là một cụm riêng (ghép một-một), nên đếm cụm đã thấy vài lần
+    gần đây cho số người riêng biệt; điều kiện ≥ min_sightings loại phần lớn báo nhầm một khung. Lấy số lớn hơn của hai
+    cách. docs/CAI_TIEN.md mục 3.5, docs/results/rq3_group.md.
+    """
+    out = []
+    for c in confirmed:
+        n = sum(
+            1 for k in clusters
+            if sum(1 for seen_t, _ in k.sightings if t - seen_t <= window_s) >= min_sightings
+            and ground_distance_m(c.lat, c.lon, k.lat, k.lon) <= radius_m
+        )
+        out.append(c.model_copy(update={"group_size": max(c.group_size, n)}))
+    return out
+
+
 class GeoConfirmer:
     """Gom phát hiện theo vị trí mặt đất (chiến lược `geo`, TECHNICAL mục 9.4).
 
@@ -118,9 +140,13 @@ class GeoConfirmer:
     """
 
     def __init__(
-        self, radius_m: float = 3.0, n_confirm: int = 3, window_s: float = 5.0, expire_s: float = 6.0, suppress_s: float = 0.0
+        self, radius_m: float = 3.0, n_confirm: int = 3, window_s: float = 5.0, expire_s: float = 6.0, suppress_s: float = 0.0,
+        group_count: str = "frame",
     ) -> None:
+        if group_count not in ("frame", "clusters"):
+            raise ValueError(f"group_count phải là 'frame' hoặc 'clusters', nhận được: {group_count}")
         self.radius_m, self.n_confirm, self.window_s, self.expire_s = radius_m, n_confirm, window_s, expire_s
+        self.group_count = group_count
         self.memory = AlertMemory(suppress_s, radius_m)
         self._clusters: list[_Cluster] = []
         self._next_id = 0
@@ -153,7 +179,10 @@ class GeoConfirmer:
                 self._clusters.append(cluster)
                 self._next_id += 1
 
-        return with_group_sizes(_newly_confirmed(self._clusters, t, self.n_confirm, self.window_s, self.memory), located)
+        confirmed = with_group_sizes(_newly_confirmed(self._clusters, t, self.n_confirm, self.window_s, self.memory), located)
+        if self.group_count == "clusters":
+            confirmed = with_cluster_group_sizes(confirmed, self._clusters, t, self.window_s)
+        return confirmed
 
 
 class TrackConfirmer:

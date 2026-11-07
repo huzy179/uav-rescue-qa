@@ -77,3 +77,22 @@ def test_telemetry_csv_doc_do_chinh_xac_gps(tmp_path) -> None:
     assert SampledTelemetry.from_csv(path).at(1.0).gps_acc_m == pytest.approx(3.0)
     path.write_text("t,lat,lon,alt_agl_m,yaw_deg\n0,21,105,50,0\n", encoding="utf-8")
     assert SampledTelemetry.from_csv(path).at(0.0).gps_acc_m is None
+
+
+def test_place_people_in_groups() -> None:
+    import math
+
+    from edge.georef import ground_distance_m
+    from sim.flight import StraightFlight
+    from sim.scenario import place_people
+
+    flight = StraightFlight(21.0, 105.8, 50.0, 10.0, 0.0)
+    single = place_people(flight, 10, (50.0, 500.0), 25.0, 0.0, 3)
+    assert single == place_people(flight, 10, (50.0, 500.0), 25.0, 0.0, 3, None, 1, 2.0)  # mặc định giữ chuỗi cũ
+    people = place_people(flight, 10, (50.0, 500.0), 25.0, 0.0, 3, None, 4, 2.0)
+    assert len(people) == 10 and [p.person_id for p in people] == list(range(10))
+    groups = [people[i:i + 4] for i in range(0, 10, 4)]
+    assert [len(g) for g in groups] == [4, 4, 2]
+    for g in groups:  # mọi người trong nhóm nằm trong đường kính 2 × 2 m
+        assert max(ground_distance_m(a.lat, a.lon, b.lat, b.lon) for a in g for b in g) <= 4.0 + 1e-6
+    assert not math.isclose(people[0].lat, people[4].lat)

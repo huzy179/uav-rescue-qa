@@ -81,7 +81,8 @@ Cập nhật 7/11/2026.
 
 - **Vấn đề.** Trên SDS v21, trạm gộp các cảnh báo trong 5 m thành một sự cố; nhiều người trong một nhóm chỉ được tính là một (bản đồ đối chiếu đáp án, TECHNICAL 12.6). Đội cứu hộ không biết cần bao nhiêu phao, xuồng.
 - **Đã làm (7/11):** khi xác nhận, UAV đếm số phát hiện cùng khung trong 5 m quanh người đó (`group_size`, `edge/confirm.py`, `shared.schema.GROUP_RADIUS_M`); trạm giữ số lớn nhất của mỗi sự cố, bản đồ hiện "nhóm khoảng N người", GPX ghi kèm. Giới hạn: cộng số người của mọi sự cố thì đếm thừa (một nhóm có thể nằm trong vài sự cố liền nhau, cộng phát hiện nhầm), nên bản đồ không hiện tổng.
-- **Đề xuất (không cần GPU):** đếm số người riêng biệt quanh mỗi sự cố bằng cách gom các cụm còn sống cùng lúc trên UAV, thay vì đếm phát hiện của một khung; kiểm chứng với lớp đáp án trên SDS v21 và chuyến quét mô phỏng.
+- **Đã làm, tuỳ chọn (7/11): đếm theo cụm** (`--group-count clusters`, TECHNICAL 9.4): đếm thêm các cụm còn sống trong 5 m đã thấy ít nhất 2 lần gần đây. Mô phỏng người theo nhóm (`rq3_group.md`): nhóm 4 người, recall 0,7, cảnh báo đúng số người 0,303 → 0,524 (thiếu trung bình 1,040 → 0,494 người); recall 0,9: 0,533 → 0,900; người lẻ không đổi. Đề xuất bật mặc định (quyết định #18).
+- **Đề xuất:** kiểm chứng trên SDS v21 (nhóm người bơi thật) bằng lớp đáp án theo nhóm.
 
 ### 3.6. Camera nghiêng
 

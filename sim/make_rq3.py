@@ -52,6 +52,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fov-deg", type=float, default=82.0, help="Góc nhìn camera (độ)")
     parser.add_argument("--fov-type", choices=["horizontal", "diagonal"], default="diagonal", help="--fov-deg là góc ngang hay chéo")
     parser.add_argument("--n-people", type=int, default=10, help="Số người thật")
+    parser.add_argument("--group-size", type=int, default=1, help="Người đứng theo nhóm, mỗi nhóm số người này (1: rải rời từng người)")
+    parser.add_argument("--group-spread-m", type=float, default=2.0, help="Bán kính một nhóm (m)")
     parser.add_argument("--lateral-m", type=float, default=25.0, help="Người lệch ngang khỏi đường bay tối đa (m)")
     parser.add_argument("--drift-mps", type=float, default=0.0, help="Vận tốc trôi theo dòng nước (m/s), hướng ngẫu nhiên")
     parser.add_argument("--gps-sigma-m", type=float, default=0.0, help="Độ lệch chuẩn nhiễu GPS mỗi trục (m)")
@@ -102,11 +104,13 @@ def main() -> None:
         flight = ZigzagFlight(args.lat0, args.lon0, args.alt_m, args.speed_mps, args.yaw_deg, args.leg_m, spacing)
         right_m = (0.0, (flight.n_legs(args.duration_s) - 1) * spacing)
         along = (half_footprint_m, args.leg_m - half_footprint_m)
-        people = place_people(flight, args.n_people, along, args.lateral_m, args.drift_mps, args.seed, right_m)
+        people = place_people(flight, args.n_people, along, args.lateral_m, args.drift_mps, args.seed, right_m,
+                              args.group_size, args.group_spread_m)
     else:
         flight = StraightFlight(args.lat0, args.lon0, args.alt_m, args.speed_mps, args.yaw_deg)
         path_m = args.speed_mps * args.duration_s
-        people = place_people(flight, args.n_people, (half_footprint_m, path_m - half_footprint_m), args.lateral_m, args.drift_mps, args.seed)
+        people = place_people(flight, args.n_people, (half_footprint_m, path_m - half_footprint_m), args.lateral_m, args.drift_mps,
+                              args.seed, None, args.group_size, args.group_spread_m)
     sigma_profile = SigmaProfile.parse(args.gps_sigma_profile) if args.gps_sigma_profile else None
     gps = GaussMarkovGps(args.gps_sigma_m, args.gps_tau_s, args.seed + 1, sigma_profile)
     rng = random.Random(args.seed + 2)

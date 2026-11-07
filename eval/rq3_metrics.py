@@ -21,7 +21,7 @@ from typing import Any
 
 from edge.georef import R95_FACTOR, ground_distance_m
 from shared.provenance import write_run_config
-from shared.schema import Alert
+from shared.schema import GROUP_RADIUS_M, Alert
 from sim.scenario import Person
 
 
@@ -55,6 +55,7 @@ def compute_metrics(
     spans = presence(truth)
     alerts_of: dict[int, list[Alert]] = {pid: [] for pid in spans}
     false_alarms = merges = 0
+    group_errors: list[int] = []  # số người ước tính − số người thật trong GROUP_RADIUS_M, mỗi cảnh báo đúng
     for alert in alerts:
         near = sorted(
             (ground_distance_m(alert.lat, alert.lon, *people[pid].at(alert.t)), pid) for pid in spans
@@ -65,6 +66,9 @@ def compute_metrics(
             continue
         merges += len(matched) >= 2
         alerts_of[matched[0][1]].append(alert)
+        here = people[matched[0][1]].at(alert.t)
+        true_group = sum(1 for p in people.values() if ground_distance_m(*here, *p.at(alert.t)) <= GROUP_RADIUS_M)
+        group_errors.append(alert.group_size - true_group)
 
     per_person = []
     for pid, (t_in, t_out) in sorted(spans.items()):
@@ -111,6 +115,10 @@ def compute_metrics(
         ),
         # Bán kính vùng tìm 95% trên bản đồ (trung vị qua người đã được cảnh báo): cái giá của vùng chứa đủ người.
         "search_radius_95_m_median": _median([R95_FACTOR * p["reported_error_m"] for p in found]),
+        # Ước tính số người quanh cảnh báo (group_size) so với số người thật trong GROUP_RADIUS_M quanh người được báo.
+        "group_count_exact": sum(e == 0 for e in group_errors) / len(group_errors) if group_errors else None,
+        "group_count_error_mean": sum(group_errors) / len(group_errors) if group_errors else None,
+        "group_count_abs_error_mean": sum(abs(e) for e in group_errors) / len(group_errors) if group_errors else None,
         "delivery_delay_s_median": _median(delays),
         "delivery_delay_s_max": max(delays, default=None),
         "lost_rate": (len(alerts) - len(delays)) / len(alerts) if alerts else None,
