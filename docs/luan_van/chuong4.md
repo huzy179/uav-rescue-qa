@@ -114,7 +114,7 @@ lặp 1.000 lần:
 khoảng tin cậy 95% của hiệu = phân vị 2,5% và 97,5%
 ```
 
-Hiệu có ý nghĩa thống kê ở mức 5% khi khoảng tin cậy của hiệu không chứa 0. Ví dụ trên VisDrone val: bộ cắt ô tự viết và thư viện SAHI có khoảng tin cậy AP50 riêng 0,437–0,469 và 0,443–0,477, chồng nhau gần hết, nhưng khoảng tin cậy của hiệu là −0,011 đến −0,003: bộ tự viết kém hơn một chút và ổn định.
+Hiệu có ý nghĩa thống kê ở mức 5% khi khoảng tin cậy của hiệu không chứa 0. Ví dụ trên VisDrone val: bộ cắt ô tự viết và thư viện SAHI có khoảng tin cậy AP50 riêng 0,437–0,470 và 0,444–0,477, chồng nhau gần hết, nhưng khoảng tin cậy của hiệu là −0,011 đến −0,003: bộ tự viết kém hơn một chút và ổn định.
 
 Hai lưu ý khi đọc chương 5. Thứ nhất, so nhiều cặp cùng lúc (năm nhóm cỡ, hai chỉ số, nhiều cấu hình) thì vài cặp sẽ "có ý nghĩa" do ngẫu nhiên; kết luận chính dựa trên nhóm "tất cả" và nhóm người nhỏ, đã định trước. Thứ hai, bootstrap xử lý độ bất định do chọn ảnh; độ bất định do khởi tạo ngẫu nhiên khi huấn luyện (seed) là nguồn khác, đo bằng cách huấn luyện lại với seed khác (mục 4.5).
 

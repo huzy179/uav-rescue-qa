@@ -217,8 +217,8 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | IoU 0,3 cho người dưới 8 px | Lệch 1–2 px ở người 6 px đã làm IoU tụt dưới 0,5 dù phát hiện đúng chỗ; với cứu hộ, đúng chỗ là đủ |
 | Recall ở conf 0,25 | AP gộp mọi ngưỡng; lúc chạy thật phải chọn một ngưỡng. Hai số trả lời hai câu hỏi khác nhau |
 | Bootstrap theo ảnh | Tập test nhỏ (200–300 ảnh) nên con số có độ bất định lớn; phải báo khoảng tin cậy. Lấy mẫu theo ảnh chứ không theo box vì các người trong cùng ảnh không độc lập |
-| Bootstrap cặp | Hai khoảng tin cậy riêng chồng nhau **không** có nghĩa hai cấu hình như nhau. Ví dụ thật: bộ cắt ô tự viết và SAHI có khoảng tin cậy AP50 riêng gần trùng nhau (0,437–0,469 và 0,443–0,477), nhưng bootstrap cặp cho thấy bộ tự viết kém hơn 0,008, có ý nghĩa thống kê (`docs/results/visdrone_tiled_vs_sahi.md`) |
-| Lấy mẫu theo video | 548 ảnh VisDrone val chỉ đến từ 76 video; ảnh cùng video không độc lập. Lấy mẫu theo video, khoảng tin cậy AP50 của E4 rộng gần gấp đôi (0,428–0,489 so với 0,443–0,477; T 15.3). Mặc định vẫn theo ảnh để bảng cũ còn so sánh được; dùng cho tập lũ hay không là quyết định #7 |
+| Bootstrap cặp | Hai khoảng tin cậy riêng chồng nhau **không** có nghĩa hai cấu hình như nhau. Ví dụ thật: bộ cắt ô tự viết và SAHI có khoảng tin cậy AP50 riêng gần trùng nhau (0,437–0,470 và 0,444–0,477), nhưng bootstrap cặp cho thấy bộ tự viết kém hơn 0,006, có ý nghĩa thống kê (`docs/results/visdrone_tiled_vs_sahi.md`) |
+| Lấy mẫu theo video | 548 ảnh VisDrone val chỉ đến từ 76 video; ảnh cùng video không độc lập. Lấy mẫu theo video, khoảng tin cậy AP50 của E4 rộng gần gấp đôi (0,428–0,489 so với 0,444–0,477; T 15.3). Mặc định vẫn theo ảnh để bảng cũ còn so sánh được; dùng cho tập lũ hay không là quyết định #7 |
 
 **Cách khác.** Dùng `yolo val` của ultralytics: không chia theo kích thước, không có vùng bỏ qua, không có khoảng tin cậy. Vẫn dùng để **đối chiếu**: trên E1 hai cách tính lệch dưới 1% (`docs/results/visdrone_baseline.md`).
 
@@ -234,7 +234,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 
 | Cấu hình | AP50 tất cả | AP50 người < 8 px | AP50 người 8–16 px |
 |---|---|---|---|
-| E0: ảnh về 640 | 0,276 | 0,050 | 0,254 |
+| E0: ảnh về 640 | 0,277 | 0,050 | 0,255 |
 | E1: ảnh về 1280 | **0,497** | **0,167** | **0,507** |
 | E4: cắt ô 640 (SAHI) | 0,460 | 0,149 | 0,470 |
 
@@ -250,7 +250,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 
 **Vì sao không dùng thẳng SAHI.** SAHI chạy mô hình **từng ô một**; trên GPU và TensorRT, chạy theo lô nhanh hơn nhiều. SAHI cũng gắn với cách nạp mô hình riêng, khó dùng với file `.engine` của TensorRT (RQ2).
 
-**Kết quả đối chiếu** (`docs/results/visdrone_tiled_vs_sahi.md`): AP50 0,452 so với 0,460 của SAHI; kém hơn 0,008 có ý nghĩa thống kê, chủ yếu ở người lớn; ở người dưới 8 px thì **tốt hơn**. Với đề tài người nhỏ, mức đánh đổi này chấp nhận được.
+**Kết quả đối chiếu** (`docs/results/visdrone_tiled_vs_sahi.md`): AP50 0,454 so với 0,460 của SAHI; kém hơn 0,006 có ý nghĩa thống kê, chủ yếu ở người lớn; ở người dưới 8 px thì **tốt hơn**. Với đề tài người nhỏ, mức đánh đổi này chấp nhận được.
 
 **Cách khác đã thử và bỏ.** Hợp nhất toạ độ các box trùng (như SAHI) thay vì chỉ giữ box điểm cao nhất: AP50 tụt dưới 0,05, vì ở ngưỡng conf thấp, box lớn điểm thấp phủ cả nhóm người kéo box của từng người thành box cả nhóm. Lý do được ghi lại trong mã để không ai thử lại.
 

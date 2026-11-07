@@ -301,7 +301,7 @@ Dự đoán lệch 2 px theo cả hai chiều so với nhãn:
 | 16×16 | 14×14 = 196 | 512 − 196 = 316 | 0,62 |
 | 32×32 | 30×30 = 900 | 2048 − 900 = 1148 | 0,78 |
 
-Cùng một sai lệch 2 px, người 8 px bị tính là bỏ sót, người 32 px thì không. Mà chính người gán nhãn cũng khó đặt box chính xác tới 1–2 px cho người 8 px. Vì vậy đề cương báo cáo thêm IoU 0,3 cho nhóm dưới 8 px. Kết quả VisDrone xác nhận: hạ IoU xuống 0,3 làm AP nhóm dưới 8 px tăng gấp đôi (0,167 → 0,342 với E1). Hướng nghiên cứu liên quan: NWD (Normalized Wasserstein Distance) thay IoU bằng khoảng cách giữa hai phân phối Gauss.
+Cùng một sai lệch 2 px, người 8 px bị tính là bỏ sót, người 32 px thì không. Mà chính người gán nhãn cũng khó đặt box chính xác tới 1–2 px cho người 8 px. Vì vậy đề cương báo cáo thêm IoU 0,3 cho nhóm dưới 8 px. Kết quả VisDrone xác nhận: hạ IoU xuống 0,3 làm AP nhóm dưới 8 px tăng gấp đôi (0,167 → 0,339 với E1). Hướng nghiên cứu liên quan: NWD (Normalized Wasserstein Distance) thay IoU bằng khoảng cách giữa hai phân phối Gauss.
 
 ### 5.3. Ghép dự đoán với nhãn
 
@@ -1211,7 +1211,7 @@ khoảng tin cậy 95% của hiệu = phân vị 2,5% và 97,5% của 1000 hiệ
 p (hai phía) = 2 × tỉ lệ hiệu trái dấu với hiệu quan sát
 ```
 
-Khoảng tin cậy của hiệu không chứa 0 thì chênh lệch có ý nghĩa ở mức 5%. Ví dụ thật trên VisDrone val (E4 SAHI và bộ cắt ô riêng): hai khoảng tin cậy AP50 riêng là 0,443–0,477 và 0,437–0,469, chồng nhau gần hết; nhưng khoảng tin cậy của hiệu là −0,011 đến −0,003, tức bộ cắt ô riêng kém hơn một chút và ổn định ([results/visdrone_tiled_vs_sahi.md](results/visdrone_tiled_vs_sahi.md)).
+Khoảng tin cậy của hiệu không chứa 0 thì chênh lệch có ý nghĩa ở mức 5%. Ví dụ thật trên VisDrone val (E4 SAHI và bộ cắt ô riêng): hai khoảng tin cậy AP50 riêng là 0,444–0,477 và 0,437–0,470, chồng nhau gần hết; nhưng khoảng tin cậy của hiệu là −0,011 đến −0,003, tức bộ cắt ô riêng kém hơn một chút và ổn định ([results/visdrone_tiled_vs_sahi.md](results/visdrone_tiled_vs_sahi.md)).
 
 Ba lưu ý:
 - "Có ý nghĩa thống kê" khác "đáng kể trong thực tế": hiệu 0,008 AP có ý nghĩa thống kê trên 548 ảnh nhưng có thể không đáng để đổi lấy tốc độ. Luận văn nên báo cả hiệu số lẫn khoảng tin cậy, không chỉ báo "có ý nghĩa".
@@ -1222,7 +1222,7 @@ Ba lưu ý:
 
 Bootstrap theo ảnh giả định các ảnh độc lập. Nhưng VisDrone val có 548 ảnh mà chỉ từ **76 video** (`runs/leakage/visdrone_val`); ảnh cùng video cùng cảnh, cùng ánh sáng, cùng độ cao, nên lỗi của mô hình trên chúng đi cùng nhau. Coi 548 ảnh là 548 mẫu độc lập làm khoảng tin cậy **hẹp giả**. Cluster bootstrap rút có hoàn lại theo **video**: video được rút k lần thì mọi ảnh của nó vào mẫu k lần.
 
-Ví dụ thật, AP50 của E4 (SAHI) trên VisDrone val: theo ảnh 0,443–0,477 (rộng 0,034), theo video 0,428–0,489 (rộng 0,061), rộng gần gấp đôi (`runs/visdrone/E4/eval_iou0.5`, `runs/visdrone/eval_iou0.5_cluster`). Hiệu số trong bootstrap cặp thì gần như không đổi (−0,011 đến −0,003 theo video, `runs/visdrone/compare_E4_E4tiled_iou0.5_cluster`), vì phần tương quan theo video triệt tiêu khi lấy hiệu.
+Ví dụ thật, AP50 của E4 (SAHI) trên VisDrone val: theo ảnh 0,444–0,477, theo video 0,428–0,489, rộng gần gấp đôi (`runs/visdrone/E4/eval_iou0.5`, `runs/visdrone/E4/eval_iou0.5_cluster`; chạy lại 7/11 trên RTX 5060). Hiệu số trong bootstrap cặp thì gần như không đổi (−0,011 đến −0,003 theo video, `runs/visdrone/compare_E4_E4tiled_iou0.5_cluster`), vì phần tương quan theo video triệt tiêu khi lấy hiệu.
 
 Tập test lũ lấy tối đa 30 khung mỗi video (docs/LABELING.md), nên cùng vấn đề. **Mặc định hiện vẫn là theo ảnh** để các bảng cũ còn so sánh được; chuyển sang theo video cho tập test lũ là thay đổi quy ước đo, cần chốt trước khi chạy bảng chính.
 

@@ -20,18 +20,18 @@ Ba quy ước đọc bảng xuyên suốt chương:
 
 | Cách chạy | Nhóm cỡ | AP50 | Recall vận hành | Recall tối đa |
 |---|---|---|---|---|
-| Toàn ảnh, đầu vào 640 (E0) | tất cả | 0,276 | 0,151 | 0,466 |
+| Toàn ảnh, đầu vào 640 (E0) | tất cả | 0,277 | 0,151 | 0,467 |
 | | < 8 px | 0,050 | 0,007 | 0,105 |
-| | 8–16 px | 0,254 | 0,104 | 0,460 |
-| Toàn ảnh, đầu vào 1280 (E1) | tất cả | 0,497 | 0,321 | 0,720 |
-| | < 8 px | 0,167 | 0,053 | 0,402 |
-| | 8–16 px | 0,507 | 0,303 | 0,754 |
-| | 16–32 px | 0,716 | 0,538 | 0,914 |
-| | > 32 px | 0,836 | 0,735 | 0,968 |
+| | 8–16 px | 0,255 | 0,105 | 0,462 |
+| Toàn ảnh, đầu vào 1280 (E1) | tất cả | 0,497 | 0,322 | 0,720 |
+| | < 8 px | 0,167 | 0,053 | 0,401 |
+| | 8–16 px | 0,507 | 0,304 | 0,753 |
+| | 16–32 px | 0,716 | 0,539 | 0,913 |
+| | > 32 px | 0,836 | 0,733 | 0,966 |
 
-Hai điều rút ra. Thứ nhất, **cỡ đầu vào quyết định trước tiên**: thu ảnh về 640 làm hơn một nửa số người không được phát hiện ở bất kỳ ngưỡng nào (recall tối đa 0,466), đúng như bảng số pixel theo độ cao ở chương 1 dự báo. Thứ hai, **mô hình gốc "thấy" người nhỏ nhưng không tự tin**: ở đầu vào 1280, recall tối đa của nhóm dưới 8 px là 0,402 nhưng recall vận hành chỉ 0,053. Phần lớn người nhỏ có box nhưng với độ tin cậy dưới ngưỡng. Đây là động lực trực tiếp cho việc tinh chỉnh mô hình (mục 5.1.2).
+Hai điều rút ra. Thứ nhất, **cỡ đầu vào quyết định trước tiên**: thu ảnh về 640 làm hơn một nửa số người không được phát hiện ở bất kỳ ngưỡng nào (recall tối đa 0,467), đúng như bảng số pixel theo độ cao ở chương 1 dự báo. Thứ hai, **mô hình gốc "thấy" người nhỏ nhưng không tự tin**: ở đầu vào 1280, recall tối đa của nhóm dưới 8 px là 0,401 nhưng recall vận hành chỉ 0,053. Phần lớn người nhỏ có box nhưng với độ tin cậy dưới ngưỡng. Đây là động lực trực tiếp cho việc tinh chỉnh mô hình (mục 5.1.2).
 
-Hạ IoU từ 0,5 xuống 0,3 làm AP của nhóm dưới 8 px tăng từ 0,167 lên 0,342 (E1): ở người vài pixel, phần lớn "bỏ sót" theo IoU 0,5 thực ra là box lệch vài pixel. Với bài toán cứu hộ, một box lệch vài pixel quanh đúng người vẫn có ích, nên mọi bảng của nhóm dưới 8 px được báo thêm ở IoU 0,3 (chương 4).
+Hạ IoU từ 0,5 xuống 0,3 làm AP của nhóm dưới 8 px tăng từ 0,167 lên 0,339 (E1): ở người vài pixel, phần lớn "bỏ sót" theo IoU 0,5 thực ra là box lệch vài pixel. Với bài toán cứu hộ, một box lệch vài pixel quanh đúng người vẫn có ích, nên mọi bảng của nhóm dưới 8 px được báo thêm ở IoU 0,3 (chương 4).
 
 **Recall theo số pixel trên người.** Để biết ngưỡng bỏ sót chính xác hơn bốn nhóm cỡ, ảnh 4K của SeaDronesSee được thu nhỏ 1, 2, 3, 4 và 6 lần, rồi chạy cắt ô sao cho một pixel ảnh đúng bằng một pixel vào mạng ở mọi mức. Như vậy số pixel trên người là biến duy nhất thay đổi (Bảng 5.2, Hình 5.1).
 
@@ -118,7 +118,7 @@ Giới hạn chung: mỗi cấu hình một seed (mục 4.5); số epoch khác n
 
 ### 5.1.3. Cắt ô và nhánh phát hiện P2 (RQ1c)
 
-**Cắt ô.** Trên VisDrone, cắt ô 640 với lượt toàn ảnh (SAHI, E4) **không hơn** chạy toàn ảnh ở 1280: AP50 0,460 so với 0,497, nhóm dưới 8 px 0,149 so với 0,167 (`visdrone_baseline.md`), mà chậm hơn khoảng bốn lần trên cùng máy. Lý do nằm ở dữ liệu: ba phần tư ảnh val chỉ rộng 1360 px, nên chạy toàn ảnh ở 1280 đã gần như giữ nguyên độ phân giải gốc; cắt ô không thêm chi tiết mà lại sinh box bị cắt ở mép ô. Kết luận này **không** chuyển sang video 4K: ở ảnh 3840 px, chạy toàn ảnh ở 1280 phải thu nhỏ ba lần, còn cắt ô giữ nguyên độ phân giải.
+**Cắt ô.** Trên VisDrone, cắt ô 640 với lượt toàn ảnh (SAHI, E4) **không hơn** chạy toàn ảnh ở 1280: AP50 0,460 so với 0,497, nhóm dưới 8 px 0,149 so với 0,167 (`visdrone_baseline.md`), mà chậm hơn nhiều trên cùng máy (141,1 so với 19,3 ms/ảnh, RTX 5060). Lý do nằm ở dữ liệu: ba phần tư ảnh val chỉ rộng 1360 px, nên chạy toàn ảnh ở 1280 đã gần như giữ nguyên độ phân giải gốc; cắt ô không thêm chi tiết mà lại sinh box bị cắt ở mép ô. Kết luận này **không** chuyển sang video 4K: ở ảnh 3840 px, chạy toàn ảnh ở 1280 phải thu nhỏ ba lần, còn cắt ô giữ nguyên độ phân giải.
 
 Pipeline trên thiết bị biên dùng một bộ cắt ô riêng thay cho SAHI vì nó chạy mọi ô trong một lô và xuất được sang TensorRT (chương 3). Bootstrap cặp so với SAHI (Bảng 5.6) cho thấy chênh lệch nhỏ nhưng có ý nghĩa, và theo hướng chấp nhận được cho đề tài: kém hơn ở người to, nhỉnh hơn ở người dưới 8 px.
 
@@ -126,13 +126,13 @@ Pipeline trên thiết bị biên dùng một bộ cắt ô riêng thay cho SAHI
 
 | IoU | Nhóm cỡ | SAHI | Cắt ô riêng | Hiệu (KTC 95%) |
 |---|---|---|---|---|
-| 0,5 | tất cả | 0,460 | 0,452 | −0,008 (−0,011 đến −0,003) |
+| 0,5 | tất cả | 0,460 | 0,454 | −0,006 (−0,011 đến −0,003) |
 | 0,5 | < 8 px | 0,149 | 0,153 | +0,004 (+0,001 đến +0,009) |
-| 0,5 | > 32 px | 0,749 | 0,706 | −0,043 (−0,071 đến −0,016) |
-| 0,3 | tất cả | 0,569 | 0,585 | +0,016 (+0,012 đến +0,021) |
-| 0,3 | < 8 px | 0,299 | 0,324 | +0,024 (+0,017 đến +0,031) |
+| 0,5 | > 32 px | 0,749 | 0,706 | −0,043 (−0,071 đến −0,015) |
+| 0,3 | tất cả | 0,569 | 0,585 | +0,016 (+0,011 đến +0,021) |
+| 0,3 | < 8 px | 0,300 | 0,324 | +0,024 (+0,017 đến +0,030) |
 
-Bảng này cũng minh hoạ vì sao cần bootstrap cặp: hai khoảng tin cậy riêng của AP50 (0,437–0,469 và 0,443–0,477) chồng nhau, nhìn riêng sẽ kết luận sai là "như nhau". Ở IoU 0,3 bộ cắt ô riêng **cao hơn**: box của nó tìm đúng chỗ nhưng kém khít hơn, vì gộp box giữa các ô bằng cách giữ box điểm cao nhất thay vì hợp nhất toạ độ. Hợp nhất toạ độ đã được thử và bỏ, vì box lớn điểm thấp phủ cả nhóm người kéo box từng người thành box cả nhóm.
+Bảng này cũng minh hoạ vì sao cần bootstrap cặp: hai khoảng tin cậy riêng của AP50 (0,437–0,470 và 0,444–0,477) chồng nhau, nhìn riêng sẽ kết luận sai là "như nhau". Ở IoU 0,3 bộ cắt ô riêng **cao hơn**: box của nó tìm đúng chỗ nhưng kém khít hơn, vì gộp box giữa các ô bằng cách giữ box điểm cao nhất thay vì hợp nhất toạ độ. Hợp nhất toạ độ đã được thử và bỏ, vì box lớn điểm thấp phủ cả nhóm người kéo box từng người thành box cả nhóm.
 
 **Nhánh P2.** Thêm tầng phát hiện ở bước 4 pixel (E3), cùng dữ liệu và cùng số epoch với mô hình chính, cho mức tăng có ý nghĩa nhưng rất nhỏ ở người dưới 8 px, và đổi lại kém hơn ở người to (Bảng 5.7).
 

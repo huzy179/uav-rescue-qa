@@ -102,12 +102,12 @@ IOS (Intersection over Smaller) = diện tích phần giao / diện tích box nh
 
 | Cách | AP50 mọi người | AP50 người dưới 8 px |
 |---|---|---|
-| Thu ảnh về 640 | 0,276 | 0,050 |
+| Thu ảnh về 640 | 0,277 | 0,050 |
 | Thu ảnh về 1280 | 0,497 | 0,167 |
 | Cắt ô bằng SAHI | 0,460 | 0,149 |
-| Cắt ô theo lô của dự án | 0,452 | 0,153 |
+| Cắt ô theo lô của dự án | 0,454 | 0,153 |
 
-Cắt ô không hơn 1280 trên VisDrone vì ảnh VisDrone chỉ rộng khoảng 1360 pixel. So với SAHI bằng bootstrap cặp, cắt ô của dự án kém hơn 0,008 AP50 (khoảng tin cậy −0,011 đến −0,003) nhưng tốt hơn ở người dưới 8 px.
+Cắt ô không hơn 1280 trên VisDrone vì ảnh VisDrone chỉ rộng khoảng 1360 pixel. So với SAHI bằng bootstrap cặp, cắt ô của dự án kém hơn 0,006 AP50 (khoảng tin cậy −0,011 đến −0,003) nhưng tốt hơn ở người dưới 8 px.
 
 Trên ảnh 4K thật (SeaDronesSee, người bơi, phần lớn to), cắt ô ở độ phân giải gốc với mô hình fine-tune lại **kém** chạy toàn ảnh: AP50 0,235 so với 0,468. Lý do ở bước 2d.
 
