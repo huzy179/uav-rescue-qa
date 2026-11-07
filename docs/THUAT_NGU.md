@@ -103,13 +103,13 @@ Chỉ dự án này dùng. Trong luận văn, bảng kết quả ghi tên mô t�
 | E0 | Mô hình nền YOLO26s, ảnh 640 px | Xong |
 | E1 | Mô hình nền, ảnh 1280 px | Xong |
 | E2 | Tinh chỉnh trên VisDrone | Xong |
-| E2b | Tinh chỉnh trên VisDrone + C2A | Có cấu hình, không chạy |
+| E2b | Tinh chỉnh trên VisDrone + C2A | Không chạy (thay bằng E2c, rồi E2e); bỏ |
 | E2c | Tinh chỉnh trên VisDrone + AFO (người dưới nước) | Xong, mô hình chính |
-| E2d | Như E2c, thêm HydroVigilance | Có cấu hình |
+| E2d | Như E2c, thêm HydroVigilance | Không chạy; bỏ 7/11 |
 | E2e | Như E2c, thêm C2A (thêm người cỡ to) | Xong, kết quả âm (kém với người nhỏ); không dùng |
 | E3 | Như E2c, thêm nhánh phát hiện P2 | Xong, không đáng chi phí |
 | E4 | Mô hình chính + cắt ô (SAHI hoặc bộ cắt ô riêng `E4tiled`) | Xong trên VisDrone và SeaDronesSee |
-| E5 | Như E2c nhưng dùng YOLO11s | Có cấu hình |
+| E5 | Như E2c nhưng dùng YOLO11s | Cắt 7/11 (thứ tự cắt khi trễ) |
 | E6 | Recall theo số pixel trên người (thu nhỏ ảnh nhiều mức) | Đã chạy thử |
 
 ### Bộ dữ liệu và tên viết tắt

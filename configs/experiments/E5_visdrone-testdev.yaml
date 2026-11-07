@@ -1,8 +1,0 @@
-# E5 (YOLO11s, dữ liệu như E2c) trên visdrone-testdev: như E2c_visdrone-testdev.yaml, trọng số E5_s0.
-source: data/processed/visdrone/images/test-dev
-model: runs/train/E5_s0/weights/best.pt
-imgsz: [1280]
-conf: 0.001
-max_det: 1000
-no_images: true
-output: runs/visdrone-testdev/E5

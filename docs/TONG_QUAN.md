@@ -143,7 +143,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 |---|---|
 | Mô hình hai giai đoạn (Faster R-CNN) | Chính xác với vật nhỏ nhưng chậm hơn nhiều; không hợp thiết bị biên |
 | Transformer (DETR, RT-DETR) | Cần nhiều dữ liệu và tính toán hơn; công cụ xuất sang thiết bị biên kém sẵn có hơn YOLO. Nếu hội đồng hỏi, có thể nêu như hướng mở rộng |
-| YOLO11s | Giữ làm **đối chứng** (E5), để biết kết quả có phụ thuộc vào đời YOLO không |
+| YOLO11s | Dự kiến làm **đối chứng** (E5), để biết kết quả có phụ thuộc vào đời YOLO không; **cắt 7/11** vì trễ lịch, ghi vào giới hạn |
 | Bản lớn hơn (`m`, `l`) | Chậm hơn; nếu RQ2 cho thấy dư tốc độ thì có thể xem lại |
 
 **Trạng thái.** Đã chốt. **Ở đâu:** `yolo26s.pt` (không đưa lên git).
@@ -158,7 +158,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | **C2A** | 10.215 ảnh thảm hoạ thật (lũ, cháy, nhà sập, tai nạn) có **ghép thêm hình người** (`data/processed/c2a/stats.json`) | Huấn luyện | Đã chuyển; chưa dùng trong lần huấn luyện nào (`E2b_s0.yaml` có cấu hình, chưa chạy) |
 | **AFO** | Ảnh drone người và vật trôi trên mặt nước (biển) | Huấn luyện (E2c), đánh giá (test, và test bỏ ảnh chung địa điểm với train) | Đã dùng |
 | **SeaDronesSee-MOT** | Video drone 4K người bơi trên biển, nhãn theo track, metadata GPS, độ cao | Đánh giá độc lập người dưới nước (`sds_det.md`); kiểm chứng khối xác nhận trên video thật (`sds_mot_confirm.md`) | Đã dùng |
-| **HydroVigilance** | Người bơi nhô đầu trên sông nước đục | Huấn luyện (E2d) | Đã chuyển; E2d chưa chạy |
+| **HydroVigilance** | Người bơi nhô đầu trên sông nước đục | Huấn luyện (E2d) | Đã chuyển; E2d không chạy (bỏ 7/11) |
 | **FinlandProper** | Người dưới nước, 1920×1024 | Huấn luyện và đánh giá | Tạm bỏ (162 GB, máy chủ không cho tải từng phần) |
 
 **Vì sao gộp về một lớp.** Đề tài chỉ quan tâm "có người hay không". VisDrone tách `pedestrian` (đứng, đi) và `people` (ngồi, nằm); cả hai đều là người cần cứu nên gộp lại. Người đi xe đạp, xe máy bị VisDrone gán vào lớp phương tiện nên bị bỏ (ghi rõ trong luận văn).
@@ -265,7 +265,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | E2c | Như trên, thêm AFO (người dưới nước) | Thêm ảnh người dưới nước có giữ được cảnh nước không? | **Xong 23/10**: AFO test 0,103 → 0,568, VisDrone val chỉ giảm 0,011; **mô hình chính** (`E2c.md`). E2d (+ HydroVigilance) đã có cấu hình |
 | E3 | E2c + nhánh phát hiện P2 (thêm tầng phát hiện ở bước nhảy 4 thay vì 8) | Người 8 px chiếm 2×2 ô đặc trưng thay vì 1 ô: có tăng recall người rất nhỏ không, đáng với chi phí tính toán không? | **Xong 28/10, kết quả âm**: dưới 8 px chỉ +0,012 (val) và +0,013 (test-dev) AP50, mất ở IoU 0,3; kém hơn ở người to; 115,0 so với 93,9 GFLOPs. Giữ E2c (`E3.md`) |
 | E4 | E2c + cắt ô, trên dữ liệu độ phân giải cao | Cắt ô có lợi khi ảnh thật sự lớn không? | Trên SDS 4K: cắt ô ở độ phân giải gốc **kém** toàn ảnh (0,235 so với 0,468) vì E2c yếu với người to; **thu nhỏ theo độ cao** rồi cắt ô cho 0,531 (`scale_by_altitude.md`). Trên tập lũ: có cấu hình `E4tiled_flood.yaml` (cắt ô không thu nhỏ, vì không có độ cao bay), chờ nhãn |
-| E5 | E2c nhưng dùng YOLO11s | Kết quả có phụ thuộc đời mô hình không? | Có cấu hình (`E5_s0.yaml`), chưa huấn luyện |
+| E5 | E2c nhưng dùng YOLO11s | Kết quả có phụ thuộc đời mô hình không? | **Cắt 7/11** (thứ tự cắt khi trễ) |
 | E6 | Thu nhỏ ảnh theo nhiều mức, vẽ recall theo số pixel trên người | Bay cao tối đa bao nhiêu thì còn phát hiện được? Nối thẳng vào khuyến nghị độ cao bay | **Chạy thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt với người trên 45 px; dưới 4 px không mô hình nào thấy. Bản chính thức chờ cô duyệt (quyết định #1) |
 
 Cấu hình cuối chạy **3 seed** (khởi tạo ngẫu nhiên khác nhau), báo trung bình ± độ lệch chuẩn: chênh lệch nhỏ hơn độ lệch chuẩn giữa các seed thì không kết luận được.
@@ -381,7 +381,7 @@ Chương 2–4 viết song song với thí nghiệm (ROADMAP 1.3); chương 5 (k
 flood-tiny-person/
 ├── configs/                 cấu hình
 │   ├── edge.yaml            mặc định của pipeline UAV
-│   └── experiments/         một file cho mỗi thí nghiệm (E0_visdrone.yaml, E2b_s0.yaml, rq3_gps.yaml, ...)
+│   └── experiments/         một file cho mỗi thí nghiệm (E0_visdrone.yaml, E2c_s0.yaml, rq3_gps.yaml, ...)
 ├── shared/                  dùng chung giữa UAV và trạm: kiểu dữ liệu (schema), đọc cấu hình, run_config
 ├── edge/                    chạy trên UAV: lấy mẫu, phát hiện, định vị, xác nhận, cảnh báo, main.py nối tất cả
 ├── ground/                  trạm mặt đất: máy chủ + trang bản đồ
@@ -476,7 +476,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |
 | Cải thiện | `docs/CAI_TIEN.md` (7/11): mỗi điểm yếu đã đo kèm cách sửa, chi phí, cách kiểm chứng, trạng thái. Mới 7/11: số người ước tính mỗi sự cố (`group_size`); định vị theo góc gimbal (`--use-pitch`, tuỳ chọn: tốt hơn khi drone di chuyển với camera nghiêng vừa phải, tính chung chưa tốt hơn, `georef_pitch.md`). Tự hiệu chỉnh lệch la bàn (`--yaw-calib`, mô phỏng: tách nhầm do la bàn lệch 5° ở 100 m từ 5,333 xuống 0,333, `rq3_yawcalib.md`). Bán kính theo độ chính xác GPS bộ thu báo (`--gps-sigma-from-telemetry`, mô phỏng: vùng tìm 95% chứa đủ người cả khi GPS kém đi giữa chuyến, `rq3_gpsacc.md`). Bốn thử nghiệm âm 7/11, không bật: phóng to khi người dưới 8 px (`upscale_small.md`), thêm lượt toàn ảnh sau khi thu nhỏ (`full_pass.md`), đồng bộ thời gian và làm mượt góc gimbal (`georef_sync.md`), ngưỡng tin cậy theo cỡ box (`conf_by_size.md`). Mất gói theo cụm (`rq3_burst.md`, mô phỏng). Đếm người theo cụm khi người đứng theo nhóm (`--group-count clusters`, `rq3_group.md`, mô phỏng: nhóm 4 người, recall 0,7, đếm đúng 0,303 → 0,524; nhưng video thật SDS v21 kém hơn 0,792 → 0,583 vì cụm tách nhầm, nên không bật, quyết định #18) |
 | 8. E2–E6 | E2 (VisDrone) và E2c (+ AFO) xong; **E3 (P2) xong 28/10**: người dưới 8 px chỉ +0,012–0,013 AP50, kém hơn ở người to, không đáng chi phí; giữ E2c (`E3.md`); E2d (+ HydroVigilance) có cấu hình; **E2e (E2c + C2A) xong 7/11, kết quả âm**: kém E2c có ý nghĩa ở người nhỏ (VisDrone val < 8 px −0,053 AP50, test-dev tất cả −0,041), tốt hơn trên AFO (+0,057), không hơn có ý nghĩa trên SeaDronesSee (+0,041, khoảng tin cậy −0,167 đến +0,167); giữ E2c (`E2e.md`); **E6 thử trên SDS** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt mạnh với người trên 45 px |
-| 9. Pipeline UAV | Xong; demo trực tiếp `scripts/live_demo.py` |
+| 9. Pipeline UAV | Xong; demo bảo vệ `scripts/demo_bao_ve.sh` và giao diện `python -m console` (`live_demo.py` cũ bỏ 7/11) |
 | 10. Trạm mặt đất | Xong; bản đồ Esri (ô OpenStreetMap không tải được); gộp cảnh báo thành sự cố, bán kính 5 m (`alert_memory.md`), rộng hơn khi hai drone khác nhau; xếp ưu tiên có lý do, người vận hành gắn thẻ và đóng sự cố; demo hai drone |
 | 11. RQ3 | Mô phỏng chạy thử; **kiểm chứng sơ bộ trên video thật SeaDronesSee**: ở 2 khung/giây geo xác nhận 12/19 người, ByteTrack 2/19 (`docs/results/sds_mot_confirm.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`); quét độ cao với recall theo cỡ người (`rq3_altitude.md`); **6/11 sai số vị trí** (`rq3_geoerr.md`: GPS là nguồn chính; vòng 1σ chỉ chứa 0,278 số người khi GPS σ 3 m nên bản đồ vẽ vùng 95%; lệch hướng 5° ở 100 m gây tách nhầm) và **mạng** (`rq3_network.md`: thêm thăm dò đường truyền, không mất cảnh báo nào, độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s); **7/11 mất theo cụm** (`rq3_burst.md`: cùng tỉ lệ mất 0,5, cụm 30 s cho độ trễ lớn nhất 44,400 s, vẫn không mất cảnh báo khi có thăm dò) |
 | 12. RQ2 | Mã xong (2/11): xuất TensorRT FP16/INT8, chấm độ chính xác, đo cả pipeline, bảng recall theo FPS; chạy thử phần PyTorch trên máy cá nhân; **7/11: chạy thử hai biến thể trên Kaggle T4 thành công, lần chạy đủ đang chạy**; xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`, `eval/rq2_report.py`, mô phỏng thiết bị `rq3_device.yaml`); giả lập thời gian thiết bị biên (`--device-profile`, TECHNICAL 14.6), hồ sơ chưa hiệu chỉnh |

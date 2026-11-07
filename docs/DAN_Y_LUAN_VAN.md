@@ -86,7 +86,7 @@ Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDr
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
 | 6.1 Trả lời ba câu hỏi | Mỗi câu một đoạn, dẫn số chính | Chương 5 | Viết sau chương 5 |
-| 6.2 Giới hạn | Tập lũ nhỏ (188 khung, 9 cụm), không bay thật, không có Jetson, video lũ không có độ cao, một seed cho phần lớn thí nghiệm | TECHNICAL mục 17, TONG_QUAN mục 6 | Viết |
+| 6.2 Giới hạn | Tập lũ nhỏ (188 khung, 9 cụm), không bay thật, không có Jetson, video lũ không có độ cao, một seed cho phần lớn thí nghiệm, không có đối chứng đời mô hình (YOLO11s cắt 7/11) | TECHNICAL mục 17, TONG_QUAN mục 6 | Viết |
 | 6.3 Hướng phát triển | Đo trên Jetson thật; nhiều drone phối hợp; phân biệt người cần cứu gấp; ảnh nhiệt; các mục "Đề xuất" của `CAI_TIEN.md` | DEMO_BAO_VE (câu hỏi dễ gặp), TONG_QUAN mục 6, `CAI_TIEN.md` | Viết |
 
 ## Việc còn thiếu để viết đủ

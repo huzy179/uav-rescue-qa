@@ -43,13 +43,6 @@ Demo hai phía trên một máy, một lệnh (trạm mặt đất + pipeline, r
 scripts/demo.sh [video.mp4] [trọng số] [geo|track]   # mặc định afo_demo.mp4, yolo26s.pt, geo; track: tracking có số ID
 ```
 
-Demo trực tiếp để trình bày: video phát trong cửa sổ, người được tô màu kèm số ID và vệt đường đi, bảng đếm người ở góc
-(Space tạm dừng, Q thoát; trên WSL cửa sổ mở qua WSLg):
-
-```bash
-.venv/bin/python scripts/live_demo.py --source video.mp4 --model runs/train/E2_s0/weights/best.pt
-```
-
 Từng bước:
 
 ```bash
@@ -219,7 +212,6 @@ Thư mục `--output` chứa trọng số (`weights/best.pt`), `results.csv`, `d
 ```bash
 python scripts/gsd_calc.py                                  # mặc định: 82° góc chéo (Matrice 4T), video 4K
 python scripts/gsd_calc.py --fov-type horizontal --fov-deg 74 --tilt-deg 30
-python scripts/benchmark_speed.py --model yolo26s.pt --imgsz 640 1280
 ```
 
 So sánh hai lần chạy có ý nghĩa thống kê không (bootstrap cặp; thêm `--cluster-pattern '^(\d+)_'` để lấy mẫu theo video):
@@ -295,9 +287,4 @@ python tools/label_size_stats.py --images data/processed/visdrone/images/val \
     --labels data/processed/visdrone/labels/val --imgsz 1280 --output runs/stats/visdrone_val_1280
 ```
 
-Trên Jetson (chưa chạy thử, cần thiết bị):
-
-```bash
-yolo export model=yolo26s.pt format=engine half=True imgsz=1280 device=0
-python scripts/benchmark_speed.py --model yolo26s.engine --imgsz 1280
-```
+Không có Jetson (quyết định #2): tốc độ đo trên Kaggle T4 bằng luồng RQ2 ở trên; thiết bị yếu chỉ ước lượng bằng giả lập (`configs/devices/`).

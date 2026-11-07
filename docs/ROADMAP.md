@@ -13,86 +13,36 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 
 ## 1. Lịch theo tuần
 
-### 1.1. Trạng thái ngày 21/10
+### 1.1. Trạng thái và nhật ký
 
-| Mảng | So với lịch gốc | Chi tiết |
-|---|---|---|
-| Code | **Sớm 1–2 tuần** | Đủ pipeline UAV (3 chiến lược xác nhận, outbox), trạm mặt đất, giả lập mạng và chuyến bay, quét lưới RQ3, đánh giá thống kê (bootstrap cặp, theo video), công cụ chia tập và kiểm tra rò rỉ, chuyển nhãn CVAT, CI. Xem TECHNICAL mục 6.1 |
-| Thí nghiệm | Chậm khoảng 3 ngày | E0, E1, E4 trên VisDrone val xong; đối chiếu cắt ô riêng với SAHI xong; **E2 lượt 1 (VisDrone, 60 epoch) xong 22/10** (7,4 giờ T4): AP50 trên VisDrone val 0,497 → 0,758, nhóm dưới 8 px 0,167 → 0,554; giữ nguyên xu hướng trên test-dev; **nhưng kém mô hình gốc với người dưới nước** (AFO test: AP50 0,147 → 0,103, có ý nghĩa thống kê; `docs/results/afo_E1_E2.md`), nên E2 lượt 2 thêm AFO (`E2c_s0.yaml`); **E2c xong 23/10** (9,1 giờ): AFO test 0,103 → 0,568, VisDrone val chỉ giảm 0,011 (`docs/results/E2c.md`) (`docs/results/visdrone_E2.md`); RQ3 đã chạy thử bằng mô phỏng |
-| Dữ liệu | **Chậm 2 tuần, rủi ro lớn nhất** | Tập test lũ **chưa gán khung nào** (26/10: 212 khung đóng gói sẵn cho CVAT trong `Downloads/floodeye_cvat`, 10 task theo video); 22/10 đã trích **227 khung** từ 10 video (YouTube, NIDARX CC0) vào `data/raw/flood/frames`, đã loại tay khung không phải góc UAV (`frames_loai/ly_do.csv`); 2 video còn 480p. Đã rà Kaggle, Hugging Face, Zenodo, Roboflow: không có bộ công khai nào gồm ảnh UAV lũ thật có khung người. Thêm dữ liệu huấn luyện: AFO (đang dùng trong E2c), HydroVigilance (`E2d_s0.yaml`) (lịch gốc: 100 khung tới 23/10, khoá 4/11); FinlandProper chưa tải |
-| Thiết bị | Đã chốt | **Không có Jetson**: RQ2 đo trên Kaggle T4, báo thứ hạng tương đối (TECHNICAL mục 14.4) |
+**Trạng thái 7/11** (chi tiết từng khâu: TONG_QUAN mục 8; mỗi kết quả một file trong `docs/results/`):
 
-Hệ quả: từ giờ tới khi khoá tập test, thời gian dồn cho **dữ liệu** và **thí nghiệm**; code chỉ làm khi một thí nghiệm cần.
+| Mảng | Trạng thái |
+|---|---|
+| Dữ liệu | **Rủi ro lớn nhất.** Tập test lũ 188 khung từ 9 nguồn, **chưa gán**; gán 7–9/11, khoá **11/11** (#10). Đã rà trùng với 5 tập train (`flood_truoc_khoa.md`) |
+| Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ |
+| Câu hỏi 2 (tốc độ) | Đang chạy trên Kaggle T4 (7/11; lần đầu lỗi INT8 với TensorRT 11, đã ghim TensorRT 10). Xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`) |
+| Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới (tần số, độ cao, GPS, la bàn, mạng, mất theo cụm, nhóm người) và ba đoạn SeaDronesSee thật |
+| Viết | Nháp chương 4, 5 (7/11); chờ tập lũ và câu hỏi 2 |
+| Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
 
-**Cập nhật 4/11 (kế hoạch):** tới hạn khoá 4/11 tập test lũ **vẫn chưa gán khung nào**. Chốt bốn quyết định:
-- **#10:** lùi khoá tới **11/11**, hạn cuối theo mục 1.5. RQ1 trên tập lũ chuyển sang 11–13/11; báo cáo 6/11 chỉ báo tiến độ gán nhãn.
-- **#15:** giữ 4 video dưới 1080p (thainguyen, duvall 480p; sanangelo, texas 720p; 74 khung sau khi gộp San Angelo), ghi ngoại lệ vào LABELING mục 6. Bỏ chúng thì chỉ còn 114 khung, dưới mức tối thiểu 150.
-- **Rà nguồn (4/11):** texas và sanangelo cùng là cảnh quay của cảnh sát San Angelo, cùng trận lũ: gộp thành một nguồn, giữ 30 khung, một cụm khi bootstrap; tập còn **188 khung**. washington nhiều khả năng quay từ trực thăng: giữ, ghi giới hạn (LABELING mục 6). Kiểm tra trùng ảnh trước khoá với cả 5 thư mục train (kể cả C2A): không có cặp nào (`docs/results/flood_truoc_khoa.md`).
-- **#7:** khoảng tin cậy trên tập lũ lấy mẫu theo video (cluster bootstrap); `scripts/eval_flood.sh` đã dùng `--cluster-pattern`.
-- **#13:** thu nhỏ theo độ cao chỉ đánh giá trên SDS và trong mô phỏng RQ3, vì tập lũ không có độ cao bay; tập lũ chạy E4 cắt ô không thu nhỏ.
-- **#14:** giờ GPU trống dùng cho **E2e** = E2c + C2A train (`E2e_s0.yaml`), vì E2c yếu với người to.
+Từ nay tới 11/11 ưu tiên gán nhãn; mã chỉ viết khi khoá tập hoặc một thí nghiệm cần.
 
-Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặc một thí nghiệm cần.
+**Nhật ký 7/11** (mỗi mục một file kết quả; trạng thái mỗi cải tiến ở `CAI_TIEN.md`):
+- Viết: nháp chương 4, chương 5.
+- **E2e (thêm C2A) xong, âm**: kém E2c ở người nhỏ (VisDrone val −0,029 AP50, < 8 px −0,053), SeaDronesSee +0,041 không có ý nghĩa; giữ E2c, #14 khép lại (`E2e.md`).
+- Câu hỏi 2: chạy thử hai biến thể trên T4 xong; lần chạy đủ đầu lỗi xuất INT8 (TensorRT 11 trên T4), đã ghim TensorRT 10 và để `run_rq2.py` bỏ qua engine lỗi; chuẩn bị `after_rq2.py`, `rq2_report.py`, `rq3_device.yaml`.
+- Cải tiến âm, giữ làm tuỳ chọn: phóng to người nhỏ (`upscale_small.md`), lượt toàn ảnh sau thu nhỏ (`full_pass.md`), đồng bộ và làm mượt gimbal (`georef_sync.md`), ngưỡng theo cỡ (`conf_by_size.md`), đếm người theo cụm hoặc theo khung trong cửa sổ (`rq3_group.md`, #18).
+- Cải tiến có lợi, tuỳ chọn (mô phỏng): định vị theo góc gimbal (`georef_pitch.md`, chưa tốt hơn tính chung), tự hiệu chỉnh la bàn (`rq3_yawcalib.md`), bán kính theo độ chính xác GPS bộ thu báo (`rq3_gpsacc.md`), mất gói theo cụm trong giả lập mạng (`rq3_burst.md`).
+- Sân thử trong `python -m console` (13 câu hỏi dựng sẵn); số người ước tính mỗi sự cố (`group_size`).
+- Dọn dẹp: cắt E5 (YOLO11s), bỏ cấu hình E2b, E2d, `benchmark_speed.py`, `live_demo.py`; chạy lại E0, E4, cắt ô tự viết và `rq3_gps.yaml` trên máy này vì thư mục kết quả cũ không còn; skill `/try-improvement`.
 
-**Cập nhật 6/11 (chiều):** E2e phiên 2 lần đầu lỗi ngay ô huấn luyện (Input chưa có `last_resume.pt`), không mất kết quả phiên 1; chạy lại bằng dataset `floodeye-e2e-resume` (`docs/results/E2e.md`). Thêm dàn ý luận văn (`docs/DAN_Y_LUAN_VAN.md`).
-
-**Cập nhật 6/11:** E2e phiên 1 xong trên Kaggle: 33/55 epoch, 19,1 phút mỗi epoch (E2c: 10,0 phút), mAP50 val ngang E2c ở cùng epoch (`docs/results/E2e.md`). Phiên 2 (22 epoch, khoảng 7 giờ) chạy tiếp bằng `MODE = "resume"`.
-
-**Cập nhật 7/11 (viết):** nháp chương 4 (`docs/luan_van/chuong4.md`): dữ liệu huấn luyện và đánh giá, tập ảnh lũ, cách đo, các thí nghiệm của ba câu hỏi, môi trường; còn chờ thống kê tập ảnh lũ sau khi khoá. Nháp chương 5 (`docs/luan_van/chuong5.md`): kết quả câu hỏi 1 trên VisDrone, AFO, SeaDronesSee và toàn bộ câu hỏi 3; chờ tập lũ và RQ2.
-
-**Cập nhật 7/11 (đếm người theo nhóm):** `--group-count clusters` đếm thêm các cụm đã thấy ≥ 2 lần trong 5 m; mô phỏng người theo nhóm (`--group-size`, `rq3_group.md`): nhóm 4 người, recall 0,7, cảnh báo đúng số người 0,303 → 0,524. Kiểm chứng trên ba đoạn SDS: v21 kém hơn (đúng số người 0,792 → 0,583) vì cụm tách nhầm bị đếm như người khác; quyết định #18 chốt không bật.
-
-**Cập nhật 7/11 (ngưỡng theo cỡ, âm):** ngưỡng tin cậy riêng cho từng cỡ box, chọn trên VisDrone val, không tăng recall chung trên chính tập chọn (0,6655 → 0,6657), chỉ chuyển recall từ người 8–16 px sang người dưới 8 px; trên SeaDronesSee đổi 0,0199 recall lấy 0,0355 precision (`conf_by_size.md`). Giữ ngưỡng chung.
-
-**Cập nhật 7/11 (mạng):** mất gói theo cụm (Gilbert–Elliott, `--net-burst`, `rq3_burst.md`, mô phỏng): cùng tỉ lệ mất trung bình, độ trễ cảnh báo lớn hơn hẳn mất rải rác (tỉ lệ 0,5, có thăm dò: độ trễ lớn nhất 8,400 s rải rác, 44,400 s với cụm 30 s); thăm dò vẫn giữ không mất cảnh báo nào. CAI_TIEN 3.4.
-
-**Cập nhật 7/11 (RQ2):** notebook RQ2 ghim commit `c4d48e4`; chạy thử trên Kaggle T4 (`pt_tiled`, `fp16_tiled`) đi hết xuất TensorRT, chấm, đo thời gian; lần chạy đủ chín biến thể đang chạy (Save & Run All). Chuẩn bị sẵn phần sau khi tải về: `scripts/after_rq2.py` (so cặp, hiệu chỉnh hồ sơ thiết bị, bảng kết quả qua `eval/rq2_report.py`) và `configs/experiments/rq3_device.yaml` (thiết bị yếu có theo kịp không, mô phỏng; chạy sau khi hiệu chỉnh).
-
-**Cập nhật 7/11 (E2e, cải thiện):**
-- **E2e xong, kết quả âm** (`docs/results/E2e.md`): phiên 2 chạy tiếp đúng từ epoch 34 (55 epoch liên tục). So với E2c: kém có ý nghĩa ở người nhỏ (VisDrone val tất cả −0,029 AP50, < 8 px −0,053; test-dev −0,041), tốt hơn trên AFO (+0,057), SeaDronesSee +0,041 không có ý nghĩa. **Giữ E2c**; quyết định #14 khép lại. `E2e_flood.yaml` không chạy trên tập lũ trừ khi cô yêu cầu (mỗi cấu hình trên tập lũ chạy một lần).
-- **`docs/CAI_TIEN.md`**: mỗi điểm yếu đã đo kèm cách sửa, chi phí, cách kiểm chứng, trạng thái, và thứ tự nên làm nếu còn giờ.
-- **Số người ước tính mỗi sự cố** (`group_size`): UAV đếm phát hiện cùng khung trong 5 m khi xác nhận; trạm và bản đồ hiện "nhóm khoảng N người", GPX ghi kèm.
-- **Định vị theo góc gimbal** (`--use-pitch`, TECHNICAL 8.3; tuỳ chọn, mặc định tắt): kiểm chứng bằng độ tản vị trí trên track SeaDronesSee (`georef_pitch.md`): tốt hơn rõ khi drone di chuyển với camera nghiêng vừa phải, kém hơn khi camera gần chân trời hoặc drone đứng yên; tính chung chưa tốt hơn.
-
-**Cập nhật 7/11 (ba cải thiện thử và bỏ):** theo thứ tự ở `CAI_TIEN.md`: phóng to khung khi người dự kiến dưới 8 px (`--min-person-px`, `upscale_small.md`), cắt ô kèm lượt toàn ảnh sau khi thu nhỏ (`full_pass.md`), đồng bộ thời gian và làm mượt góc gimbal (`georef_sync.md`). Cả ba không cải thiện có ý nghĩa; mã giữ làm tuỳ chọn, cấu hình cuối không đổi.
-
-**Cập nhật 7/11 (la bàn):** tự hiệu chỉnh lệch la bàn trên UAV (`--yaw-calib`, TECHNICAL 8.4): mô phỏng cho tách nhầm và báo giả do la bàn lệch giảm mạnh (`rq3_yawcalib.md`); tuỳ chọn, chưa kiểm chứng trên log thật. Thẻ drone ở trạm hiện lệch đang trừ.
-
-**Cập nhật 7/11 (độ chính xác GPS):** bán kính sai số theo độ chính xác GPS do bộ thu báo (`--gps-sigma-from-telemetry`): mô phỏng cho vùng tìm 95% chứa đủ người khi GPS kém đi giữa chuyến và hẹp lại khi GPS tốt; rủi ro khi bộ thu báo lạc quan (`rq3_gpsacc.md`). Tuỳ chọn; thẻ drone hiện độ chính xác GPS.
-
-**Cập nhật 7/11 (sân thử):** tab **Sân thử** của `python -m console` (TECHNICAL 11.4): chỉnh tham số chuyến bay, mô hình, thiết bị, mạng hoặc chọn một trong tám câu hỏi "nếu… thì sao" dựng sẵn; một lần chạy sinh kịch bản, xoá trạm (`POST /api/reset`), nạp đáp án, bay và gửi về trạm, chấm bằng `eval/rq3_metrics.py`; bảng so sánh các lần chạy, kết quả ở `runs/sandbox/`. Dùng để trả lời câu hỏi của hội đồng tại chỗ (DEMO_BAO_VE). `--link-probe-s 0` tắt thăm dò khi file cấu hình đã bật.
-
-**Cập nhật 6/11 (RQ3c, RQ3d, mô phỏng):**
-- **Sai số vị trí** (`rq3_geoerr.md`, `rq3_geoerr.yaml`): GPS là nguồn sai số chính; khi GPS σ 3 m chỉ 0,278 số người nằm trong bán kính 1σ mà cảnh báo ghi, vùng 95% chứa 1,000. Bản đồ trạm giờ vẽ **vùng tìm 95%** (2,448 × 1σ, `R95_FACTOR`); trường `position_error_m` vẫn là 1σ. Lệch hướng 5° ở 100 m gây tách nhầm 5,333 mỗi kịch bản.
-- **Mạng** (`rq3_network.md`, `rq3_network.yaml`): thêm **thăm dò đường truyền** (`--link-probe-s`; dòng lệnh mặc định tắt, `configs/edge.yaml` bật từ 6/11): không mất cảnh báo nào; độ trễ lớn nhất khi mất một nửa gói từ 41,167 s còn 8,333 s. Quyết định #17.
-- Phiên 2 của E2e chạy trên Kaggle (dataset `floodeye-e2e-resume`); xong 7/11.
-- **Màn hình điều phối cho demo:** drone gửi trạng thái mỗi giây (`--state-every-s`, `edge/status.py`), video xem trực tiếp (`--live-port`); bản đồ hiện drone, vùng camera đang nhìn, vùng đã quét, mất liên lạc và cảnh báo còn kẹt trên drone. Giới hạn: các đoạn SeaDronesSee drone đi tối đa khoảng 100 m, và đoạn nào drone di chuyển thì camera nghiêng 20–78° (phép chiếu giả định nhìn thẳng xuống), nên phần "quét vùng" dùng **chuyến bay mô phỏng có ảnh tổng hợp** (`configs/demo/hotay_quet*.yaml`, `sim/render.py`); đoạn đường bay lỡ khi mất sóng được gửi bù (`trail`) để vùng đã quét không bị thủng.
-- Quyết định #17 chốt: bật thăm dò đường truyền.
-- **Đối chiếu đáp án trên bản đồ** (`tools/make_truth_layer.py`, `POST /api/truth`, TECHNICAL 12.6): người thật hiện theo hai mức, được cảnh báo riêng và nằm trong vùng tìm 95%, cùng bỏ sót và sự cố báo nhầm. Trên SDS v21 số "cảnh báo riêng" thấp hơn hẳn số "trong vùng tìm" vì người bơi theo nhóm bị gộp thành một sự cố. Số trên màn hình demo là minh hoạ, không ghi vào kết quả.
-- **Công cụ cho đội đi cứu** (TECHNICAL 12.7): vị trí thuyền, khoảng cách, hướng và thời gian tới từng sự cố, gợi ý thứ tự đi cứu (ưu tiên trước, gần trước), chép toạ độ, link Google Maps, `GET /api/incidents.gpx`. `R95_FACTOR` chuyển sang `shared/schema.py` để trạm dùng được (trạm không import `edge/`).
-
-**Cập nhật 5/11:**
-- **Thuật ngữ chuẩn hoá:** `docs/THUAT_NGU.md` là bảng chuẩn duy nhất (thuật ngữ ngành, khái niệm dự án đặt tên tiếng Việt, ký hiệu nội bộ, quy tắc dùng trong luận văn); TECHNICAL mục 18 trỏ sang.
-- **Tab "Hiểu dự án"** trong `python -m console`: bản đồ dự án 6 khâu (làm gì, vì sao, kết quả kèm file nguồn, file mã), đọc mọi tài liệu với giải thích thuật ngữ khi di chuột, tìm kiếm, xem mã.
-- **Lịch gán nhãn đổi:** 5–6/11 học dự án và chạy Kaggle (E2e, RQ2), gán nhãn 7–9/11, khoá vẫn 11/11 (LABELING mục 9). Rủi ro: khoảng 4 giờ gán mỗi ngày trong ba ngày.
-
-**Cập nhật 4/11 (giả lập thiết bị, demo bảo vệ):** pipeline giả lập thời gian xử lý của thiết bị biên (`--device-profile`, `edge/device_sim.py`, TECHNICAL 14.6): bỏ khung tới trong lúc bận, cảnh báo gửi lúc xử lý xong. Hồ sơ T4, Orin Nano Super, Orin NX, AGX Orin trong `configs/devices/` lấy từ bảng YOLO26 của Ultralytics, **chưa hiệu chỉnh**; sau khi chạy RQ2 trên T4 thì hiệu chỉnh bằng `tools/fit_device_profile.py`. Demo bảo vệ một lệnh (`scripts/demo_bao_ve.sh`): phát lại SDS v21 (telemetry thật) theo thời gian thực, không cần GPU; bản đồ trạm chạy không cần internet (Leaflet đóng gói, ô bản đồ đã xem được giữ lại); banner mất sóng; video so hai thiết bị (`scripts/ghep_video.py`).
-
-**Cập nhật 4/11 (mã):** xuất báo cáo phân tích lỗi và so hai lần chạy trong giao diện; trạm đẩy cập nhật qua `/api/stream`; mô phỏng độ cao đổi giữa chuyến (`docs/results/rq3_altprofile.md`: 12 lần nhìn, trần 8 khung/giây gần bằng 8 khung/giây cố định, với 137 khung thay vì 480).
-
-**Cập nhật 3/11 (mã):** giao diện thử nghiệm `python -m console`: xem lỗi từng ảnh theo nhóm kích thước và thẻ (khớp `eval_by_size.csv`), chạy thử pipeline có vẽ khung, cảnh báo, thời gian; nhúng trạm mặt đất. Công cụ cho tuần phân tích lỗi 21–27/11.
-
-**Cập nhật 2/11 (mã):**
-- **RQ2 sẵn sàng chạy trên Kaggle**: `scripts/run_rq2.py` + `configs/experiments/rq2_t4.yaml` + `notebooks/kaggle_rq2.ipynb` (xuất TensorRT FP16/INT8, hiệu chỉnh INT8 trên ô 640 từ ảnh val, chấm độ chính xác, đo cả pipeline, bảng recall theo FPS). Đã chạy thử phần PyTorch trên máy cá nhân; phần TensorRT chưa chạy (máy cá nhân không cài `tensorrt`). Có thể chạy trước 9/11.
-- Sai số vị trí trong cảnh báo tính từ vị trí trong ảnh và độ cao, thay hằng số 5 m; trạm gộp cảnh báo của hai drone khác nhau theo sai số của cả hai; trạm xếp ưu tiên sự cố và cho người vận hành gắn thẻ, đóng sự cố; demo hai drone (`scripts/demo_multi.sh`).
-- Tần số xử lý theo độ cao (`--min-views`); mô phỏng thêm bay zig-zag, sai số độ cao, recall sau thu nhỏ theo độ cao. Quét `rq3_adaptive.yaml` (`docs/results/rq3_adaptive.md`): 12 lần nhìn, trần 8 khung/giây không kém 2 khung/giây cố định ở độ cao nào, tốt hơn hẳn ở 30 m, ít khung hơn từ 80 m.
-
-**Cập nhật 28/10:**
-- **E3 (P2) xong sớm một tuần**, kết quả âm: người dưới 8 px chỉ +0,012 (val) và +0,013 (test-dev) AP50, kém hơn ở người to; giữ E2c làm mô hình chính (`docs/results/E3.md`). Tuần 31/10–6/11 dư khoảng 10 giờ GPU (quyết định #14).
-- **E6 chạy thử trên SeaDronesSee** (`e6_sds_pilot.md`): E2c mạnh ở người 6–23 px, tụt với người trên 45 px. Từ đó có **thu nhỏ khung theo độ cao** (`scale_by_altitude.md`): E2c cắt ô trên SDS 4K từ AP50 0,235 lên 0,531 (quyết định #13).
-- RQ3: mô phỏng dùng recall theo cỡ người từ E6 thử, quét độ cao (`rq3_altitude.md`); cơ chế `bytetrack_cmc` bỏ sót đã xác định (`rq3_cmc_cause.md`).
-- Trạm mặt đất gộp cảnh báo thành sự cố (`alert_memory.md`).
-- Mã cho tập lũ đã sẵn (`scripts/eval_flood.sh`: chuyển nhãn CVAT, chạy mọi `*_flood.yaml`, chấm theo kích thước và theo thẻ nhiễu). **Tập test lũ vẫn chưa gán khung nào**: đây vẫn là rủi ro lớn nhất, hạn khoá 4/11 (sau lùi tới 11/11).
+**Nhật ký 21/10–6/11** (tóm tắt; chi tiết trong lịch sử git của file này):
+- 21–23/10: E0, E1, E4 trên VisDrone; E2 (VisDrone) và E2c (+ AFO) xong, E2c thành mô hình chính (`visdrone_E2.md`, `E2c.md`, `afo_E1_E2.md`).
+- 26–28/10: E3 (P2) xong, âm (`E3.md`); E6 thử trên SeaDronesSee dẫn tới thu nhỏ theo độ cao (`e6_sds_pilot.md`, `scale_by_altitude.md`, #13); mô phỏng câu hỏi 3 theo độ cao, cơ chế `bytetrack_cmc` bỏ sót (`rq3_altitude.md`, `rq3_cmc_cause.md`); gộp sự cố ở trạm (`alert_memory.md`); `scripts/eval_flood.sh`.
+- 2–4/11: luồng câu hỏi 2 trên Kaggle (`run_rq2.py`); tần số theo độ cao (`rq3_adaptive.md`, `rq3_altprofile.md`); sai số vị trí từ vị trí trong ảnh; demo hai drone; giao diện `python -m console`; giả lập thời gian thiết bị biên, demo bảo vệ một lệnh (`demo_bao_ve.sh`).
+- 4/11: chốt #7, #10 (lùi khoá tới 11/11), #13, #14, #15; gộp hai nguồn San Angelo, tập còn 188 khung, không trùng với tập train.
+- 5–6/11: bảng thuật ngữ chuẩn, tab "Hiểu dự án"; sai số vị trí và vùng tìm 95% (`rq3_geoerr.md`); thăm dò đường truyền (`rq3_network.md`, #17 bật); màn hình điều phối, lớp đáp án, công cụ cho đội đi cứu; E2e phiên 1 và 2.
 
 ### 1.2. Phân bổ giờ mỗi tuần (15–20 giờ)
 
@@ -114,7 +64,7 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 | 21–23/10 | Gom video lũ, ghi `sources.csv`; dựng dự án CVAT theo LABELING.md; gán thử | E2 lượt 1 xong → `eval_by_size` trên VisDrone val, `compare_runs` với E1 | Push, xem CI chạy | Chương 2 | 30–50 | 23/10: bảng VisDrone (E0, E1, E4, cắt ô riêng); E2 nếu kịp; demo pipeline + trạm mặt đất (telemetry giả lập); RQ3 chạy thử; hỏi cô quyết định #1, #7, #10 |
 | 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` (thực tế: FinlandProper tạm bỏ) | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle (thực tế: E2c = VisDrone + AFO, xong 23/10; E3 xong 28/10) | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
 | 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E2e (E2c + C2A) trên Kaggle; RQ2 trên T4 nếu kịp | | Chương 4 | 188; khoá lùi tới 11/11 (#10) | 6/11: tiến độ gán nhãn, lý do lùi khoá |
-| 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, không thu nhỏ: tập lũ không có độ cao bay, quyết định #13) trên tập lũ; E5 (YOLO11s); E6 nếu cô duyệt; recall theo loại nhiễu; **RQ2 trên T4 bắt đầu sớm 7/11** (chạy thử hai biến thể xong; lần chạy đủ đầu lỗi xuất INT8 với TensorRT 11, đã ghim TensorRT 10 và chạy lại) | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~, ~~xử lý sau RQ2 (`scripts/after_rq2.py`)~~ (đã có); 7/11 làm thêm các mục `CAI_TIEN.md` không cần GPU (xem các khối cập nhật 7/11) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
+| 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, không thu nhỏ: tập lũ không có độ cao bay, quyết định #13) trên tập lũ; ~~E5 (YOLO11s)~~ (cắt 7/11); E6 nếu cô duyệt; recall theo loại nhiễu; **RQ2 trên T4 bắt đầu sớm 7/11** (chạy thử hai biến thể xong; lần chạy đủ đầu lỗi xuất INT8 với TensorRT 11, đã ghim TensorRT 10 và chạy lại) | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~, ~~xử lý sau RQ2 (`scripts/after_rq2.py`)~~ (đã có); 7/11 làm thêm các mục `CAI_TIEN.md` không cần GPU (xem các khối cập nhật 7/11) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
 | 14–20/11 | | 3 seed cho cấu hình cuối; **RQ3** quét đủ lưới (mô phỏng) + điều tra cơ chế `bytetrack_cmc` bỏ sót; RQ2 xong | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
 | 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; hiệu chỉnh hồ sơ thiết bị từ RQ2 (`scripts/after_rq2.py`), RQ3 với `device_profile` (`rq3_device.yaml`) | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
 | 28/11–4/12 | | | **Đóng băng mã 28/11** | Bản thảo đầy đủ | | 4/12: bản thảo |
@@ -129,7 +79,7 @@ Mỗi lần huấn luyện ở 1280 khoảng 8–10 giờ T4 (E2 lượt 1, 60 e
 | 21–23/10 | E2 lượt 1 | 8 |
 | 24–30/10 | E2 lượt 2 (thêm FinlandProper); thực tế: E3 | 10 |
 | 31/10–6/11 | ~~E3 (P2)~~ đã chạy trước (hai phiên); giờ trống: E2e (E2c + C2A, quyết định #14), phiên 1. Tập train gấp khoảng 1,66 lần E2c nên một phiên 12 giờ không đủ 55 epoch; phần còn lại chạy tiếp (`resume`) tuần sau | 10 |
-| 7–13/11 | ~~E2e phiên 2~~ (xong 7/11); E5 (YOLO11s); xuất TensorRT, đo RQ2 | 6 + 9 + 2 |
+| 7–13/11 | ~~E2e phiên 2~~ (xong 7/11); ~~E5 (YOLO11s)~~ (cắt 7/11); xuất TensorRT, đo RQ2 | 6 + 2 |
 | 14–20/11 | 2 seed thêm cho cấu hình cuối | 20 |
 
 Không tuần nào vượt hạn mức nếu không chạy lại. Lần chạy hỏng thì đẩy seed sang Colab (như đề cương).
@@ -299,10 +249,10 @@ Câu hỏi con của RQ1–RQ3 (RQ1a…RQ3e), trả lời bằng thí nghiệm n
 |---|---|---|
 | E0 | YOLO26s COCO, 640 | Đã có |
 | E1 | 1280 | Đã có |
-| E2 | Fine-tune (VisDrone; FinlandProper tạm bỏ) | Xong: E2 (VisDrone), **E2c (+ AFO), mô hình chính**; E2d (+ HydroVigilance) có cấu hình; E2e (E2c + C2A) xong 7/11, kết quả âm: kém E2c ở người nhỏ, không hơn có ý nghĩa ở người to (#14, `E2e.md`) |
+| E2 | Fine-tune (VisDrone; FinlandProper tạm bỏ) | Xong: E2 (VisDrone), **E2c (+ AFO), mô hình chính**; E2b (+ C2A) và E2d (+ HydroVigilance) không chạy, cấu hình xoá 7/11; E2e (E2c + C2A) xong 7/11, kết quả âm: kém E2c ở người nhỏ, không hơn có ý nghĩa ở người to (#14, `E2e.md`) |
 | E3 | E2c + đầu P2 | Xong 28/10, không đáng chi phí (`docs/results/E3.md`) |
 | E4 | E2c + cắt ô | Xong trên VisDrone và SDS; thêm biến thể thu nhỏ theo độ cao (`--target-person-px`), chỉ đánh giá trên SDS (#13); trên tập lũ chờ nhãn, chỉ cắt ô |
-| E5 | E2c với YOLO11s | Có cấu hình (`E5_s0.yaml`, `E5_<tập>.yaml`), chưa huấn luyện |
+| E5 | E2c với YOLO11s | **Cắt 7/11** (việc đầu tiên trong thứ tự cắt, mục 1.5; tiết kiệm khoảng 10 giờ GPU); cấu hình đã xoá, lấy lại từ lịch sử git nếu cô yêu cầu |
 | E6 | Recall theo số pixel trên người (thu nhỏ nhiều mức); 48 MP và 4K là hai điểm trên đường cong | Đã có `tools/rescale_dataset.py`, `eval/recall_by_pixels.py`; chạy thử trên SDS (`e6_sds_pilot.md`); xem mục 5.3 |
 
 Đánh giá trên: VisDrone val và test-dev, AFO test, SeaDronesSee (người dưới nước, độc lập với dữ liệu huấn luyện), tập test lũ (TECHNICAL 15.1). FinlandProper dự kiến ban đầu đã tạm bỏ (162 GB). Theo mục 8.5 của đề cương:

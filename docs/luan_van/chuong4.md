@@ -160,7 +160,7 @@ Mọi mô hình dùng YOLO26s làm mô hình nền (đã huấn luyện trên CO
 | E3 | Như E2c, thêm nhánh phát hiện P2 (P2 detection head) | Thêm tầng phát hiện độ phân giải cao có giúp người rất nhỏ không, có đáng chi phí không |
 | E4 | Mô hình chính kèm cắt ô (tiling) 640 px chồng 20% | Cắt ô có lợi khi ảnh thật sự lớn không |
 | | E4 kèm thu nhỏ theo độ cao bay | Đưa người về cỡ mô hình làm tốt nhất, dựa trên độ cao bay (đóng góp) |
-| E5 | Như E2c nhưng dùng YOLO11s | Kết quả có phụ thuộc đời mô hình không |
+| E5 | Như E2c nhưng dùng YOLO11s | Kết quả có phụ thuộc đời mô hình không. **Không chạy** (cắt vì lịch); ghi vào giới hạn |
 | E6 | Thu nhỏ ảnh nhiều mức, đo recall theo số pixel trên người | Bay cao tối đa bao nhiêu thì còn phát hiện được |
 
 **Huấn luyện.** Ảnh 1280 px, batch 8, 55 epoch (E2: 60 epoch), seed 0, các tham số tăng cường dữ liệu mặc định của thư viện trừ lật dọc (bật, vì ảnh nhìn từ trên không có chiều trên dưới cố định). Ảnh được giữ ở 1280 px vì ở 640 px phép tăng cường thu nhỏ ngẫu nhiên xoá nhãn của nhiều người rất nhỏ (tới 26,9% số nhãn khi thu nhỏ 0,5 lần trên VisDrone val), dạy mô hình rằng đó là nền. Trọng số tốt nhất chọn theo tập kiểm định VisDrone val cộng AFO val; vì vậy bảng chính cho người nhỏ dùng VisDrone test-dev.

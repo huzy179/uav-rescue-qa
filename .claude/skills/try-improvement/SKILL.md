@@ -35,7 +35,7 @@ Quy ước đo ở `.claude/rules/experiments.md`, ràng buộc kiến trúc ở
 - Cập nhật cùng lúc:
   - `docs/CAI_TIEN.md`: mục đó thành "Đã làm, tuỳ chọn", "Đã làm" hoặc "Đã thử, bỏ", kèm số chính và file; thêm dòng "Đề xuất" tiếp theo nếu có.
   - `docs/TECHNICAL.md`: đoạn **[Đã có]** hoặc **[Đã có, tuỳ chọn]** ở mục liên quan, bảng file nếu có script mới.
-  - `docs/TONG_QUAN.md` mục 8, `docs/ROADMAP.md` (khối "Cập nhật <ngày>"), `docs/DAN_Y_LUAN_VAN.md` (cột kết quả), `docs/luan_van/chuong5.md` (một đoạn ở câu hỏi con tương ứng, giữ nhãn mô phỏng).
+  - `docs/TONG_QUAN.md` mục 8, `docs/ROADMAP.md` (một dòng trong "Nhật ký <ngày>" ở mục 1.1, và bảng trạng thái nếu đổi), `docs/DAN_Y_LUAN_VAN.md` (cột kết quả), `docs/luan_van/chuong5.md` (một đoạn ở câu hỏi con tương ứng, giữ nhãn mô phỏng).
   - Thuật ngữ mới thì thêm vào `docs/THUAT_NGU.md`.
   - File kết quả cũ mà kết luận đổi thì thêm một dòng trỏ sang file mới, không sửa số cũ.
 - Tính năng nhìn thấy được trong demo thì thêm vào sân thử (`console/sandbox.py`, `sandbox.js`, câu hỏi dựng sẵn) và sửa số câu hỏi dựng sẵn ở README, TECHNICAL 11.4.
