@@ -40,6 +40,8 @@ Từ nay tới 11/11 không viết thêm mã, trừ khi việc khoá tập hoặ
 
 **Cập nhật 7/11 (viết):** nháp chương 4 (`docs/luan_van/chuong4.md`): dữ liệu huấn luyện và đánh giá, tập ảnh lũ, cách đo, các thí nghiệm của ba câu hỏi, môi trường; còn chờ thống kê tập ảnh lũ sau khi khoá. Nháp chương 5 (`docs/luan_van/chuong5.md`): kết quả câu hỏi 1 trên VisDrone, AFO, SeaDronesSee và toàn bộ câu hỏi 3; chờ tập lũ và RQ2.
 
+**Cập nhật 7/11 (mạng):** mất gói theo cụm (Gilbert–Elliott, `--net-burst`, `rq3_burst.md`, mô phỏng): cùng tỉ lệ mất trung bình, độ trễ cảnh báo lớn hơn hẳn mất rải rác (tỉ lệ 0,5, có thăm dò: độ trễ lớn nhất 8,400 s rải rác, 44,400 s với cụm 30 s); thăm dò vẫn giữ không mất cảnh báo nào. CAI_TIEN 3.4.
+
 **Cập nhật 7/11 (RQ2):** notebook RQ2 ghim commit `c4d48e4`; chạy thử trên Kaggle T4 (`pt_tiled`, `fp16_tiled`) đi hết xuất TensorRT, chấm, đo thời gian; lần chạy đủ chín biến thể đang chạy (Save & Run All). Chuẩn bị sẵn phần sau khi tải về: `scripts/after_rq2.py` (so cặp, hiệu chỉnh hồ sơ thiết bị, bảng kết quả qua `eval/rq2_report.py`) và `configs/experiments/rq3_device.yaml` (thiết bị yếu có theo kịp không, mô phỏng; chạy sau khi hiệu chỉnh).
 
 **Cập nhật 7/11 (E2e, cải thiện):**

@@ -5,7 +5,7 @@
     alt_m: "Độ cao bay (m)", speed_mps: "Tốc độ bay (m/s)", pattern: "Đường bay", leg_m: "Chiều dài mỗi đường (m)",
     duration_s: "Thời gian bay (s)", n_people: "Số người", gps_sigma_m: "Nhiễu GPS σ (m)", gps_sigma_late_m: "GPS σ từ giữa chuyến (m)", gps_from_receiver: "Vùng tìm theo GPS bộ thu báo", yaw_bias_deg: "Lệch la bàn (°)", yaw_calib: "Tự hiệu chỉnh la bàn",
     recall_model: "Mô hình", target_person_px: "Thu nhỏ theo độ cao về (px)", fps: "Khung xử lý mỗi giây",
-    device: "Thiết bị giả lập", net_loss: "Mất gói (0–0,8)", outage_start_s: "Mất sóng từ giây", outage_len_s: "Mất sóng trong (s)",
+    device: "Thiết bị giả lập", net_loss: "Mất gói (0–0,8)", outage_start_s: "Mất sóng từ giây", outage_len_s: "Mất sóng trong (s)", net_burst_s: "Sóng yếu theo cụm, mỗi cụm (s)",
     link_probe: "Thăm dò đường truyền", render: "Vẽ ảnh tổng hợp (có video)", realtime_speed: "Tốc độ phát (0 = nhanh nhất)",
     seed: "Seed", label: "Ghi chú",
   };
@@ -26,6 +26,7 @@
     ["Bay thấp 30 m, có thu nhỏ theo độ cao?", { alt_m: 30, target_person_px: 10, label: "30 m, thu nhỏ 10 px" }],
     ["Mất sóng 30 s giữa chuyến?", { outage_start_s: 40, outage_len_s: 30, label: "mất sóng 30 s" }],
     ["Mất sóng 30 s, không thăm dò đường truyền?", { outage_start_s: 40, outage_len_s: 30, link_probe: false, label: "mất sóng, không thăm dò" }],
+    ["Sóng chập chờn từng cụm khoảng 10 s?", { net_burst_s: 10, label: "sóng yếu theo cụm 10 s" }],
     ["GPS kém (σ 5 m), la bàn lệch 5°?", { gps_sigma_m: 5, yaw_bias_deg: 5, label: "GPS kém" }],
     ["Thiết bị yếu (Orin Nano), 8 khung/giây?", { device: "orin_nano_super", fps: 8, label: "Orin Nano 8 khung/giây" }],
     ["Bay nhanh 15 m/s?", { speed_mps: 15, label: "15 m/s" }],
@@ -130,7 +131,7 @@
   async function init() {
     opts = await get("/api/sandbox/options");
     const order = ["label", "alt_m", "speed_mps", "pattern", "leg_m", "duration_s", "n_people", "recall_model", "target_person_px", "fps",
-      "device", "gps_sigma_m", "gps_sigma_late_m", "gps_from_receiver", "yaw_bias_deg", "yaw_calib", "net_loss", "outage_start_s", "outage_len_s", "link_probe", "render", "realtime_speed", "seed"];
+      "device", "gps_sigma_m", "gps_sigma_late_m", "gps_from_receiver", "yaw_bias_deg", "yaw_calib", "net_loss", "net_burst_s", "outage_start_s", "outage_len_s", "link_probe", "render", "realtime_speed", "seed"];
     const fields = order.map(k => el("div", { className: "sbfield" + (opts.fields[k].type === "boolean" ? " chk" : "") },
       el("label", { htmlFor: "sb_" + k, textContent: LABELS[k] || k }), input(k, opts.fields[k], opts.defaults[k])));
     page.replaceChildren(

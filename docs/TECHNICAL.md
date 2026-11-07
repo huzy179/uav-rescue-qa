@@ -834,7 +834,9 @@ class Transport(Protocol):
 
 ### 11.1. `netem.py`: mạng chập chờn [Đã có một phần]
 
-Đã có mất gói Bernoulli và khoảng mất sóng. Chưa có Gilbert–Elliott, độ trễ, băng thông.
+Đã có mất gói Bernoulli, khoảng mất sóng và mất theo cụm (7/11). Chưa có độ trễ, băng thông.
+
+**[Đã có] Mất theo cụm** (`GilbertElliott`, `--net-burst BAD_S GOOD_S`, `--net-burst-loss`): khác bảng dưới ở một điểm, trạng thái đổi theo **thời gian** mô phỏng chứ không theo số lần gửi, vì lượt gửi không đều (theo khung đã xử lý, rồi mỗi giây khi gửi bù). Thời gian ở mỗi trạng thái theo phân phối mũ với trung bình BAD_S, GOOD_S; bắt đầu ở trạng thái tốt; trạng thái xấu mất mỗi lần gửi với xác suất `--net-burst-loss` (mặc định 1), cộng thêm mất rải rác `--net-loss`. Bộ sinh số của cụm tách riêng, nên không bật thì chuỗi sự kiện giống hệt trước. Video demo hiện banner "SONG YEU" trong cụm xấu. Kết quả: `docs/results/rq3_burst.md`.
 
 `NetemTransport(inner, …)` bọc một Transport và quyết định mỗi lần gửi có thành công không, trễ bao lâu:
 
@@ -889,7 +891,7 @@ Hai cách dùng:
 
 ### 11.4. Sân thử mô phỏng trên giao diện [Đã có]
 
-Tab "Sân thử" của `python -m console` (`console/sandbox.py`, `console/sandbox_run.py`, `console/sandbox.js`): chỉnh độ cao, tốc độ, đường bay, thời gian bay, số người, mô hình (recall theo cỡ người của E1 hoặc E2c), thu nhỏ theo độ cao, số khung xử lý mỗi giây, thiết bị giả lập, nhiễu GPS (có thể kém đi từ giữa chuyến), vùng tìm theo độ chính xác GPS bộ thu báo, lệch la bàn, tự hiệu chỉnh la bàn, mất gói, khoảng mất sóng, thăm dò đường truyền, ảnh tổng hợp, tốc độ phát; mười hai câu hỏi "nếu… thì sao" hay gặp ở buổi bảo vệ là các bộ thay đổi dựng sẵn so với mặc định. Một lần chạy là một tiến trình con: sinh kịch bản (`sim/make_rq3.py`, ảnh 1080p, 8 khung/giây, đặt trên mặt Hồ Tây), lớp đáp án, xoá trạm mặt đất (`POST /api/reset?confirm=true`) và nạp đáp án, chạy `edge/main.py` gửi về trạm (xem trực tiếp ở màn hình điều phối, có video khi vẽ ảnh và phát theo thời gian thực), chấm bằng `eval/rq3_metrics.py`. Mọi thứ ghi vào `runs/sandbox/<mã>/` kèm đúng các lệnh (`commands.txt`); bảng so sánh chỉ hiện tham số khác nhau giữa các lần và chỉ số đọc từ `rq3_metrics.json`. Mỗi lần một seed: để thấy xu hướng khi trả lời câu hỏi tại chỗ, không thay bảng nhiều seed trong `docs/results/`. Tham số giới hạn bằng Pydantic, thiết bị chỉ chọn trong `configs/devices/`; mỗi lúc chạy một lần (dùng chung cổng video và trạm).
+Tab "Sân thử" của `python -m console` (`console/sandbox.py`, `console/sandbox_run.py`, `console/sandbox.js`): chỉnh độ cao, tốc độ, đường bay, thời gian bay, số người, mô hình (recall theo cỡ người của E1 hoặc E2c), thu nhỏ theo độ cao, số khung xử lý mỗi giây, thiết bị giả lập, nhiễu GPS (có thể kém đi từ giữa chuyến), vùng tìm theo độ chính xác GPS bộ thu báo, lệch la bàn, tự hiệu chỉnh la bàn, mất gói, khoảng mất sóng, thăm dò đường truyền, ảnh tổng hợp, tốc độ phát; mười ba câu hỏi "nếu… thì sao" hay gặp ở buổi bảo vệ là các bộ thay đổi dựng sẵn so với mặc định. Một lần chạy là một tiến trình con: sinh kịch bản (`sim/make_rq3.py`, ảnh 1080p, 8 khung/giây, đặt trên mặt Hồ Tây), lớp đáp án, xoá trạm mặt đất (`POST /api/reset?confirm=true`) và nạp đáp án, chạy `edge/main.py` gửi về trạm (xem trực tiếp ở màn hình điều phối, có video khi vẽ ảnh và phát theo thời gian thực), chấm bằng `eval/rq3_metrics.py`. Mọi thứ ghi vào `runs/sandbox/<mã>/` kèm đúng các lệnh (`commands.txt`); bảng so sánh chỉ hiện tham số khác nhau giữa các lần và chỉ số đọc từ `rq3_metrics.json`. Mỗi lần một seed: để thấy xu hướng khi trả lời câu hỏi tại chỗ, không thay bảng nhiều seed trong `docs/results/`. Tham số giới hạn bằng Pydantic, thiết bị chỉ chọn trong `configs/devices/`; mỗi lúc chạy một lần (dùng chung cổng video và trạm).
 
 ---
 

@@ -325,7 +325,19 @@ Cảnh báo được ghi xuống đĩa trước khi gửi, và gửi lại với
 
 **Khi có thăm dò thì không mất cảnh báo nào**, kể cả mất một nửa số gói cộng 30 s mất sóng; không thăm dò thì có một ô mất 0,033 (một cảnh báo trong ba kịch bản không tới trạm sau 60 s gửi bù). **Độ trễ trung vị nhỏ; độ trễ lớn nhất mới là vấn đề**: với thời gian chờ tăng gấp đôi, một gói hỏng ngay trước khi sóng có lại có thể đợi thêm gần 30 s. Thăm dò cắt phần chờ thừa đó (mất gói 0,5: độ trễ lớn nhất 41,167 s còn 8,333 s) mà gần như không tốn thêm dữ liệu (2,647 so với 2,629 KB mỗi cảnh báo khi mất sóng 20–35 s), vì mỗi lần thăm dò chỉ là một gói toạ độ. Phần trễ còn lại khi đã thăm dò chủ yếu là chính khoảng mất sóng: cảnh báo tạo trong lúc mất sóng không thể tới trạm trước khi sóng có lại.
 
-Giới hạn: mất gói độc lập giữa các lần gửi, trong khi mạng thật mất theo cụm; 3 seed với 10 cảnh báo mỗi kịch bản, nên độ trễ lớn nhất dao động mạnh giữa các seed (độ lệch chuẩn ở `rq3_network.md`).
+**Mất theo cụm.** Bảng 5.14 giả định mỗi lần gửi mất độc lập. Sóng yếu thật thường kéo dài, nên mô phỏng thêm mất theo cụm (mô hình Gilbert–Elliott: đường truyền đổi qua lại giữa trạng thái tốt và xấu, trạng thái xấu mất mọi gói) và so với mất rải rác ở **cùng tỉ lệ mất trung bình** (Bảng 5.14b; chuyến 120 s, 5 seed, nên không so thẳng với Bảng 5.14).
+
+**Bảng 5.14b.** Mất rải rác so với mất theo cụm, tỉ lệ mất trung bình 0,5, có thăm dò (`rq3_burst.md`). **Mô phỏng.**
+
+| Cách mất | Độ trễ trung vị (s) | Độ trễ lớn nhất (s) | Mất cảnh báo |
+|---|---|---|---|
+| Rải rác 0,5 | 0,850 | 8,400 | 0,000 |
+| Cụm xấu 10 s / tốt 10 s | 4,350 | 15,800 | 0,000 |
+| Cụm xấu 30 s / tốt 30 s | 19,900 | 44,400 | 0,000 |
+
+Cùng tỉ lệ mất, cụm càng dài cảnh báo càng trễ, vì mọi lần gửi trong cụm đều hỏng; phần trễ này là chính độ dài cụm, không cách gửi lại nào rút ngắn được. Thăm dò vẫn giữ không mất cảnh báo nào ở mọi ô; không thăm dò thì các ô cụm 30 s mất 0,080–0,180 số cảnh báo.
+
+Giới hạn: không có số đo mạng thật để chọn độ dài cụm; số seed ít so với độ dao động của cụm dài, nên độ trễ lớn nhất dao động mạnh giữa các seed (độ lệch chuẩn ở `rq3_network.md`, `rq3_burst.md`).
 
 ### 5.3.5. Gộp cảnh báo thành sự cố (RQ3e)
 

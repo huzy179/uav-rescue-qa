@@ -73,3 +73,12 @@ def test_sandbox_gps_receiver_and_profile(tmp_path: Path, monkeypatch: pytest.Mo
     assert "--gps-acc-report" in cmd
     assert "--gps-sigma-from-telemetry" in pipeline_args(req, scen, out, None)
     assert "--gps-sigma-from-telemetry" not in pipeline_args(SandboxRequest(), scen, out, None)
+
+
+def test_sandbox_burst_flag() -> None:
+    from console.sandbox import SandboxRequest, pipeline_args
+
+    req = SandboxRequest(net_burst_s=10)
+    cmd = pipeline_args(req, Path("s"), Path("o"), None)
+    i = cmd.index("--net-burst")
+    assert cmd[i + 1:i + 3] == ["10.0", "10.0"]

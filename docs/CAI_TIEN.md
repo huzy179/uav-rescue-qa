@@ -74,7 +74,8 @@ Cập nhật 7/11/2026.
 
 - **Vấn đề.** Gửi lại có thời gian chờ tăng dần tới 30 s; mất một nửa số gói thì độ trễ lớn nhất 41,167 s và có cảnh báo không tới trạm (`rq3_network.md`).
 - **Đã làm:** thăm dò đường truyền mỗi 2 s (quyết định #17, bật mặc định): độ trễ lớn nhất 8,333 s, không mất cảnh báo nào.
-- **Đề xuất:** mất gói theo cụm (Gilbert–Elliott) trong giả lập mạng, để kiểm tra trường hợp sóng yếu kéo dài (TECHNICAL 11.1).
+- **Đã làm (7/11): mất gói theo cụm** (Gilbert–Elliott, `--net-burst`, TECHNICAL 11.1). Mô phỏng (`rq3_burst.md`), cùng tỉ lệ mất trung bình 0,5, có thăm dò: độ trễ lớn nhất 8,400 s khi mất rải rác, 15,800 s với cụm 10 s, 44,400 s với cụm 30 s; vẫn không mất cảnh báo nào ở mọi ô có thăm dò (không thăm dò: tới 0,180). Phần trễ còn lại là chính độ dài cụm.
+- **Đề xuất:** đo mạng thật (radio của drone hoặc 4G) để chọn độ dài cụm; nếu cụm dài là thường, xét đường truyền dự phòng (drone bay về gần trạm khi có cảnh báo chưa gửi được lâu).
 
 ### 3.5. Người bơi theo nhóm bị gộp thành một sự cố
 

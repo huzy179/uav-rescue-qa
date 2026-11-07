@@ -44,7 +44,7 @@
 
 ## Giới hạn
 
-- Mất gói độc lập giữa các lần gửi; mạng thật mất theo cụm. Mất sóng là khoảng cố định, trạm luôn sẵn sàng.
+- Mất gói độc lập giữa các lần gửi; mạng thật mất theo cụm. **7/11:** đã mô phỏng mất theo cụm ở `rq3_burst.md`: cùng tỉ lệ mất trung bình, độ trễ lớn hơn hẳn, thăm dò vẫn giữ không mất cảnh báo. Mất sóng là khoảng cố định, trạm luôn sẵn sàng.
 - Mô phỏng đồng hồ: lượt gửi chạy theo khung đã xử lý (2 lần mỗi giây) và mỗi giây trong lúc gửi bù; không đo thời gian truyền thật hay băng thông.
 - 3 seed, một chuyến 60 s với 10 cảnh báo mỗi kịch bản: độ trễ lớn nhất dao động mạnh giữa các seed (xem cột ±).
 

@@ -58,6 +58,7 @@ class SandboxRequest(BaseModel):
     net_loss: float = Field(0.0, ge=0, le=0.8)
     outage_start_s: float = Field(0.0, ge=0, le=300)
     outage_len_s: float = Field(0.0, ge=0, le=120)
+    net_burst_s: float | None = Field(None, gt=0, le=60)  # sóng yếu theo cụm: xấu và tốt trung bình bằng nhau (mất 0,5), rq3_burst.md
     link_probe: bool = True
     render: bool = True
     realtime_speed: float = Field(4.0, ge=0, le=16)  # 0: chạy nhanh hết mức, không phát theo thời gian thực
@@ -121,6 +122,8 @@ def pipeline_args(req: SandboxRequest, scenario: Path, out: Path, ground_url: st
         cmd += ["--device-profile", str(DEVICES / f"{req.device}.yaml")]
     if req.net_loss:
         cmd += ["--net-loss", str(req.net_loss)]
+    if req.net_burst_s is not None:
+        cmd += ["--net-burst", str(req.net_burst_s), str(req.net_burst_s)]
     if req.outage_len_s:
         cmd += ["--net-outage", str(req.outage_start_s), str(req.outage_start_s + req.outage_len_s)]
     if ground_url:

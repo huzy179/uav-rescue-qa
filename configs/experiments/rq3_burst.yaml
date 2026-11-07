@@ -1,0 +1,20 @@
+# RQ3d mô phỏng: mất gói theo cụm (Gilbert–Elliott, --net-burst) so với mất rải rác (--net-loss) ở CÙNG tỉ lệ mất trung
+# bình: 0,2 (xấu 5 s / tốt 20 s, hoặc cụm dài 15 s / 60 s) và 0,5 (10 s / 10 s, hoặc 30 s / 30 s); trạng thái xấu mất
+# mọi gói. Có hoặc không thăm dò đường truyền mỗi 2 s. Chuyến 120 s, 5 seed vì cụm dài làm kết quả dao động giữa các
+# seed. Gửi bù tối đa 60 s sau khung cuối (mặc định). Kịch bản như rq3_network.yaml. docs/results/rq3_burst.md.
+output: runs/rq3/burst
+seeds: [0, 1, 2, 3, 4]
+scenario:
+  duration_s: 120
+  n_people: 10
+  recall: 0.7
+  fp_per_frame: 0.5
+  gps_sigma_m: 0.5
+pipeline_config: configs/edge.yaml
+pipeline:
+  n_confirm: 3
+  confirm: geo
+grid:
+  pipeline.net_loss: [0, 0.2, 0.5]
+  pipeline.net_burst: [null, [5, 20], [15, 60], [10, 10], [30, 30]]
+  pipeline.link_probe_s: [0, 2]

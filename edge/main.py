@@ -94,6 +94,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ground-url", default=None, help="Địa chỉ trạm mặt đất; không có thì dùng transport giả luôn ack")
     parser.add_argument("--net-loss", type=float, default=0.0, help="Giả lập: xác suất mất mỗi lần gửi")
     parser.add_argument("--net-outage", type=float, nargs=2, action="append", default=None, metavar=("START", "END"), help="Giả lập: khoảng mất sóng (giây), lặp được")
+    parser.add_argument("--net-burst", type=float, nargs=2, default=None, metavar=("BAD_S", "GOOD_S"),
+                        help="Giả lập mất theo cụm (Gilbert–Elliott): thời gian trung bình ở trạng thái xấu và tốt (giây); tỉ lệ mất trung bình BAD/(BAD+GOOD) khi --net-burst-loss 1")
+    parser.add_argument("--net-burst-loss", type=float, default=1.0, help="Xác suất mất mỗi lần gửi khi ở trạng thái xấu của --net-burst")
     parser.add_argument("--link-probe-s", type=float, default=None, help="Gửi cảnh báo: khi mọi gói đang chờ gửi lại, cứ mỗi số giây này thử một gói toạ độ; gửi được thì gửi ngay mọi gói đang chờ (mặc định tắt; 0 để tắt khi file cấu hình đã bật)")
     parser.add_argument("--state-every-s", type=float, default=None, help="Gửi trạng thái drone (vị trí, vùng camera nhìn, cảnh báo đang chờ) về trạm mỗi số giây này, qua cùng giả lập mạng; mặc định tắt (edge/status.py)")
     parser.add_argument("--simulated-flight", action="store_true", help="Nguồn là chuyến bay mô phỏng (sim/make_rq3.py --render): ghi 'ảnh tổng hợp' lên video và báo trạm telemetry không phải thật")
@@ -227,8 +230,11 @@ def main() -> None:
         else YoloDetector(args.model, args.mode, args.imgsz, args.tile, args.overlap, args.conf, args.max_det, args.device)
     )
     transport: Transport = HttpTransport(args.ground_url) if args.ground_url else FakeTransport()
-    if args.net_loss > 0 or args.net_outage:
-        transport = NetemTransport(transport, args.net_loss, [tuple(o) for o in args.net_outage or []], args.seed)
+    netem = args.net_loss > 0 or bool(args.net_outage) or args.net_burst is not None
+    burst = tuple(args.net_burst) if args.net_burst else None
+    if netem:
+        transport = NetemTransport(transport, args.net_loss, [tuple(o) for o in args.net_outage or []], args.seed,
+                                   burst, args.net_burst_loss)
     # Outbox của lần chạy trước trong cùng thư mục là của thí nghiệm khác: xoá để lần chạy tái lập được.
     for suffix in ("", "-wal", "-shm"):
         (args.output / f"outbox.sqlite{suffix}").unlink(missing_ok=True)
@@ -236,8 +242,9 @@ def main() -> None:
     # Trạng thái drone đi đường riêng (không qua outbox), cùng khoảng mất sóng nhưng seed khác, để bật hay tắt không đổi
     # chuỗi sự kiện mạng của cảnh báo (kết quả RQ3d giữ nguyên).
     state_transport: Transport = HttpTransport(args.ground_url) if args.ground_url else FakeTransport()
-    if args.net_loss > 0 or args.net_outage:
-        state_transport = NetemTransport(state_transport, args.net_loss, [tuple(o) for o in args.net_outage or []], args.seed + 7919)
+    if netem:
+        state_transport = NetemTransport(state_transport, args.net_loss, [tuple(o) for o in args.net_outage or []],
+                                         args.seed + 7919, burst, args.net_burst_loss)
     live = LiveView(args.live_port) if args.live_port else None
     if live:
         print(f"Video trực tiếp: http://localhost:{live.port}/")
@@ -286,7 +293,11 @@ def main() -> None:
         if device:
             lines.append(f"Thiet bi gia lap: {device.profile.name}")
             lines.append(f"{device.achieved_fps(t_now):.1f} khung/s, tre {device.last_latency_ms:.0f} ms/khung, bo {device.n_skipped} khung")
-        banner = "MAT SONG - canh bao cho gui bu" if any(a <= t_now < b for a, b in outages) else None
+        banner = None
+        if any(a <= t_now < b for a, b in outages):
+            banner = "MAT SONG - canh bao cho gui bu"
+        elif isinstance(transport, NetemTransport) and transport.burst is not None and transport.burst.bad_at(t_now):
+            banner = "SONG YEU - mat goi lien tiep"
         return lines, banner
 
     def skip_frame(frame: Any, frame_id: Any, t_now: float, tel: Any) -> None:

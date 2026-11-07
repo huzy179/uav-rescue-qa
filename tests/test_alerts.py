@@ -125,3 +125,35 @@ def test_crop_near_border_has_full_size() -> None:
     jpeg = base64.b64decode(crop_jpeg_base64(frame, (390, 290, 399, 299), size=256))
     image = cv2.imdecode(np.frombuffer(jpeg, np.uint8), cv2.IMREAD_COLOR)
     assert image.shape == (256, 256, 3)
+
+
+def test_gilbert_elliott_bursts_are_deterministic_and_average_right() -> None:
+    from sim.netem import GilbertElliott
+
+    a, b = GilbertElliott(5.0, 20.0, seed=3), GilbertElliott(5.0, 20.0, seed=3)
+    times = [0.5 * i for i in range(20000)]
+    states = [a.bad_at(t) for t in times]
+    assert states == [b.bad_at(t) for t in times]
+    assert not states[0]  # bắt đầu ở trạng thái tốt
+    assert abs(sum(states) / len(states) - a.bad_fraction) < 0.05  # 10.000 s, khoảng 400 chu kỳ
+    intervals = a.bad_intervals(100.0)
+    assert all(0 < s < e <= 100.0 for s, e in intervals)
+    assert all(a.bad_at(s + 1e-9) and not a.bad_at(e + 1e-9) for s, e in intervals if e < 100.0)
+
+
+def test_netem_burst_off_keeps_old_sequence_and_burst_drops_only_when_bad() -> None:
+    from sim.netem import NetemTransport
+
+    class Ack:
+        def send(self, msg: object, now: float) -> bool:
+            return True
+
+    old = NetemTransport(Ack(), loss=0.3, seed=5)
+    same = NetemTransport(Ack(), loss=0.3, seed=5, burst=None)
+    times = [0.5 * i for i in range(400)]
+    assert [old.send(None, t) for t in times] == [same.send(None, t) for t in times]  # type: ignore[arg-type]
+
+    net = NetemTransport(Ack(), loss=0.0, seed=5, burst=(5.0, 20.0), burst_loss=1.0)
+    for t in times:
+        assert net.send(None, t) == (not net.burst.bad_at(t))  # type: ignore[arg-type, union-attr]
+        assert net.link_down(t) == net.burst.bad_at(t)  # type: ignore[union-attr]
