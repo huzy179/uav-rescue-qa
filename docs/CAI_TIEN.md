@@ -47,7 +47,8 @@ Cập nhật 7/11/2026.
 - **Vấn đề.** Đo TensorRT FP16/INT8 trên T4 đang chạy (7/11; lần đầu INT8 lỗi với TensorRT 11, đã ghim TensorRT 10). Hồ sơ Jetson trong `configs/devices/` là ước lượng chưa hiệu chỉnh.
 - **Đã làm:** thu nhỏ theo độ cao giảm số ô mỗi khung (khung 4K từ 32 ô xuống 6 ô, `DEMO_BAO_VE.md`); tần số xử lý theo độ cao chạy ít khung hơn khi bay cao (`rq3_adaptive.md`); giả lập thời gian thiết bị (`--device-profile`).
 - **Đề xuất (cần GPU T4, khoảng 2 giờ):** chạy RQ2, rồi hiệu chỉnh hồ sơ bằng `scripts/after_rq2.py`.
-- **Đề xuất (cần GPU T4, khoảng 1 giờ):** đầu một-một không cần NMS của YOLO26 (`nms=False` khi xuất); mọi kết quả hiện dùng mặc định đầu một-nhiều kèm NMS (TECHNICAL 3.1). Kiểm chứng: AP và recall theo nhóm cỡ so với mặc định bằng bootstrap cặp, thời gian gộp và suy luận mỗi khung trên T4.
+- **Đã thử, bỏ (8/11): đầu một-một không cần NMS của YOLO26** (`--nms-free`, `nms_free.md`). Cùng trọng số E2c, recall ở conf 0,25 giảm có ý nghĩa trên VisDrone (val −0,034, dưới 8 px −0,056; test-dev −0,030), AP50 gần như không đổi; trên PyTorch không nhanh hơn (15,2 ms/ảnh ở 1280 cả hai cách). Giữ mặc định có NMS.
+- **Đề xuất (chỉ nếu còn giờ T4):** đo thời gian đầu một-một trên TensorRT; nếu nhanh hơn rõ thì chọn lại ngưỡng conf trên val để lấy lại recall.
 - **Đề xuất (không cần GPU):** bỏ qua ô không có gì thay đổi so với khung trước khi drone gần như đứng yên (so độ khác biệt ảnh trên ô đã căn theo telemetry); kiểm chứng: số ô chạy và recall trên SDS v21 (drone gần như đứng yên).
 
 ## 3. Xác nhận, định vị, gửi cảnh báo (câu hỏi 3)

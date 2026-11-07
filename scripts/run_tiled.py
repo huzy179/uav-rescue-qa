@@ -35,6 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=Path("runs/baseline/tiled"), help="Thư mục kết quả")
     parser.add_argument("--max-frames", type=int, default=None, help="Giới hạn số ảnh xử lý")
     parser.add_argument("--no-images", action="store_true", help="Không lưu ảnh có vẽ box (nên dùng khi conf rất thấp)")
+    parser.add_argument("--nms-free", action="store_true", help="Đầu một-một của YOLO26, không NMS trong từng ô (ultralytics nms=False)")
     parser.add_argument("--altitude-csv", type=Path, default=None, help="CSV image, alt_agl_m (tools/make_sds_det.py) để thu nhỏ theo độ cao")
     parser.add_argument("--target-person-px", type=float, default=None, help="Như edge/main.py: thu nhỏ để người dự kiến còn khoảng số px này")
     parser.add_argument("--min-person-px", type=float, default=None, help="Phóng to khi người dự kiến dưới số px này (tối đa --max-upscale lần)")
@@ -49,7 +50,8 @@ def main() -> None:
     """Chạy bộ cắt ô trên toàn bộ nguồn rồi xuất CSV, bảng tóm tắt, histogram và run_config.json."""
     args = parse_args()
     detector = YoloDetector(
-        args.model, "tiled", args.imgsz, args.tile, args.overlap, args.conf, args.max_det, args.device, args.full_pass
+        args.model, "tiled", args.imgsz, args.tile, args.overlap, args.conf, args.max_det, args.device, args.full_pass,
+        args.nms_free,
     )
     image_dir = args.output / "images"
     (args.output if args.no_images else image_dir).mkdir(parents=True, exist_ok=True)

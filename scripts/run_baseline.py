@@ -40,6 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--vid-stride", type=int, default=1, help="Với video: lấy 1 khung hình mỗi N khung")
     parser.add_argument("--max-frames", type=int, default=None, help="Giới hạn số ảnh/khung hình xử lý")
     parser.add_argument("--no-images", action="store_true", help="Không lưu ảnh có vẽ box (nên dùng khi conf rất thấp)")
+    parser.add_argument("--nms-free", action="store_true", help="Đầu một-một của YOLO26, không NMS (ultralytics nms=False); mặc định đầu một-nhiều kèm NMS")
     return parse_args_with_config(parser)
 
 
@@ -53,6 +54,8 @@ def run_one_imgsz(
     predict_kwargs = dict(
         imgsz=imgsz, conf=args.conf, classes=[PERSON_CLASS_ID], max_det=args.max_det, device=device, verbose=False
     )
+    if args.nms_free:
+        predict_kwargs["nms"] = False
     box_records: list[dict[str, Any]] = []
     image_records: list[dict[str, Any]] = []
     warmed_up = False

@@ -1,0 +1,9 @@
+# E2c, đầu một-một của YOLO26 không NMS (nms=False) trên visdrone test-dev: như E2c_visdrone-testdev.yaml, chỉ khác --nms-free.
+source: data/processed/visdrone/images/test-dev
+model: runs/train/E2c_s0/weights/best.pt
+imgsz: [1280]
+conf: 0.001
+max_det: 1000
+no_images: true
+nms_free: true
+output: runs/visdrone-testdev/E2cnf

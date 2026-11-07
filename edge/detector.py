@@ -229,6 +229,8 @@ class YoloDetector:
 
     full_pass (chỉ với mode="tiled"): thêm một lượt toàn ảnh ở imgsz để bắt người lớn bị cắt đôi giữa các ô,
     giống perform_standard_pred mặc định của SAHI.
+    nms_free: dùng đầu một-một của YOLO26 (ultralytics nms=False), không chạy NMS; mặc định False là đầu một-nhiều
+    kèm NMS như mọi kết quả trước 8/11 (TECHNICAL mục 3.1, docs/results/nms_free.md).
     """
 
     def __init__(
@@ -242,6 +244,7 @@ class YoloDetector:
         max_det: int = 1000,
         device: str | None = None,
         full_pass: bool = False,
+        nms_free: bool = False,
     ) -> None:
         from ultralytics import YOLO
 
@@ -253,6 +256,8 @@ class YoloDetector:
         self._kwargs: dict[str, Any] = dict(
             conf=conf, classes=[PERSON_CLASS_ID], max_det=max_det, device=self.device, verbose=False
         )
+        if nms_free:
+            self._kwargs["nms"] = False
         self._warmed_up = False
 
     def _predict(self, images: list[np.ndarray], imgsz: int) -> list[tuple[np.ndarray, np.ndarray]]:

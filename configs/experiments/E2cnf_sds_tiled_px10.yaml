@@ -1,0 +1,14 @@
+# E2c cắt ô 640 thu nhỏ về 10 px theo độ cao (cấu hình cuối), đầu một-một không NMS trong từng ô, trên SeaDronesSee val:
+# như lần chạy runs/sds_det/E2c_tiled_px10, chỉ khác --nms-free.
+source: data/processed/sds_det/images/val
+model: runs/train/E2c_s0/weights/best.pt
+tile: 640
+overlap: 0.2
+imgsz: 640
+conf: 0.001
+max_det: 1000
+no_images: true
+altitude_csv: data/processed/sds_det/meta_val.csv
+target_person_px: 10
+nms_free: true
+output: runs/sds_det/E2cnf_tiled_px10
