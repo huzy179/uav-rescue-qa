@@ -24,7 +24,7 @@ Cập nhật 7/11/2026.
 - **Vấn đề.** VisDrone val < 8 px: E2c 0,546 AP50, test-dev 0,241 (`E3.md`), thấp hơn hẳn các nhóm khác.
 - **Đã thử, bỏ: nhánh phát hiện P2 (E3).** Chỉ +0,012–0,013 AP50 ở < 8 px, mức tăng mất ở IoU 0,3, kém ở người to, tốn thêm tính toán (`E3.md`).
 - **Đã làm:** fine-tune trên VisDrone (< 8 px từ 0,167 lên 0,554, `visdrone_E2.md`); cắt ô 640 chồng 0,2.
-- **Đề xuất (không cần huấn luyện):** thu nhỏ theo độ cao theo chiều ngược lại, tức **phóng to** khung khi người dự kiến dưới khoảng 8 px (hệ số < 1 trong `person_scale`), đổi lại nhiều ô hơn. Kiểm chứng: recall theo số pixel (`eval/recall_by_pixels.py`) trên SeaDronesSee ở các đoạn bay cao, kèm số ô mỗi khung.
+- **Đã thử, bỏ (7/11): phóng to khi người dự kiến dưới 8 px** (`--min-person-px 8 --max-upscale 2`, tuỳ chọn, mặc định tắt). Trên SeaDronesSee thu nhỏ 2–6 lần, không mức nào cải thiện có ý nghĩa (ví dụ thu nhỏ 6 lần: hiệu AP50 +0,017, −0,043 đến +0,064) mà số ô tăng từ 317 lên 673 (`upscale_small.md`). Người dưới 8 px vẫn là giới hạn dưới; chữa bằng bay thấp hơn.
 - **Đề xuất (bay):** hạ độ cao bay khi tìm kiếm chi tiết; mô phỏng cho thấy từ 80 m trở lên E2c không bỏ sót ai còn ở 30 m lại bỏ sót nhiều (`rq3_altitude.md`), nên khuyến nghị độ cao nằm ở khoảng giữa; tần số theo độ cao bù được bay thấp (`rq3_adaptive.md`).
 
 ### 1.3. Khác biệt giữa dữ liệu huấn luyện và cảnh lũ
@@ -108,6 +108,6 @@ Cập nhật 7/11/2026.
 
 1. RQ2 trên T4 rồi hiệu chỉnh hồ sơ thiết bị (mục 2): mở khoá câu hỏi 2, khoảng 2 giờ GPU.
 2. Hai seed cho E2c (mục 1.5): cần cho chương 5, khoảng 20 giờ GPU.
-3. Phóng to khi người dưới 8 px và lượt toàn ảnh cho người to (mục 1.1, 1.2): chỉ cần suy luận, vài giờ công.
+3. ~~Phóng to khi người dưới 8 px~~ (7/11, kết quả âm, `upscale_small.md`) và lượt toàn ảnh cho người to (mục 1.1): chỉ cần suy luận, vài giờ công.
 4. Đồng bộ thời gian metadata gimbal (mục 3.6): không cần GPU; mở được video thật cho phần quét vùng.
 5. Lấy mẫu C2A một phần (mục 1.1): chỉ khi còn khoảng 10 giờ GPU sau mục 1 và 2.

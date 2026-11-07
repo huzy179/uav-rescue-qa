@@ -24,6 +24,9 @@ def test_inference_counts_match_detector_tiling() -> None:
     assert inference_counts(3840, 2160, 1.0, "tiled", 640, 0.2, full_pass=True) == (32, 1)
     # thu nhỏ 3 lần: 1280×720 → ngang ceil(640/512)+1 = 3, dọc ceil(80/512)+1 = 2 → 6 ô
     assert inference_counts(3840, 2160, 3.0, "tiled", 640, 0.2) == (6, 0)
+    # phóng to 2 lần (scale 0,5): 640×360 → 1280×720 → 6 ô thay vì 1
+    assert inference_counts(640, 360, 1.0, "tiled", 640, 0.2) == (1, 0)
+    assert inference_counts(640, 360, 0.5, "tiled", 640, 0.2) == (6, 0)
     assert inference_counts(3840, 2160, 1.0, "full", 640, 0.2) == (0, 1)
 
 

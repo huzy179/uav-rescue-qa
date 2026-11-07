@@ -53,7 +53,7 @@ def inference_counts(
     """
     if mode == "full":
         return 0, 1
-    if scale > 1.0:
+    if scale != 1.0:
         width, height = max(1, round(width / scale)), max(1, round(height / scale))
     n_tiles = len(tile_origins(width, tile, overlap)) * len(tile_origins(height, tile, overlap))
     return n_tiles, int(full_pass)

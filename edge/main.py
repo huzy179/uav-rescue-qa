@@ -59,6 +59,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-det", type=int, default=1000, help="Số box tối đa mỗi lần suy luận")
     parser.add_argument("--target-person-px", type=float, default=None,
                         help="Thu nhỏ khung theo độ cao để người dự kiến còn khoảng số px này (docs/results/e6_sds_pilot.md); không đặt thì giữ nguyên")
+    parser.add_argument("--min-person-px", type=float, default=None,
+                        help="Phóng to khung khi người dự kiến dưới số px này (bay cao); không đặt thì không phóng to")
+    parser.add_argument("--max-upscale", type=float, default=2.0, help="Hệ số phóng to tối đa (số ô tăng theo bình phương)")
     parser.add_argument("--person-m", type=float, default=0.5, help="Cỡ người nhìn từ trên xuống (m), để tính số px dự kiến")
     parser.add_argument("--device", default=None, help="cuda:0, mps, cpu (mặc định: tự chọn)")
     parser.add_argument("--telemetry", type=Path, default=None, help="File .csv hoặc .srt (DJI); không có thì dùng chuyến bay thẳng giả lập")
@@ -334,7 +337,9 @@ def main() -> None:
                 in_frame_s = footprint_m / speed if speed > 0 else args.window_s
                 confirmer.window_s = max(args.window_s, in_frame_s)
                 confirmer.expire_s = max(args.expire_s, confirmer.window_s + 1.0 / fps_now)
-            scale = person_scale(expected_person_px(tel, cam, args.person_m), args.target_person_px)
+            scale = person_scale(
+                expected_person_px(tel, cam, args.person_m), args.target_person_px, args.min_person_px, args.max_upscale
+            )
             if device and not device.ready(t):
                 # Thiết bị còn bận với khung trước: khung này bị bỏ, video demo vẽ kết quả gần nhất.
                 skip_frame(frame, frame_id, t, tel)
