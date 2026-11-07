@@ -13,13 +13,15 @@ Ký hiệu trạng thái: **Có** (có file kết quả), **Chờ** (chưa chạ
 
 ## Chương 1. Mở đầu
 
+Nháp 7/11: `docs/luan_van/chuong1.md` (1.1–1.6; thêm 1.5 phạm vi và giới hạn; còn **[CẦN NGUỒN]** cho số liệu lũ thực tế và **[ĐỐI CHIẾU ĐỀ CƯƠNG]** cho câu chữ ba câu hỏi).
+
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
-| 1.1 Bối cảnh | Người mắc kẹt trong lũ; UAV quét nhanh nhưng người vận hành không xem kịp video | TONG_QUAN 1.1 | Viết |
-| 1.2 Ba ràng buộc | Người rất nhỏ trong ảnh; thiết bị biên yếu; mạng chập chờn. Kèm bảng số pixel theo độ cao | TONG_QUAN 1.2, TECHNICAL mục 2 (bảng GSD) | Có |
-| 1.3 Câu hỏi nghiên cứu | Ba câu theo đề cương, 14 câu hỏi con, luận điểm "dữ liệu bay giúp cả ba khâu" | TONG_QUAN 1.3 | Viết (chờ cô duyệt cách trình bày) |
-| 1.4 Đóng góp | Ba đóng góp và phần hiện thực hoá | TONG_QUAN 1.4 | Viết |
-| 1.5 Bố cục luận văn | Một đoạn giới thiệu sáu chương | Dàn ý này | Viết |
+| 1.1 Bối cảnh | Người mắc kẹt trong lũ; UAV quét nhanh nhưng người vận hành không xem kịp video | TONG_QUAN 1.1 | Nháp |
+| 1.2 Ba ràng buộc | Người rất nhỏ trong ảnh; thiết bị biên yếu; mạng chập chờn. Kèm bảng số pixel theo độ cao | TONG_QUAN 1.2, TECHNICAL mục 2 (bảng GSD) | Nháp |
+| 1.3 Câu hỏi nghiên cứu | Ba câu theo đề cương, 14 câu hỏi con, luận điểm "dữ liệu bay giúp cả ba khâu" | TONG_QUAN 1.3 | Nháp (chờ cô duyệt cách trình bày) |
+| 1.4 Đóng góp | Ba đóng góp và phần hiện thực hoá | TONG_QUAN 1.4 | Nháp |
+| 1.5 Bố cục luận văn | Một đoạn giới thiệu sáu chương | Dàn ý này | Nháp |
 
 ## Chương 2. Cơ sở lý thuyết và nghiên cứu liên quan
 

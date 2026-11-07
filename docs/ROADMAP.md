@@ -23,13 +23,13 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 | Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ |
 | Câu hỏi 2 (tốc độ) | Lần chạy đủ thứ hai **đang chạy** trên Kaggle T4 (7/11; lần đầu lỗi INT8 với TensorRT 11, đã ghim TensorRT 10). Xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`); khi xong: kết quả `rq2_t4.md`, chương 5 mục 5.2, hiệu chỉnh hồ sơ thiết bị, `rq3_device.yaml` |
 | Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới (tần số, độ cao, GPS, la bàn, mạng, mất theo cụm, nhóm người) và ba đoạn SeaDronesSee thật |
-| Viết | Nháp chương 3, 4, 5 (7/11); chờ tập lũ và câu hỏi 2; còn chương 1, 2, 6 |
+| Viết | Nháp chương 1, 3, 4, 5 (7/11); chờ tập lũ và câu hỏi 2; còn chương 2 (cần tra lại trích dẫn) và 6 |
 | Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
 
 Từ nay tới 11/11 ưu tiên gán nhãn; mã chỉ viết khi khoá tập hoặc một thí nghiệm cần.
 
 **Nhật ký 7/11** (mỗi mục một file kết quả; trạng thái mỗi cải tiến ở `CAI_TIEN.md`):
-- Viết: nháp chương 3 (phương pháp), chương 4, chương 5.
+- Viết: nháp chương 1 (mở đầu), chương 3 (phương pháp), chương 4, chương 5.
 - **E2e (thêm C2A) xong, âm**: kém E2c ở người nhỏ (VisDrone val −0,029 AP50, < 8 px −0,053), SeaDronesSee +0,041 không có ý nghĩa; giữ E2c, #14 khép lại (`E2e.md`).
 - Câu hỏi 2: chạy thử hai biến thể trên T4 xong; lần chạy đủ đầu lỗi xuất INT8 (TensorRT 11 trên T4), đã ghim TensorRT 10 và để `run_rq2.py` bỏ qua engine lỗi; chuẩn bị `after_rq2.py`, `rq2_report.py`, `rq3_device.yaml`.
 - Cải tiến âm, giữ làm tuỳ chọn: phóng to người nhỏ (`upscale_small.md`), lượt toàn ảnh sau thu nhỏ (`full_pass.md`), đồng bộ và làm mượt gimbal (`georef_sync.md`), ngưỡng theo cỡ (`conf_by_size.md`), đếm người theo cụm hoặc theo khung trong cửa sổ (`rq3_group.md`, #18).
