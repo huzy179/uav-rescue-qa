@@ -23,7 +23,7 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 | Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ |
 | Câu hỏi 2 (tốc độ) | Chạy thử xuất INT8 với TensorRT 10.16 thành công (8/11); lần chạy đủ chín biến thể **đang chạy** trên Kaggle T4 (bắt đầu 8/11; lần đầu 7/11 lỗi INT8 với TensorRT 11). Xử lý sau khi tải về đã sẵn (`scripts/after_rq2.py`); khi xong: kết quả `rq2_t4.md`, chương 5 mục 5.2, hiệu chỉnh hồ sơ thiết bị, `rq3_device.yaml` |
 | Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới (tần số, độ cao, GPS, la bàn, mạng, mất theo cụm, nhóm người) và ba đoạn SeaDronesSee thật |
-| Viết | Nháp chương 1–5 (7–8/11); chờ tập lũ và câu hỏi 2; chương 2 còn tra trích dẫn và đọc toàn văn; còn chương 6 |
+| Viết | Nháp chương 1–5 (7–8/11); chờ tập lũ và câu hỏi 2; chương 2 còn tra trích dẫn và đọc toàn văn; khung chương 6 |
 | Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
 
 Từ nay tới 11/11 ưu tiên gán nhãn; mã chỉ viết khi khoá tập hoặc một thí nghiệm cần.
