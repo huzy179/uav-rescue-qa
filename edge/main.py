@@ -97,6 +97,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ground-url", default=None, help="Địa chỉ trạm mặt đất; không có thì dùng transport giả luôn ack")
     parser.add_argument("--net-loss", type=float, default=0.0, help="Giả lập: xác suất mất mỗi lần gửi")
     parser.add_argument("--net-outage", type=float, nargs=2, action="append", default=None, metavar=("START", "END"), help="Giả lập: khoảng mất sóng (giây), lặp được")
+    parser.add_argument("--gpu-resize", action="store_true",
+                        help="Đổi cỡ khung khi thu nhỏ theo độ cao bằng torch trên GPU thay cho cv2 trên CPU (docs/results/gpu_resize.md)")
     parser.add_argument("--skip-static-tiles", action="store_true",
                         help="Khi drone gần như đứng yên (theo telemetry), dùng lại kết quả của ô gần như không đổi thay vì chạy lại mô hình (edge/tile_cache.py, docs/results/tile_skip.md)")
     parser.add_argument("--skip-diff", type=float, default=4.0, help="Ngưỡng chênh trung bình (mức xám, ảnh ô thu về 32×32) để coi ô là không đổi")
@@ -237,7 +239,8 @@ def main() -> None:
         ReplayDetector(args.replay)
         if args.replay
         else YoloDetector(args.model, args.mode, args.imgsz, args.tile, args.overlap, args.conf, args.max_det, args.device,
-                          tile_cache=TileCache(args.skip_diff, args.skip_max_age) if args.skip_static_tiles else None)
+                          tile_cache=TileCache(args.skip_diff, args.skip_max_age) if args.skip_static_tiles else None,
+                          gpu_resize=args.gpu_resize)
     )
     transport: Transport = HttpTransport(args.ground_url) if args.ground_url else FakeTransport()
     netem = args.net_loss > 0 or bool(args.net_outage) or args.net_burst is not None

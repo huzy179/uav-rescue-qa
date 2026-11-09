@@ -1,0 +1,15 @@
+# E2c cắt ô 640 thu nhỏ về 10 px theo độ cao (cấu hình cuối) trên SeaDronesSee val:
+# như E2c_sds_tiled_px10_cpu, chỉ khác --gpu-resize: đổi cỡ khung bằng torch trên GPU (CAI_TIEN mục 2).
+source: data/processed/sds_det/images/val
+model: runs/train/E2c_s0/weights/best.pt
+tile: 640
+overlap: 0.2
+imgsz: 640
+conf: 0.001
+max_det: 1000
+device: "0"
+no_images: true
+altitude_csv: data/processed/sds_det/meta_val.csv
+target_person_px: 10
+gpu_resize: true
+output: runs/sds_det/E2c_tiled_px10_gpuresize

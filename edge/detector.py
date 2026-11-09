@@ -51,6 +51,28 @@ def person_scale(
     return expected_px / target_px
 
 
+def torch_device(device: str) -> str:
+    """Tên thiết bị kiểu Ultralytics ("0", "cuda:0", "cpu", "mps") sang tên torch hiểu ("0" thành "cuda:0")."""
+    return f"cuda:{device}" if device.isdigit() else device
+
+
+def resize_torch(frame: np.ndarray, size: tuple[int, int], device: str = "cpu") -> np.ndarray:
+    """Đổi cỡ khung bằng torch trên `device`, thay cho cv2.resize trên CPU (CAI_TIEN mục 2, docs/results/gpu_resize.md).
+
+    size là (rộng, cao) như cv2. Thu nhỏ dùng nội suy song tuyến có khử răng cưa (antialias), gần INTER_AREA của
+    cv2; phóng to dùng song tuyến thường như INTER_LINEAR. Khung uint8 (cao, rộng, kênh) được chép lên thiết bị ở dạng
+    uint8 rồi mới đổi sang số thực, để lượng dữ liệu chép qua PCIe nhỏ nhất. Trả về uint8 trên CPU.
+    """
+    import torch
+    import torch.nn.functional as F
+
+    width, height = size
+    downscale = width < frame.shape[1] or height < frame.shape[0]
+    x = torch.from_numpy(np.ascontiguousarray(frame)).to(device).permute(2, 0, 1)[None].float()
+    y = F.interpolate(x, size=(height, width), mode="bilinear", align_corners=False, antialias=downscale)
+    return y[0].permute(1, 2, 0).round_().clamp_(0, 255).to(torch.uint8).cpu().numpy()
+
+
 class ReplayDetector:
     """Đọc lại detections.jsonl của một lần chạy trước, để thí nghiệm RQ3 không phải chạy lại mô hình."""
 
@@ -232,6 +254,8 @@ class YoloDetector:
     giống perform_standard_pred mặc định của SAHI.
     nms_free: dùng đầu một-một của YOLO26 (ultralytics nms=False), không chạy NMS; mặc định False là đầu một-nhiều
     kèm NMS như mọi kết quả trước 8/11 (TECHNICAL mục 3.1, docs/results/nms_free.md).
+    gpu_resize: đổi cỡ khung (scale ≠ 1) bằng torch trên thiết bị của mô hình (resize_torch) thay cho cv2.resize trên
+    CPU; mặc định False giữ cv2 như mọi kết quả trước 10/11 (docs/results/gpu_resize.md).
     """
 
     def __init__(
@@ -247,6 +271,7 @@ class YoloDetector:
         full_pass: bool = False,
         nms_free: bool = False,
         tile_cache: TileCache | None = None,
+        gpu_resize: bool = False,
     ) -> None:
         from ultralytics import YOLO
 
@@ -262,6 +287,7 @@ class YoloDetector:
             self._kwargs["nms"] = False
         # Dùng lại kết quả ô không đổi (edge/tile_cache.py); bên gọi bật allow_tile_reuse khi drone đứng yên.
         self.tile_cache = tile_cache
+        self.resize_device = torch_device(self.device) if gpu_resize else None
         self.allow_tile_reuse = False
         self._warmed_up = False
 
@@ -280,8 +306,11 @@ class YoloDetector:
         start = time.perf_counter()
         if scale != 1.0:
             size = (max(1, round(frame.shape[1] / scale)), max(1, round(frame.shape[0] / scale)))
-            interpolation = cv2.INTER_AREA if scale > 1.0 else cv2.INTER_LINEAR
-            frame = cv2.resize(frame, size, interpolation=interpolation)
+            if self.resize_device is not None:
+                frame = resize_torch(frame, size, self.resize_device)
+            else:
+                interpolation = cv2.INTER_AREA if scale > 1.0 else cv2.INTER_LINEAR
+                frame = cv2.resize(frame, size, interpolation=interpolation)
         if self.mode == "full":
             images, offsets, imgsz = [frame], [(0, 0)], self.imgsz
         else:

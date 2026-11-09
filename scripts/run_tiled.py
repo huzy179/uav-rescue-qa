@@ -35,6 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=Path("runs/baseline/tiled"), help="Thư mục kết quả")
     parser.add_argument("--max-frames", type=int, default=None, help="Giới hạn số ảnh xử lý")
     parser.add_argument("--no-images", action="store_true", help="Không lưu ảnh có vẽ box (nên dùng khi conf rất thấp)")
+    parser.add_argument("--gpu-resize", action="store_true", help="Đổi cỡ khung bằng torch trên GPU thay cho cv2 trên CPU (edge/detector.py resize_torch)")
     parser.add_argument("--nms-free", action="store_true", help="Đầu một-một của YOLO26, không NMS trong từng ô (ultralytics nms=False)")
     parser.add_argument("--altitude-csv", type=Path, default=None, help="CSV image, alt_agl_m (tools/make_sds_det.py) để thu nhỏ theo độ cao")
     parser.add_argument("--target-person-px", type=float, default=None, help="Như edge/main.py: thu nhỏ để người dự kiến còn khoảng số px này")
@@ -51,7 +52,7 @@ def main() -> None:
     args = parse_args()
     detector = YoloDetector(
         args.model, "tiled", args.imgsz, args.tile, args.overlap, args.conf, args.max_det, args.device, args.full_pass,
-        args.nms_free,
+        args.nms_free, gpu_resize=args.gpu_resize,
     )
     image_dir = args.output / "images"
     (args.output if args.no_images else image_dir).mkdir(parents=True, exist_ok=True)
@@ -79,7 +80,7 @@ def main() -> None:
         box_records.extend(box_rows(name, METHOD, args.tile, boxes_xyxy, confs))
         infer_ms = timings["tile_ms"] + timings["infer_ms"] + timings["merge_ms"]
         image_records.append(
-            {"image": name, "method": METHOD, "imgsz": args.tile, "n_persons": len(confs), "infer_ms": round(infer_ms, 2), "scale": scale, "n_tiles": int(timings.get("n_tiles", 1))}
+            {"image": name, "method": METHOD, "imgsz": args.tile, "n_persons": len(confs), "infer_ms": round(infer_ms, 2), "tile_ms": round(timings["tile_ms"], 2), "scale": scale, "n_tiles": int(timings.get("n_tiles", 1))}
         )
         if not args.no_images:
             cv2.imwrite(str((image_dir / name).with_suffix(".jpg")), draw_boxes(frame, boxes_xyxy, confs))
