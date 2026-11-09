@@ -78,6 +78,7 @@ Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDr
 | | RQ1f chuyển sang cảnh lũ | `sds_det.md` và tập lũ | **Chờ** tập lũ |
 | 5.2 Câu hỏi 2 | RQ2a, RQ2b nén mô hình, cấu hình tốt nhất | Bảng tốc độ, hiệu độ chính xác theo cặp, biên Pareto trên T4 (`rq2_t4.md`) | **Đã có** (8/11) |
 | | RQ2c thiết bị yếu | Giả lập thời gian thiết bị, hiệu chỉnh từ RQ2 (ước lượng, bảng riêng; mô phỏng `rq3_device.yaml`, `rq2_t4.md` kết quả 4) | **Đã có** (8/11, mô phỏng) |
+| | Đổi cỡ khung trên GPU (sau RQ2b) | Thời gian chặng chuẩn bị khung và so cặp độ chính xác trên SeaDronesSee val (`gpu_resize.md`, sơ bộ trên máy cá nhân) | **Đã có** (10/11, sơ bộ) |
 | 5.3 Câu hỏi 3 | RQ3a số khung mỗi giây | `rq3_adaptive.md`, `rq3_altitude.md`, `rq3_altprofile.md` | Có, mô phỏng |
 | | RQ3b xác nhận | `sds_mot_confirm.md`, `rq3_cmc_cause.md` | Có, sơ bộ |
 | | RQ3c sai số GPS | `rq3_geoerr.md`, `rq3_yawcalib.md`, `rq3_gpsacc.md`; video thật: `georef_pitch.md`, `georef_sync.md` (âm) | Có, mô phỏng |

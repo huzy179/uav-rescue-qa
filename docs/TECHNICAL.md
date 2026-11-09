@@ -1167,6 +1167,8 @@ Không có Jetson nên không đo được; cũng không có công cụ nào gi�
 
 Số hạng cuối chỉ cộng khi khung bị thu nhỏ theo độ cao (`scale ≠ 1`); thêm 8/11 vì trên T4 đổi cỡ khung 4K bằng `cv2.INTER_AREA` mất 46,28 ms, nhiều hơn suy luận FP16 của 6 ô. Hồ sơ cũ không có khoá này đọc như 0.
 
+**[Đã có, tuỳ chọn] Đổi cỡ trên GPU** (`--gpu-resize`, 10/11, `results/gpu_resize.md`): `resize_torch` chép khung uint8 lên GPU rồi nội suy song tuyến có khử răng cưa; box vẫn quy về ảnh gốc như cũ. Chặng chậm vì Ultralytics gọi `cv2.setNumThreads(0)` khi import, nên `cv2.resize` trong pipeline chỉ chạy một luồng. Trên RTX 5060, SeaDronesSee val: chặng chuẩn bị khung 21,34 → 5,39 ms (trung vị), độ chính xác không khác có ý nghĩa. Hồ sơ thiết bị vẫn theo số đo T4 với `cv2.resize` (chưa đo `--gpu-resize` trên T4). Đo riêng: `tools/bench_resize.py`; tóm tắt thời gian `eval/per_image_timing.py`.
+
 - Số ô tính từ kích thước khung, hệ số thu nhỏ và cách cắt ô của detector (`inference_counts`), nên chế độ phát lại (`--replay`, không chạy mô hình) cũng dùng được. Khung 1080p có 8 ô; 4K có 32 ô; thu nhỏ theo độ cao làm giảm số ô, nên **thu nhỏ theo độ cao cũng là cách để thiết bị yếu theo kịp**.
 - Thiết bị bận từ t tới t + độ trễ; khung tới trong lúc bận bị bỏ, như trên máy thật. Xác nhận vẫn tính theo thời điểm chụp t (telemetry của khung đó), nhưng cảnh báo vào hàng đợi gửi lúc xử lý xong, nên độ trễ cảnh báo gồm cả thời gian xử lý. Không có `--device-profile` thì như cũ (xử lý coi là tức thời), các kết quả RQ3 đã có không đổi.
 - `timings.jsonl` ghi thêm `sim_n_tiles`, `sim_latency_ms`, `t_done`; `run_config.json` ghi cả nội dung hồ sơ. `eval/rq3_metrics.py` tính `sim_latency_ms_median`, nên quét mô phỏng có cột độ trễ giả lập.

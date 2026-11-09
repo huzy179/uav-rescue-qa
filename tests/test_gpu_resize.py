@@ -58,3 +58,13 @@ def test_bat_thi_dung_torch_box_van_ve_anh_goc() -> None:
     dets, _ = det.detect(frame, 0, 0.0, scale=2.5)
     assert np.array_equal(det.seen[0], resize_torch(frame, (256, 144), "cpu"))
     assert dets[0].box_px == pytest.approx((25.0, 25.0, 50.0, 50.0))
+
+
+def test_per_image_timing_summarize() -> None:
+    import pandas as pd
+
+    from eval.per_image_timing import summarize
+
+    row = summarize(pd.DataFrame({"tile_ms": [1.0, 2.0, 9.0], "infer_ms": [10.0, 20.0, 30.0]}))
+    assert row["n_images"] == 3 and row["tile_ms_median"] == 2.0 and row["infer_ms_mean"] == 20.0
+    assert "tile_ms_p95" in summarize(pd.DataFrame({"tile_ms": [1.0]})) and "infer_ms_median" not in summarize(pd.DataFrame({"tile_ms": [1.0]}))

@@ -41,7 +41,7 @@ Kèm theo: hệ thống hoàn chỉnh từ video tới bản đồ, các công c
 
 - Đo trên thiết bị Jetson thật, gồm điện năng và giảm xung khi nóng; hiệu chỉnh lại giả lập thời gian thiết bị bằng số đo đó.
 - Mở rộng tập ảnh lũ, nhất là video có telemetry để đánh giá thu nhỏ theo độ cao trên cảnh lũ.
-- Đổi cỡ khung trên GPU (hoặc giải mã video ở độ phân giải thấp hơn khi bay thấp), vì đây là khâu chậm nhất của cấu hình được chọn và là chỗ thiết bị yếu thiếu sức (mục 5.2).
+- Đo đổi cỡ khung trên GPU trên chính thiết bị biên (đã cài và thử sơ bộ trên máy cá nhân, mục 5.2.1), hoặc giải mã video ở độ phân giải thấp hơn khi bay thấp, vì đây là khâu chậm nhất của cấu hình được chọn và là chỗ thiết bị yếu thiếu sức (mục 5.2).
 - Nếu cần INT8: chọn ngưỡng tin cậy riêng cho mô hình nén trên tập val và hiệu chỉnh INT8 với ảnh có nước.
 - Ảnh nhiệt kết hợp ảnh màu cho ban đêm và người bị che khuất.
 - Nhiều UAV phối hợp, chia vùng quét; xếp ưu tiên sự cố theo mức nguy cấp.

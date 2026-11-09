@@ -26,7 +26,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", default="0", help="Thiết bị của torch (như Ultralytics: 0, cpu)")
     parser.add_argument("--repeat", type=int, default=20, help="Số lần đo mỗi ô")
     parser.add_argument("--output", type=Path, required=True, help="File CSV kết quả")
-    parser.add_argument("--config", type=Path, default=None, help="File YAML chứa giá trị mặc định")
     return parser
 
 

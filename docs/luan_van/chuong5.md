@@ -227,6 +227,8 @@ Hiệu AP50 dưới 8 px là −0,018 (KTC 95% −0,041 đến −0,015), còn h
 
 **Thu nhỏ theo độ cao vừa đúng hơn vừa nhanh hơn, và đẩy chỗ tốn thời gian sang khâu đổi cỡ khung.** Trên khung 4K, cắt ô ở độ phân giải gốc phải chạy 32 ô và cho AP50 thấp nhất (0,234; INT8 0,164); thu nhỏ về 10 px còn 6 ô, AP50 0,534 với FP16 (hiệu +0,301, KTC 95% +0,060 đến +0,414). Nhưng đổi cỡ một khung 4K trên CPU mất 46,28 ms (trung vị, FP16), nhiều hơn suy luận của 6 ô (30,56 ms với FP16). Từ đây, muốn nhanh hơn nữa thì phải tối ưu khâu đổi cỡ khung (làm trên GPU hoặc giải mã video ở độ phân giải thấp hơn), không phải nén mô hình thêm.
 
+**Đổi cỡ khung trên GPU (sơ bộ, đo trên máy cá nhân, chỉ so tương đối).** Nguyên nhân khâu này chậm là thư viện Ultralytics ép OpenCV chạy một luồng khi được nạp. Đổi cỡ bằng torch trên GPU giảm chặng chuẩn bị khung trên SeaDronesSee val từ 21,34 ms xuống 5,39 ms (trung vị), tổng mỗi ảnh từ 50,60 ms xuống 43,55 ms, mà AP50 và recall không khác có ý nghĩa (AP50 −0,021, KTC 95% −0,038 đến +0,017; `gpu_resize.md`). Chưa đo trên T4 nên các bảng trên vẫn là số đo với đổi cỡ trên CPU.
+
 **Bảng 5.8c.** Biên Pareto recall vận hành theo tốc độ, SeaDronesSee val (`rq2_t4.md`; hình: `runs/rq2/rq2_sds_det.png`).
 
 | Cấu hình | Khung/giây theo p95 | Recall vận hành | AP50 | Trên biên |
