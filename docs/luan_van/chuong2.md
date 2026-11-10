@@ -44,7 +44,7 @@ Các mục 2.2 và chương 3 lần lượt xét các cách chống lại từng
 
 **Khớp thang kích thước.** TinyPerson [TinyPerson] chỉ ra rằng chênh lệch thang kích thước vật giữa dữ liệu học trước và dữ liệu phát hiện làm đặc trưng kém đi, và đề xuất co giãn dữ liệu học trước cho khớp thang của dữ liệu đích (Scale Match). Ý chung là: mô hình làm tốt nhất ở khoảng cỡ vật nó đã học.
 
-**Đổi cỡ ảnh theo độ cao bay.** Với ảnh UAV, cỡ vật phụ thuộc chủ yếu vào độ cao chụp. Messmer và cộng sự [AdaptiveResize] đổi cỡ từng ảnh UAV theo độ cao chụp trước khi phát hiện (Adaptive Resizing), báo độ chính xác tăng trên UAVDT và VisDrone và suy luận nhanh hơn hai đến ba lần [ĐỌC TOÀN VĂN: cách tính hệ số, nguồn độ cao]. Ahmed và Pizarro [AltTiling] kết hợp thu nhỏ theo độ cao với số ô thay đổi theo độ cao, đánh giá trên SeaDronesSee với YOLOv5 và SAHI, báo AP của vật nhỏ tăng và tốc độ hơn gấp đôi so với cắt ô cố định [ĐỌC TOÀN VĂN]. Bước thu nhỏ theo độ cao ở chương 3 thuộc cùng hướng này; khác biệt và phần luận văn thêm vào được nêu ở mục 2.6.
+**Đổi cỡ ảnh theo độ cao bay.** Với ảnh UAV, cỡ vật phụ thuộc chủ yếu vào độ cao chụp. Messmer và cộng sự [AdaptiveResize] đổi cỡ từng ảnh UAV trước khi phát hiện (Adaptive Resizing) để giữ khoảng cách mẫu mặt đất (GSD) không đổi: cỡ ảnh đích tỉ lệ nghịch với độ cao chụp, giả định camera nhìn thẳng xuống và cố định. Chỉ tập tự thu POG (10–110 m) có độ cao thật từ log bay; với VisDrone và UAVDT, độ cao được suy từ diện tích box trung bình của một lớp tham chiếu, tức là dùng nhãn. Với EfficientDet-D0, AP50 trên UAVDT tăng từ 34,1 lên 58,8 và tốc độ tăng 2,1–2,7 lần; bản rút gọn chạy khoảng 16 khung/giây trên Jetson AGX Xavier (TensorRT FP16). Bài không cắt ô, không báo riêng vật rất nhỏ, không có khoảng tin cậy. Ahmed và Pizarro [AltTiling] gần hơn nữa: cũng trên SeaDronesSee, họ tính độ phân giải đích từ độ cao, góc nhìn và diện tích người (0,48 m²) sao cho người chiếm khoảng 80 px² (cạnh khoảng 9 px), làm tròn về sáu mức từ 640 đến 3200 px, không phóng to, rồi cắt ô 640 px chồng 20% bằng SAHI; số ô tự giảm theo độ cao. Với YOLOv5s, mAP50 của vật nhỏ tăng từ 0,34 (ảnh 640 px) lên 0,47, và nhanh hơn cắt ô cố định (1,87 so với 0,60 khung/giây, không ghi phần cứng). Họ chia lại train và val của SeaDronesSee theo tỉ lệ 70/20/10, chạy một lần, không có khoảng tin cậy, chỉ làm phát hiện từng khung. Bước thu nhỏ theo độ cao ở chương 3 thuộc cùng hướng này; khác biệt và phần luận văn thêm vào được nêu ở mục 2.6.
 
 ## 2.3. Ảnh UAV và dữ liệu cho tìm kiếm cứu nạn
 
@@ -76,7 +76,7 @@ Các mục 2.2 và chương 3 lần lượt xét các cách chống lại từng
 
 ## 2.6. Khoảng trống nghiên cứu
 
-[Viết theo đề xuất của quyết định #19, chờ cô duyệt và chờ đọc toàn văn ba bài [AdaptiveResize], [AltTiling], [MIDDTD].]
+[Viết theo đề xuất của quyết định #19, chờ cô duyệt. Đã đọc [AdaptiveResize], [AltTiling] (10/11); còn [MIDDTD].]
 
 Từ các mục trên, ba khoảng trống mà luận văn nhắm tới:
 
