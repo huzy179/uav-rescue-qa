@@ -8,6 +8,7 @@
 #   scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super   # video hai thiết bị cạnh nhau
 #   scripts/demo_bao_ve.sh chuan-bi hotay_quet && scripts/demo_bao_ve.sh chay hotay_quet orin_nano_super 60 80
 #                                                           # chuyến bay mô phỏng quét vùng (ảnh tổng hợp), mất sóng giây 60–80
+#   scripts/demo_bao_ve.sh kiem-tra                         # trước hôm bảo vệ: soát đủ dữ liệu, video, ô bản đồ, cổng
 #
 # Kịch bản: configs/demo/<tên>.yaml. Thiết bị: configs/devices/<tên>.yaml (ước lượng, không phải số đo; xem
 # TECHNICAL mục 14.6). Ô bản đồ đã xem khi diễn tập được giữ ở runs/ground/tiles, nên vẫn hiện khi mất mạng.
@@ -15,7 +16,43 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PY=.venv/bin/python
-CMD="${1:?Cần lệnh: chuan-bi, chay hoặc so-sanh}"
+CMD="${1:?Cần lệnh: chuan-bi, chay, so-sanh hoặc kiem-tra}"
+
+if [ "$CMD" = kiem-tra ]; then
+  # Soát mọi thứ demo cần (DEMO_BAO_VE.md, mục Chuẩn bị); in OK hoặc THIẾU từng mục, thoát 1 nếu thiếu mục bắt buộc.
+  fail=0
+  check() {  # check <bắt buộc 1/0> <mô tả> <lệnh kiểm tra...>
+    local must=$1 what=$2; shift 2
+    if "$@" >/dev/null 2>&1; then echo "  OK     $what"
+    elif [ "$must" = 1 ]; then echo "  THIẾU  $what"; fail=1
+    else echo "  (chưa) $what"; fi
+  }
+  nonempty_dir() { [ -n "$(find "$1" -type f 2>/dev/null | head -n 1)" ]; }
+  port_free() { $PY -c "import socket,sys; s=socket.socket(); s.bind((\"127.0.0.1\", int(sys.argv[1])))" "$1"; }
+  echo "Dữ liệu phát lại (chuan-bi):"
+  for n in sds_v21_goc sds_v21_px10 hotay_quet; do
+    check 1 "$n: phát hiện" test -s "runs/edge/demo_cache/$n/detections.jsonl"
+    check 1 "$n: lớp đáp án" test -s "runs/edge/demo_cache/$n/truth_layer.json"
+  done
+  echo "Hồ sơ thiết bị:"
+  for d in agx_orin_64gb orin_nano_super; do check 1 "$d đã hiệu chỉnh" grep -q '^calibrated: *true' "configs/devices/$d.yaml"; done
+  echo "Video cho slide và dự phòng:"
+  check 1 "so sánh AGX Orin và Orin Nano Super" test -s runs/edge/demo_bao_ve/so_sanh_sds_v21_goc_agx_orin_64gb_orin_nano_super/so_sanh.mp4
+  check 1 "so sánh Orin Nano Super, khung gốc và thu nhỏ" test -s runs/edge/demo_bao_ve/so_sanh_nano_goc_px10.mp4
+  check 0 "quay màn hình toàn bộ demo (runs/edge/demo_bao_ve/du_phong.mp4)" test -s runs/edge/demo_bao_ve/du_phong.mp4
+  echo "Ảnh tập lũ (sau khi khoá, tools/demo_panels.py):"
+  check 0 "tập test lũ đã khoá" test -f data/processed/flood/MANIFEST.sha256
+  check 0 "ảnh so sánh trên tập lũ" test -s runs/demo/flood_panels/picks.csv
+  echo "Chạy không cần mạng:"
+  check 1 "ô bản đồ đã lưu (diễn tập một lần có mạng)" nonempty_dir runs/ground/tiles
+  check 1 "Leaflet đóng gói sẵn" test -s ground/static/leaflet/leaflet.js
+  check 1 "thư viện trạm mặt đất" $PY -c "import uvicorn, fastapi"
+  echo "Cổng trống:"
+  check 1 "8000 (trạm mặt đất)" port_free 8000
+  check 1 "8001 (video trực tiếp)" port_free 8001
+  [ $fail = 0 ] && echo "Đủ để demo." || echo "Còn thiếu mục bắt buộc ở trên."
+  exit $fail
+fi
 NAME="${2:?Cần tên kịch bản trong configs/demo/}"
 CFG="configs/demo/$NAME.yaml"
 CACHE="runs/edge/demo_cache/$NAME"
