@@ -16,6 +16,7 @@ Người đọc là cô hướng dẫn: nắm đề tài, không theo dõi mã h
 4. Mục 6 của ROADMAP: quyết định còn treo có hạn rơi vào tuần này hoặc đã quá hạn.
 5. Hỏi người dùng những thứ không có trong kho: số khung đã gán nhãn, tiến độ viết chương, việc làm ngoài máy, ý kiến của cô ở buổi trước.
 6. Báo cáo trước trong `docs/reports/` (nếu có): việc hứa tuần trước mà tuần này chưa làm phải nhắc lại.
+7. Từ tháng 11: chạy `scripts/demo_bao_ve.sh kiem-tra`; phần còn thiếu của demo bảo vệ đưa vào mục "Vướng mắc" (bảng chuẩn bị ở `docs/DEMO_BAO_VE.md`).
 
 ## Bố cục
 

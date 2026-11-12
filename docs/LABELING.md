@@ -114,6 +114,11 @@ Thứ tự, **trước khi chạy bất kỳ mô hình nào trên tập này**:
 #    Ghi tên rõ ràng: không có tên thì script chạy mọi *_flood.yaml, kể cả E2e (thêm C2A, kết quả âm), mà quyết định
 #    #14 chỉ chạy E2e trên tập lũ khi cô yêu cầu (mỗi cấu hình trên tập lũ chạy một lần).
 scripts/eval_flood.sh exports/ E1 E2 E2c E3 E4tiled
+# 5. Ảnh so sánh cho slide và demo: khung chọn theo ba quy tắc đã ghi trước khi khoá (docs/DEMO_BAO_VE.md),
+#    không chọn tay khung khác thay thế.
+.venv/bin/python tools/demo_panels.py --images data/processed/flood/images/test --labels data/processed/flood/labels/test \
+    --ignore data/processed/flood/ignore/test --run-a runs/flood/E1 --run-b runs/flood/E2c \
+    --title-a "YOLO26s gốc" --title-b "Đã tinh chỉnh (E2c)" --output runs/demo/flood_panels
 ```
 
 Giữ lại thư mục `exports/` và commit dòng mã băm của `MANIFEST.sha256` vào tài liệu kết quả, để chứng minh tập không đổi sau khi khoá.

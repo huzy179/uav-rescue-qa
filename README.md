@@ -54,6 +54,7 @@ FLOODEYE_GROUND_DB=runs/ground/ground.sqlite .venv/bin/python -m uvicorn --facto
     --ground-url http://localhost:8000 --save-video
 # thêm --net-loss 0.2 --net-outage 30 90 để giả lập mạng chập chờn; --link-probe-s 2 để gửi bù ngay khi có sóng lại (rq3_network.md)
 # thêm --target-person-px 10 để thu nhỏ khung theo độ cao trước khi phát hiện (mô hình fine-tune, TECHNICAL mục 4.5)
+# configs/edge.yaml bật gpu_resize: thu nhỏ khung bằng torch trên GPU thay cho cv2.resize (docs/results/gpu_resize.md)
 
 # 3. Chạy lại phần sau detector mà không cần mô hình (RQ3): đọc lại phát hiện đã lưu
 .venv/bin/python -m edge.main --config configs/edge.yaml --source video.mp4 --replay runs/edge/demo/detections.jsonl \
@@ -72,12 +73,21 @@ Demo hai drone: `scripts/demo_multi.sh` (đoạn SeaDronesSee có telemetry th�
 scripts/demo_bao_ve.sh chuan-bi sds_v21_goc                     # một lần, cần GPU: phát hiện cho mọi khung (khoảng 7 phút)
 scripts/demo_bao_ve.sh chay sds_v21_goc orin_nano_super 20 30   # mở màn hình điều phối (link in ra), Enter để bay; mất sóng giây 20–30
 scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super   # video hai thiết bị cạnh nhau, cho slide
+scripts/demo_bao_ve.sh kiem-tra                                  # soát cache, video, ô bản đồ, cổng 8000/8001 trước khi trình bày
 scripts/demo_bao_ve.sh chuan-bi hotay_quet && scripts/demo_bao_ve.sh chay hotay_quet orin_nano_super 60 80   # chuyến quét mô phỏng, ảnh tổng hợp
 .venv/bin/python tools/make_truth_layer.py --sds data/processed/sds_mot/val-m100-DJI_0001-v21 --config configs/demo/sds_v21_goc.yaml \
     --output runs/edge/demo_cache/sds_v21_goc/truth_layer.json   # lớp đáp án (chuan-bi đã tự làm; chạy tay nếu cache có từ trước)
 ```
 
-Kịch bản trong `configs/demo/` (`sds_v21_goc`, `sds_v21_px10` có thu nhỏ theo độ cao; `hotay_quet` là chuyến bay **mô phỏng** quét luống cày với ảnh tổng hợp, sinh từ `hotay_quet_scenario.yaml` bằng `sim/make_rq3.py --render`), thiết bị trong `configs/devices/` (ước lượng, chưa hiệu chỉnh cho tới khi chạy RQ2: `tools/fit_device_profile.py`). Thẻ "Đội cứu hộ": đặt vị trí thuyền, khoảng cách và hướng tới từng sự cố, gợi ý thứ tự đi cứu, chép toạ độ, link Google Maps, tải GPX (`/api/incidents.gpx`; TECHNICAL 12.7). Nút "Đối chiếu đáp án" trên bản đồ hiện người thật (được cảnh báo riêng, nằm trong vùng tìm, bỏ sót) và sự cố báo nhầm, khi cache có `truth_layer.json` (TECHNICAL 12.6; minh hoạ, không thay số trong `docs/results/`). Màn hình điều phối (`http://localhost:8000/?video=http://localhost:8001/`) gồm video trên drone, bản đồ có drone, vùng camera đang nhìn, vùng đã quét, sự cố, và thẻ drone (khung/giây, cảnh báo còn kẹt trên drone, mất liên lạc); TECHNICAL 10.6 và 12.5. Video có ghi tên thiết bị, khung/giây đạt được, độ trễ mỗi khung và banner khi mất sóng. Bản đồ chạy không cần internet: Leaflet đóng gói sẵn, ô bản đồ đã xem khi diễn tập được giữ ở `runs/ground/tiles`; diễn tập ít nhất một lần khi có mạng để giữ ô của vùng bay.
+Kịch bản trong `configs/demo/` (`sds_v21_goc`, `sds_v21_px10` có thu nhỏ theo độ cao; `hotay_quet` là chuyến bay **mô phỏng** quét luống cày với ảnh tổng hợp, sinh từ `hotay_quet_scenario.yaml` bằng `sim/make_rq3.py --render`), thiết bị trong `configs/devices/` (hiệu chỉnh 8/11 từ số đo T4 của RQ2 bằng `tools/fit_device_profile.py`; phần Jetson vẫn là tỉ lệ ước lượng, TECHNICAL 14.6). Thẻ "Đội cứu hộ": đặt vị trí thuyền, khoảng cách và hướng tới từng sự cố, gợi ý thứ tự đi cứu, chép toạ độ, link Google Maps, tải GPX (`/api/incidents.gpx`; TECHNICAL 12.7). Nút "Đối chiếu đáp án" trên bản đồ hiện người thật (được cảnh báo riêng, nằm trong vùng tìm, bỏ sót) và sự cố báo nhầm, khi cache có `truth_layer.json` (TECHNICAL 12.6; minh hoạ, không thay số trong `docs/results/`). Màn hình điều phối (`http://localhost:8000/?video=http://localhost:8001/`) gồm video trên drone, bản đồ có drone, vùng camera đang nhìn, vùng đã quét, sự cố, và thẻ drone (khung/giây, cảnh báo còn kẹt trên drone, mất liên lạc); TECHNICAL 10.6 và 12.5. Video có ghi tên thiết bị, khung/giây đạt được, độ trễ mỗi khung và banner khi mất sóng. Bản đồ chạy không cần internet: Leaflet đóng gói sẵn, ô bản đồ đã xem khi diễn tập được giữ ở `runs/ground/tiles`; diễn tập ít nhất một lần khi có mạng để giữ ô của vùng bay.
+
+Ảnh so sánh hai mô hình cho slide (vòng xanh thấy, đỏ bỏ sót, vàng báo nhầm, kèm ảnh phóng to), khung chọn theo quy tắc cố định `nho_nhat`, `tieu_bieu`, `loi` (`docs/DEMO_BAO_VE.md`). Trên tập lũ chỉ chạy sau khi khoá và chấm:
+
+```bash
+.venv/bin/python tools/demo_panels.py --images data/processed/flood/images/test --labels data/processed/flood/labels/test \
+    --ignore data/processed/flood/ignore/test --run-a runs/flood/E1 --run-b runs/flood/E2c \
+    --title-a "YOLO26s gốc" --title-b "Đã tinh chỉnh (E2c)" --output runs/demo/flood_panels
+```
 
 Mỗi lần chạy ghi vào `--output`: `detections.jsonl`, `confirmations.jsonl`, `alerts.jsonl`, `alerts_sent.jsonl` (từng lần gửi, kể cả thất bại), `timings.jsonl` (ms từng chặng), `outbox.sqlite`, `run_config.json`.
 
@@ -175,7 +185,8 @@ Quy ước theo nhóm kích thước giống COCO: nhãn ngoài nhóm được b
 ### Các lưu ý khi đo
 
 - Dự đoán để tính AP chạy với `conf: 0.001` và `max_det: 1000`.
-- `infer_ms` là thời gian một lần gọi suy luận, gồm tiền và hậu xử lý, bỏ lượt làm nóng. Đo trên Mac chỉ để so sánh tương đối.
+- `infer_ms` là thời gian một lần gọi suy luận, gồm tiền và hậu xử lý, bỏ lượt làm nóng. Đo trên máy cá nhân chỉ để so sánh tương đối. `run_tiled.py` ghi thêm `tile_ms` (đổi cỡ và cắt ô); tóm tắt nhiều lần chạy bằng `eval/per_image_timing.py`.
+- `import ultralytics` gọi `cv2.setNumThreads(0)`, nên mọi `cv2.resize` trong cùng tiến trình chạy một luồng. Đo riêng cv2 ngoài pipeline sẽ nhanh hơn trong pipeline (`docs/results/gpu_resize.md`).
 - SAHI mặc định gộp thêm một lượt suy luận toàn ảnh; `--no-standard-pred` tắt lượt này.
 
 ## Huấn luyện

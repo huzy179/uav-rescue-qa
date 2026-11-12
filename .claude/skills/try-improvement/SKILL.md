@@ -26,6 +26,7 @@ Quy ước đo ở `.claude/rules/experiments.md`, ràng buộc kiến trúc ở
 
 - Mô phỏng: `.venv/bin/python -m sim.sweep_rq3 --config configs/experiments/rq3_<tên>.yaml --jobs 12` (chạy nền nếu lâu). Ít nhất 3 seed; hiện tượng dao động mạnh (mất theo cụm) thì 5.
 - Dữ liệu có nhãn: dùng lại `boxes.csv` hoặc `detections.jsonl` đã có khi được (phát lại bằng `--replay`), so cặp bằng `eval/compare_runs.py` hoặc bootstrap cặp trong script `eval/` mới.
+- Cải tiến về tốc độ: ghi thời gian chặng bị đổi vào log hoặc `per_image.csv` (như `tile_ms`), chạy bản bật và bản tắt cùng phiên trên cùng máy, tóm tắt bằng `eval/per_image_timing.py`, và vẫn kiểm chứng độ chính xác bằng bootstrap cặp. Đo riêng một phép tính ngoài pipeline thì phải đối chiếu với số trong pipeline (`import ultralytics` ép OpenCV một luồng, `gpu_resize.md`).
 - Đọc `run_config.json`: nếu `dirty: true` (mã chưa commit lúc chạy) thì ghi rõ trong file kết quả và commit ngay sau.
 
 ## 4. Ghi kết quả
@@ -38,7 +39,7 @@ Quy ước đo ở `.claude/rules/experiments.md`, ràng buộc kiến trúc ở
   - `docs/TONG_QUAN.md` mục 8, `docs/ROADMAP.md` (một dòng trong "Nhật ký <ngày>" ở mục 1.1, và bảng trạng thái nếu đổi), `docs/DAN_Y_LUAN_VAN.md` (cột kết quả), `docs/luan_van/chuong5.md` (một đoạn ở câu hỏi con tương ứng, giữ nhãn mô phỏng).
   - Thuật ngữ mới thì thêm vào `docs/THUAT_NGU.md`.
   - File kết quả cũ mà kết luận đổi thì thêm một dòng trỏ sang file mới, không sửa số cũ.
-- Tính năng nhìn thấy được trong demo thì thêm vào sân thử (`console/sandbox.py`, `sandbox.js`, câu hỏi dựng sẵn) và sửa số câu hỏi dựng sẵn ở README, TECHNICAL 11.4.
+- Tính năng nhìn thấy được trong demo thì thêm vào sân thử (`console/sandbox.py`, `sandbox.js`, câu hỏi dựng sẵn) và sửa số câu hỏi dựng sẵn ở README, TECHNICAL 11.4. Đổi cấu hình demo (`configs/demo/`) hay số thiết bị giả lập thì sửa `docs/DEMO_BAO_VE.md`, dựng lại video liên quan và chạy `scripts/demo_bao_ve.sh kiem-tra`.
 
 ## 5. Đề xuất bật hay bỏ
 

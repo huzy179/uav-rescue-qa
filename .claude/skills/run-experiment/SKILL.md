@@ -21,7 +21,7 @@ Tìm `configs/experiments/<Mã>_<tập>.yaml`.
 
 - `data/processed/<tập>/images/<split>` và `labels/<split>` phải tồn tại. Thiếu thì dừng và đưa lệnh chuẩn bị dữ liệu trong `README.md`; không tự tải dữ liệu.
 - File trọng số trong cấu hình phải tồn tại. Thí nghiệm cần fine-tune (E2 trở đi) dùng trọng số tải về từ Kaggle; thiếu thì dừng và nói rõ, không huấn luyện trên máy cá nhân.
-- Tập `flood`: không làm theo skill này. Tập chưa khoá (`data/processed/flood/MANIFEST.sha256` chưa có) thì dừng; đã khoá thì dùng `scripts/eval_flood.sh <thư mục file xuất CVAT> <Mã>`, rồi làm tiếp từ bước 5.
+- Tập `flood`: không làm theo skill này. Tập chưa khoá (`data/processed/flood/MANIFEST.sha256` chưa có) thì dừng; đã khoá thì dùng `scripts/eval_flood.sh <thư mục file xuất CVAT> <Mã>`, rồi làm tiếp từ bước 5. Lần chấm đầu có E1 và E2c thì dựng luôn ảnh so sánh cho slide bằng `tools/demo_panels.py` (lệnh ở `docs/LABELING.md` mục 8, bước 5); không chọn tay khung khác.
 
 ## 3. Dự đoán
 

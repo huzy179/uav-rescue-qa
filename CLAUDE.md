@@ -26,6 +26,7 @@ scripts/eval_flood.sh <thư mục file xuất CVAT>   # cả chuỗi trên tập
 .venv/bin/python -m sim.sweep_rq3 --config configs/experiments/rq3_<tên>.yaml --jobs 12   # quét mô phỏng câu hỏi 3
 .venv/bin/python scripts/after_rq2.py --rq2 runs/rq2   # sau khi tải kết quả đo tốc độ từ Kaggle về
 .venv/bin/python -m console                      # giao diện thử nghiệm, http://localhost:8501
+scripts/demo_bao_ve.sh kiem-tra                  # soát mọi thứ demo bảo vệ cần (docs/DEMO_BAO_VE.md)
 ```
 
 Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Skill: `/run-experiment` (chạy và chấm một thí nghiệm E0–E6), `/try-improvement` (thử một mục của `CAI_TIEN.md` từ đầu tới khi ghi kết quả), `/friday-report` (báo cáo tuần gửi cô hướng dẫn).
@@ -46,3 +47,5 @@ Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Ski
 - Không sửa nhãn hay thành phần tập test lũ sau khi đã khoá (khoá 11/11/2026, lùi từ 4/11; `MANIFEST.sha256`).
 - Không dùng mô hình gán nhãn trước cho tập test lũ, và không chọn tham số (conf, `--target-person-px`, N…) trên tập đó.
 - Không coi thời gian đo trên máy cá nhân (Mac MPS, RTX 5060 trên WSL) là số liệu cho thiết bị biên; chỉ dùng để so sánh tương đối.
+- Không chọn tay khung tập lũ để trình bày: ảnh cho slide và demo lấy theo ba quy tắc cố định của `tools/demo_panels.py` (`docs/DEMO_BAO_VE.md`).
+- Không nói trong tài liệu hay demo rằng thiết bị biên "theo kịp" khi số giả lập không cho thấy vậy (hiện chưa cấu hình nào đạt 8 khung/giây).

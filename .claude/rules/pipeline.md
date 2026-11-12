@@ -19,4 +19,5 @@ Thiết kế chi tiết ở mục 3 của `docs/ROADMAP.md` và mục 7 trở đ
 - **Cảnh báo gửi qua outbox SQLite**: `coords` trước, `crop` sau, cùng `alert_id`. Trạm mặt đất bỏ qua `alert_id` đã có, nên gửi lại không sinh cảnh báo trùng.
 - **Luật gộp sự cố ở `ground/incidents.py` là hàm thuần**, `ground/app.py` chỉ đọc ghi SQLite; gộp trong một giao dịch `BEGIN IMMEDIATE`. Đổi luật thì chấm lại bằng `eval/incident_merge_eval.py`.
 - **`ground/` không được import torch, ultralytics hay opencv.** `shared/` chỉ dùng pydantic và PyYAML, vì cả hai phía đều cài nó.
+- **Đổi cỡ khung nằm trong `Detector.detect`** (`edge/detector.py`): `cv2.resize` khi tắt `gpu_resize`, `resize_torch` khi bật. Mặc định trong mã là tắt để mọi kết quả cũ tái lập được; `configs/edge.yaml` và `configs/demo/` bật (quyết định #20). `import ultralytics` ép OpenCV chạy một luồng, nên thêm bước xử lý ảnh bằng cv2 trên khung 4K trong cùng tiến trình thì đo thời gian ngay trong pipeline, không suy từ bench riêng.
 - **Cấu hình mới đọc bằng Pydantic**, để sai tên khoá hay sai kiểu bị báo ngay lúc khởi động.

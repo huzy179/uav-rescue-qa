@@ -34,6 +34,13 @@ Kế hoạch thí nghiệm ở mục 4 của `docs/ROADMAP.md`; cách đo ở m�
 
 - Chỉ chạy mô hình sau khi khoá (`docs/LABELING.md` mục 8), qua `scripts/eval_flood.sh`; script dừng nếu nhãn khác `MANIFEST.sha256`.
 - Mỗi cấu hình cuối chạy một lần. Mọi tham số (conf, `--target-person-px`, N, bán kính) chọn trên tập khác rồi mới đưa vào cấu hình `*_flood.yaml`.
+- Ảnh trình bày (slide, demo) lấy bằng `tools/demo_panels.py` theo ba quy tắc `nho_nhat`, `tieu_bieu`, `loi`, ghi trước khi khoá (`docs/DEMO_BAO_VE.md`). Không đổi quy tắc sau khi đã xem kết quả; khung chỉ định thêm (`--image`) phải ghi lý do trong tài liệu.
+
+## Đo thời gian
+
+- Thời gian trên máy cá nhân chỉ so sánh tương đối; hai cấu hình cần so thì chạy cùng phiên, cùng máy, và ghi rõ máy trong file kết quả.
+- Chặng chuẩn bị khung (`tile_ms`) và tổng mỗi ảnh (`infer_ms`) lấy từ `per_image.csv`, tóm tắt bằng `eval/per_image_timing.py` (trung vị, trung bình, p95). Báo trung vị, không báo trung bình một mình.
+- Số cho thiết bị biên chỉ đến từ hồ sơ `configs/devices/*.yaml` đã hiệu chỉnh từ số đo T4 (`tools/fit_device_profile.py`) và luôn gọi là ước lượng. Hồ sơ hiện tại đo với `cv2.resize`; chưa hiệu chỉnh lại cho `gpu_resize`.
 
 ## Mã đánh giá
 
