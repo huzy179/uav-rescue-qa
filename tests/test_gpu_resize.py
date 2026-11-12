@@ -68,3 +68,30 @@ def test_per_image_timing_summarize() -> None:
     row = summarize(pd.DataFrame({"tile_ms": [1.0, 2.0, 9.0], "infer_ms": [10.0, 20.0, 30.0]}))
     assert row["n_images"] == 3 and row["tile_ms_median"] == 2.0 and row["infer_ms_mean"] == 20.0
     assert "tile_ms_p95" in summarize(pd.DataFrame({"tile_ms": [1.0]})) and "infer_ms_median" not in summarize(pd.DataFrame({"tile_ms": [1.0]}))
+
+
+@pytest.mark.parametrize("argv, expected", [([], True), (["--no-gpu-resize"], False)])
+def test_cau_hinh_bat_van_tat_duoc_bang_dong_lenh(tmp_path, monkeypatch: pytest.MonkeyPatch, argv: list[str],
+                                                  expected: bool) -> None:
+    """configs/edge.yaml bật gpu_resize; --no-gpu-resize phải tắt được (run_rq2 đo lại bản cv2)."""
+    from edge.main import build_parser
+    from shared.config import parse_args_with_config
+
+    cfg = tmp_path / "edge.yaml"
+    cfg.write_text("gpu_resize: true\n", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["edge.main", "--config", str(cfg), "--source", "x.mp4", *argv])
+    assert parse_args_with_config(build_parser()).gpu_resize is expected
+
+
+def test_run_rq2_truyen_ro_gpu_resize() -> None:
+    """Biến thể RQ2 mặc định tắt đổi cỡ trên GPU (giữ nghĩa của rq2_t4.yaml), bật được theo từng biến thể."""
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location("run_rq2", Path(__file__).parents[1] / "scripts/run_rq2.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["run_rq2"] = module  # Pydantic cần module có trong sys.modules để giải chú thích kiểu
+    spec.loader.exec_module(module)
+    assert module.Variant(name="a", precision="fp16").gpu_resize is False
+    assert module.Variant(name="b", precision="fp16", target_person_px=10, gpu_resize=True).gpu_resize is True

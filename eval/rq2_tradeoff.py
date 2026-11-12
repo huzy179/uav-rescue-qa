@@ -71,6 +71,7 @@ def tradeoff_rows(rq2: Path, variants: list[dict[str, Any]], datasets: list[str]
                 "precision": v["precision"],
                 "mode": v.get("mode", "tiled"),
                 "target_person_px": v.get("target_person_px"),
+                "gpu_resize": bool(v.get("gpu_resize", False)),
                 "AP50": number(size_row(at05, "all").get("AP")),
                 "recall": number(size_row(at05, "all").get("recall")),
                 "precision_at_025": number(size_row(at05, "all").get("precision")),

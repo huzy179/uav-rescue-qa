@@ -1,0 +1,23 @@
+# Đo lại trên Kaggle T4 việc đổi cỡ khung trên GPU (quyết định #20, docs/results/gpu_resize.md): FP16 cắt ô thu nhỏ về
+# 10 px với cv2.resize và với torch trên GPU, cùng phiên; thêm FP16 cắt ô gốc để tools/fit_device_profile.py tính thời
+# gian thu nhỏ mỗi megapixel. Độ chính xác chỉ trên SeaDronesSee val (có độ cao). Không INT8 nên không cần hiệu chỉnh.
+# Chạy bằng notebooks/kaggle_rq2.ipynb với CONFIG trỏ tới file này; số đo chỉ so sánh tương đối (TECHNICAL 14.4).
+output: runs/rq2_gpuresize
+weights: runs/train/E2c_s0/weights/best.pt
+max_tiles: 32
+speed:
+  source: data/processed/sds_mot/val-m100-DJI_0001-v21/frames
+  source_fps: 30
+  telemetry: data/processed/sds_mot/val-m100-DJI_0001-v21/telemetry.csv
+  fps: 2
+  max_frames: 100
+accuracy:
+  - name: sds_det
+    images: data/processed/sds_det/images/val
+    labels: data/processed/sds_det/labels/val
+    altitude_csv: data/processed/sds_det/meta_val.csv
+    cluster_pattern: '^(v\d+)_'
+variants:
+  - {name: fp16_tiled, precision: fp16, mode: tiled}
+  - {name: fp16_tiled_px10, precision: fp16, mode: tiled, target_person_px: 10}
+  - {name: fp16_tiled_px10_gpu, precision: fp16, mode: tiled, target_person_px: 10, gpu_resize: true}

@@ -10,7 +10,7 @@ Cấu hình là một file YAML (đọc bằng Pydantic, sai khoá thì báo l�
     accuracy:                     # mỗi tập một mục; altitude_csv để chạy được biến thể thu nhỏ theo độ cao
       - {name: sds_det, images: ..., labels: ..., altitude_csv: ..., cluster_pattern: '^(v\\d+)_'}
     variants:                     # precision: pt (PyTorch), fp32, fp16, int8 (TensorRT)
-      - {name: fp16_tiled_px10, precision: fp16, mode: tiled, target_person_px: 10}
+      - {name: fp16_tiled_px10, precision: fp16, mode: tiled, target_person_px: 10}   # gpu_resize: true để đổi cỡ trên GPU
 
 Các bước, bước nào đã có kết quả thì bỏ qua (chạy tiếp được khi phiên Kaggle bị ngắt):
 1. Xuất engine: cắt ô thì imgsz = tile, batch động tới max_tiles; toàn ảnh thì imgsz, batch 1. INT8 hiệu chỉnh trên ô
@@ -83,6 +83,9 @@ class Variant(BaseModel):
     imgsz: int = 1280
     tile: int = 640
     target_person_px: float | None = None
+    # Đổi cỡ khung trên GPU. Ghi rõ cho mọi biến thể vì configs/edge.yaml bật từ 10/11 (quyết định #20): tắt thì truyền
+    # --no-gpu-resize, để rq2_t4.yaml chạy lại vẫn đo cv2.resize như bản 8/11.
+    gpu_resize: bool = False
 
     @model_validator(mode="after")
     def _check(self) -> Variant:
@@ -230,6 +233,7 @@ def accuracy_step(config: Rq2Config, variants: list[Variant], device: str) -> No
                     cmd = [sys.executable, "scripts/run_tiled.py", *common, "--tile", str(v.tile), "--imgsz", str(v.tile)]
                     if v.target_person_px is not None:
                         cmd += ["--altitude-csv", str(data.altitude_csv), "--target-person-px", str(v.target_person_px)]
+                    cmd += ["--gpu-resize" if v.gpu_resize else "--no-gpu-resize"]
                 else:
                     cmd = [sys.executable, "scripts/run_baseline.py", *common, "--imgsz", str(v.imgsz)]
                 run(cmd)
@@ -267,6 +271,7 @@ def speed_step(config: Rq2Config, variants: list[Variant], device: str) -> None:
             cmd += ["--telemetry", str(s.telemetry)]
         if v.target_person_px is not None:
             cmd += ["--target-person-px", str(v.target_person_px)]
+        cmd += ["--gpu-resize" if v.gpu_resize else "--no-gpu-resize"]
         run(cmd)
     run([sys.executable, "eval/timing_summary.py", "--runs", *map(str, runs), "--output", str(config.output / "timing.csv")])
 

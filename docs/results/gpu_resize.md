@@ -86,7 +86,7 @@ Mức sai khác điểm ảnh so với `cv2.INTER_AREA` (`mean_abs_diff` trong `
 
 ## Đề xuất
 
-- **Đã bật 10/11** trong `configs/edge.yaml` và `configs/demo/sds_v21_px10.yaml` (ROADMAP mục 6, #20). Giả lập thời gian thiết bị vẫn dùng `resize_ms_per_mpx` đo với cv2 trên T4, tức ước lượng thận trọng. Nên đo lại một lần trên T4 nếu còn giờ Kaggle, để hiệu chỉnh `resize_ms_per_mpx` cho hồ sơ thiết bị.
+- **Đã bật 10/11** trong `configs/edge.yaml` và `configs/demo/sds_v21_px10.yaml` (ROADMAP mục 6, #20). Giả lập thời gian thiết bị vẫn dùng `resize_ms_per_mpx` đo với cv2 trên T4, tức ước lượng thận trọng. Nên đo lại một lần trên T4 nếu còn giờ Kaggle, để hiệu chỉnh `resize_ms_per_mpx` cho hồ sơ thiết bị. Đã chuẩn bị 13/11: `configs/experiments/rq2_t4_gpuresize.yaml` (FP16 cắt ô gốc, thu nhỏ bằng cv2, thu nhỏ trên GPU, cùng phiên) chạy bằng `notebooks/kaggle_rq2.ipynb`.
 - **Trả lại số luồng cho OpenCV:** là tuỳ chọn tiếp theo, rẻ, không cần GPU (CAI_TIEN mục 2).
 
 ## Tái lập
