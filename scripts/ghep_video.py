@@ -5,7 +5,7 @@ và slide bảo vệ (scripts/demo_bao_ve.sh so-sanh).
 
 Ví dụ:
     .venv/bin/python scripts/ghep_video.py --left runs/edge/a/annotated.mp4 --right runs/edge/b/annotated.mp4 \\
-        --left-title "Jetson AGX Orin (uoc luong)" --right-title "Jetson Orin Nano Super (uoc luong)" --output so_sanh.mp4
+        --left-title "Jetson AGX Orin (ước lượng)" --right-title "Jetson Orin Nano Super (ước lượng)" --output so_sanh.mp4
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from eval.draw import put_text
 from shared.config import parse_args_with_config
 
 
@@ -24,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--left", type=Path, required=True, help="Video bên trái")
     parser.add_argument("--right", type=Path, required=True, help="Video bên phải")
-    parser.add_argument("--left-title", default="", help="Tiêu đề bên trái (không dấu: cv2.putText không vẽ được dấu)")
+    parser.add_argument("--left-title", default="", help="Tiêu đề bên trái")
     parser.add_argument("--right-title", default="", help="Tiêu đề bên phải")
     parser.add_argument("--height", type=int, default=720, help="Chiều cao mỗi bên (px)")
     parser.add_argument("--output", type=Path, required=True, help="File .mp4 ra")
@@ -35,7 +36,7 @@ def with_title(frame: np.ndarray, title: str, height: int) -> np.ndarray:
     """Thu khung về chiều cao height rồi thêm dải tiêu đề đen phía trên."""
     frame = cv2.resize(frame, (round(frame.shape[1] * height / frame.shape[0]), height), interpolation=cv2.INTER_AREA)
     bar = np.zeros((48, frame.shape[1], 3), dtype=np.uint8)
-    cv2.putText(bar, title, (12, 34), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
+    put_text(bar, title, (12, 8), 30, (255, 255, 255))
     return np.vstack([bar, frame])
 
 

@@ -12,7 +12,7 @@ lượng: chỉ phần T4 là số đo.
 
 Ví dụ:
     .venv/bin/python tools/fit_device_profile.py --tiled runs/rq2/speed/fp16_tiled/timings.jsonl \\
-        --full runs/rq2/speed/fp16_full1280/timings.jsonl --ratio 2.688 --name "Jetson Orin Nano Super (uoc luong)" \\
+        --full runs/rq2/speed/fp16_full1280/timings.jsonl --ratio 2.688 --name "Jetson Orin Nano Super (ước lượng)" \\
         --ratio-source "Ultralytics: YOLO26 TensorRT FP16, Orin Nano Super 4,57 ms / T4 1,7 ms" \\
         --output configs/devices/orin_nano_super.yaml
 """
@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ratio", type=float, required=True, help="Thời gian suy luận thiết bị / T4 (1 cho chính T4)")
     parser.add_argument("--cpu-ratio", type=float, default=None, help="Tỉ lệ cho phần không phải suy luận (mặc định = --ratio)")
     parser.add_argument("--ratio-source", required=True, help="Nguồn của --ratio, ghi vào hồ sơ")
-    parser.add_argument("--name", required=True, help="Tên hiển thị, không dấu")
+    parser.add_argument("--name", required=True, help="Tên hiển thị")
     parser.add_argument("--power-mode", default="MAXN (giả định)", help="Chế độ công suất giả định")
     parser.add_argument("--output", type=Path, required=True, help="File hồ sơ .yaml ra")
     return parse_args_with_config(parser)

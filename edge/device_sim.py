@@ -27,7 +27,7 @@ class DeviceProfile(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(description="Tên hiển thị, không dấu (vẽ bằng cv2.putText)")
+    name: str = Field(description="Tên hiển thị trên video và màn hình điều phối")
     calibrated: bool = Field(description="False khi các hệ số chưa lấy từ lần đo RQ2 của chính pipeline này")
     source: str = Field(description="Nguồn của các hệ số và cách tính")
     power_mode: str = Field(description="Chế độ công suất giả định, ví dụ MAXN; Jetson ở chế độ thấp hơn chạy chậm hơn")

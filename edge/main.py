@@ -30,7 +30,7 @@ from edge.pacing import RealtimePacer
 from edge.sampler import iter_timed_frames, views_fps
 from edge.status import LiveView, StatusReporter
 from edge.telemetry import NadirTelemetry, SampledTelemetry, TelemetrySource, YawCalibrated
-from eval.draw import draw_boxes
+from eval.draw import draw_boxes, put_text, text_size
 from shared.config import parse_args_with_config
 from shared.provenance import write_run_config
 from shared.schema import AlertCrop, Confirmation
@@ -38,7 +38,7 @@ from sim.flight import StraightFlight
 from sim.netem import NetemTransport
 
 CONFIRMED_COLOR_BGR = (0, 200, 0)
-SYNTHETIC_NOTE = "TELEMETRY GIA LAP - vi tri chi minh hoa"  # cv2.putText không vẽ được dấu tiếng Việt
+SYNTHETIC_NOTE = "TELEMETRY GIẢ LẬP - vị trí chỉ minh hoạ"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -175,12 +175,12 @@ def annotate(
             label = f"#{track_id}" if done else str(track_id)
             cv2.putText(canvas, label, (x1, max(12, y1 - 3)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1, cv2.LINE_AA)
         if synthetic:
-            cv2.putText(canvas, SYNTHETIC_NOTE, (10, int(30 * k)), cv2.FONT_HERSHEY_SIMPLEX, 0.8 * k, (0, 255, 255), int(2 * k), cv2.LINE_AA)
+            put_text(canvas, SYNTHETIC_NOTE, (10, int(6 * k)), int(28 * k), (0, 255, 255), int(2 * k))
         return canvas
     canvas = draw_boxes(frame, boxes, confs)
     if synthetic:
         # Ghi thẳng lên video để không ai lấy nhầm video demo làm bằng chứng định vị.
-        cv2.putText(canvas, SYNTHETIC_NOTE, (10, int(30 * k)), cv2.FONT_HERSHEY_SIMPLEX, 0.8 * k, (0, 255, 255), int(2 * k), cv2.LINE_AA)
+        put_text(canvas, SYNTHETIC_NOTE, (10, int(6 * k)), int(28 * k), (0, 255, 255), int(2 * k))
     for c in confirmed:
         if recent_s is not None and t_now is not None and t_now - c.t > recent_s:
             continue
@@ -195,16 +195,16 @@ def annotate(
 def draw_status(canvas: Any, lines: list[str], banner: str | None = None) -> Any:
     """Ghi các dòng trạng thái (thiết bị giả lập, FPS, độ trễ) ở góc dưới trái; banner đỏ ở giữa trên (mất sóng)."""
     height, k = canvas.shape[0], max(1.0, canvas.shape[1] / 1920)
-    font = cv2.FONT_HERSHEY_SIMPLEX
+    size, stroke = int(30 * k), max(2, int(3 * k))
     for i, line in enumerate(reversed(lines)):
-        y = int(height - 15 * k - 36 * k * i)
-        cv2.putText(canvas, line, (int(10 * k), y), font, 0.9 * k, (0, 0, 0), int(6 * k), cv2.LINE_AA)
-        cv2.putText(canvas, line, (int(10 * k), y), font, 0.9 * k, (255, 255, 255), int(2 * k), cv2.LINE_AA)
+        top = int(height - 12 * k - 40 * k * (i + 1))
+        put_text(canvas, line, (int(10 * k), top), size, (255, 255, 255), stroke)
     if banner:
-        (w, h), _ = cv2.getTextSize(banner, font, 1.2 * k, int(3 * k))
-        x, top = (canvas.shape[1] - w) // 2, int(50 * k)
-        cv2.rectangle(canvas, (x - int(12 * k), top), (x + w + int(12 * k), top + h + int(24 * k)), (0, 0, 200), -1)
-        cv2.putText(canvas, banner, (x, top + h + int(10 * k)), font, 1.2 * k, (255, 255, 255), int(3 * k), cv2.LINE_AA)
+        size = int(40 * k)
+        w, h = text_size(banner, size)
+        x, top, pad = (canvas.shape[1] - w) // 2, int(50 * k), int(12 * k)
+        cv2.rectangle(canvas, (x - pad, top), (x + w + pad, top + h + 2 * pad), (0, 0, 200), -1)
+        put_text(canvas, banner, (x, top + pad), size, (255, 255, 255))
     return canvas
 
 
@@ -302,15 +302,15 @@ def main() -> None:
 
     def status(t_now: float) -> tuple[list[str], str | None]:
         """Dòng trạng thái và banner vẽ lên video demo."""
-        lines = ["ANH TONG HOP - chuyen bay mo phong"] if args.simulated_flight else []
+        lines = ["ẢNH TỔNG HỢP - chuyến bay mô phỏng"] if args.simulated_flight else []
         if device:
-            lines.append(f"Thiet bi gia lap: {device.profile.name}")
-            lines.append(f"{device.achieved_fps(t_now):.1f} khung/s, tre {device.last_latency_ms:.0f} ms/khung, bo {device.n_skipped} khung")
+            lines.append(f"Thiết bị giả lập: {device.profile.name}")
+            lines.append(f"{device.achieved_fps(t_now):.1f} khung/giây".replace(".", ",", 1) + f", trễ {device.last_latency_ms:.0f} ms/khung, bỏ {device.n_skipped} khung")
         banner = None
         if any(a <= t_now < b for a, b in outages):
-            banner = "MAT SONG - canh bao cho gui bu"
+            banner = "MẤT SÓNG - cảnh báo chờ gửi bù"
         elif isinstance(transport, NetemTransport) and transport.burst is not None and transport.burst.bad_at(t_now):
-            banner = "SONG YEU - mat goi lien tiep"
+            banner = "SÓNG YẾU - mất gói liên tiếp"
         return lines, banner
 
     def skip_frame(frame: Any, frame_id: Any, t_now: float, tel: Any) -> None:

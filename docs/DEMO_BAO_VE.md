@@ -60,7 +60,7 @@ Hoà thì lấy tên file nhỏ nhất. Đây là chọn ảnh minh hoạ, khôn
 | Ảnh so sánh trên tập lũ | `.venv/bin/python tools/demo_panels.py --images data/processed/flood/images/test --labels data/processed/flood/labels/test --ignore data/processed/flood/ignore/test --run-a runs/flood/E1 --run-b runs/flood/E2c --title-a "YOLO26s gốc" --title-b "Đã tinh chỉnh (E2c)" --output runs/demo/flood_panels` | Ngay sau khi chấm tập lũ (sau 11/11) |
 | Phát hiện cho mọi khung SDS (một lần, cần GPU) | `scripts/demo_bao_ve.sh chuan-bi sds_v21_goc` và `... chuan-bi sds_v21_px10` | Đã có |
 | Chuyến quét mô phỏng (không cần GPU, khoảng 20 giây) | `scripts/demo_bao_ve.sh chuan-bi hotay_quet` | Đã có |
-| Video so sánh thiết bị | `scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super`; Nano khung gốc và thu nhỏ: lệnh ghép ở mục "Video Nano" dưới | Làm lại 10/11 theo hồ sơ đã hiệu chỉnh 8/11; làm lại nếu hồ sơ đổi |
+| Video so sánh thiết bị | `scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super`; Nano khung gốc và thu nhỏ: lệnh ghép ở mục "Video Nano" dưới | Làm lại 10/11 theo hồ sơ đã hiệu chỉnh 8/11, dựng lại 13/11 với chữ có dấu (số khung/giây không đổi); làm lại nếu hồ sơ đổi |
 | Sân thử cho phần hỏi đáp | `python -m console`, tab Sân thử; chạy trước mặc định và hai câu hỏi hay gặp để bảng so sánh có sẵn vài dòng | Tuần 7/12 |
 | Giữ ô bản đồ vùng bay | Diễn tập ít nhất một lần **khi có mạng**, phóng to thu nhỏ quanh vùng bay; ô đã xem nằm trong `runs/ground/tiles` | Đã có, diễn tập lại tuần 7/12 |
 | Video dự phòng toàn bộ demo | Quay màn hình một lần chạy `chay`, lưu `runs/edge/demo_bao_ve/du_phong.mp4`, nhúng vào slide | Tuần 7/12 |

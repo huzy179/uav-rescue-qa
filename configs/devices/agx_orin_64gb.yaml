@@ -1,5 +1,5 @@
 # Hồ sơ thời gian thiết bị cho edge/device_sim.py: ước lượng, không phải số đo (TECHNICAL mục 14.6).
-name: Jetson AGX Orin 64GB (uoc luong)
+name: Jetson AGX Orin 64GB (ước lượng)
 calibrated: true
 source: 'Đo trên T4 bằng tools/fit_device_profile.py: overhead 0.55 ms, một ô 3.75
   ms, toàn ảnh 23.72 ms, thu nhỏ khung 5.57 ms mỗi megapixel (trung vị; runs/rq2/speed/fp16_tiled/timings.jsonl,

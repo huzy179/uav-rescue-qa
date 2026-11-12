@@ -30,12 +30,12 @@ from shared.config import parse_args_with_config
 
 ULTRALYTICS_SOURCE = "Ultralytics, bảng YOLO26 TensorRT FP16 trên Jetson (docs.ultralytics.com/guides/nvidia-jetson, xem 4/11/2026) chia cho YOLO26n trên T4 (1,7 ms; docs.ultralytics.com/models/yolo26); giả định tỉ lệ của bản n áp được cho bản s"
 
-# (file hồ sơ, tên hiển thị không dấu, tỉ lệ thời gian thiết bị/T4, nguồn của tỉ lệ)
+# (file hồ sơ, tên hiển thị, tỉ lệ thời gian thiết bị/T4, nguồn của tỉ lệ)
 DEVICES: list[tuple[str, str, float, str]] = [
-    ("configs/devices/t4.yaml", "Tesla T4 (Kaggle, do)", 1.0, "chính T4, không nhân"),
-    ("configs/devices/orin_nano_super.yaml", "Jetson Orin Nano Super (uoc luong)", 2.688, f"4,57 / 1,7 = 2,688; {ULTRALYTICS_SOURCE}"),
-    ("configs/devices/orin_nx_16gb.yaml", "Jetson Orin NX 16GB (uoc luong)", 2.429, f"4,13 / 1,7 = 2,429; {ULTRALYTICS_SOURCE}"),
-    ("configs/devices/agx_orin_64gb.yaml", "Jetson AGX Orin 64GB (uoc luong)", 1.541, f"2,62 / 1,7 = 1,541; {ULTRALYTICS_SOURCE}"),
+    ("configs/devices/t4.yaml", "Tesla T4 (Kaggle, đo)", 1.0, "chính T4, không nhân"),
+    ("configs/devices/orin_nano_super.yaml", "Jetson Orin Nano Super (ước lượng)", 2.688, f"4,57 / 1,7 = 2,688; {ULTRALYTICS_SOURCE}"),
+    ("configs/devices/orin_nx_16gb.yaml", "Jetson Orin NX 16GB (ước lượng)", 2.429, f"4,13 / 1,7 = 2,429; {ULTRALYTICS_SOURCE}"),
+    ("configs/devices/agx_orin_64gb.yaml", "Jetson AGX Orin 64GB (ước lượng)", 1.541, f"2,62 / 1,7 = 1,541; {ULTRALYTICS_SOURCE}"),
 ]
 
 
