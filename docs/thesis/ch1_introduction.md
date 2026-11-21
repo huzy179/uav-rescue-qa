@@ -18,10 +18,10 @@ Three constraints of the problem drive every design choice in the following chap
 
 | Altitude | Ground footprint width | Ground sampling distance | Person (0.5 m) | Head (0.2 m) | Person after resizing to 640 px |
 |---|---|---|---|---|---|
-| 30 m | 45.5 m | 1.18 cm | 42.2 px | 16.9 px | 7.0 px |
-| 50 m | 75.8 m | 1.97 cm | 25.3 px | 10.1 px | 4.2 px |
-| 80 m | 121.2 m | 3.16 cm | 15.8 px | 6.3 px | 2.6 px |
-| 100 m | 151.5 m | 3.95 cm | 12.7 px | 5.1 px | 2.1 px |
+| 30 m | 45.46 m | 1.184 cm | 42.24 px | 16.89 px | 7.04 px |
+| 50 m | 75.76 m | 1.973 cm | 25.34 px | 10.14 px | 4.22 px |
+| 80 m | 121.22 m | 3.157 cm | 15.84 px | 6.34 px | 2.64 px |
+| 100 m | 151.53 m | 3.946 cm | 12.67 px | 5.07 px | 2.11 px |
 
 Common object detectors such as YOLO resize the image to 640 px before processing. For 4K video this step divides the image size by six, and a person seen from 100 m shrinks to about 2 px (last column), below what any model can detect. The system therefore has to keep the native resolution, either with a larger input size or by cutting the image into tiles.
 
