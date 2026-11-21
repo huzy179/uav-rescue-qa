@@ -1,6 +1,8 @@
 # Dàn ý luận văn
 
 > **21/11:** quyển viết tiếng Anh, tám chương (quyết định #21). Cấu trúc mới và cách ánh xạ từ sáu chương dưới đây: `KE_HOACH_QUYEN.md` mục 1. Dàn ý này vẫn là nguồn nội dung theo từng mục.
+>
+> **Bản tiếng Anh (`docs/thesis/`, 22/11):** Ch. 1 ← chương 1 (xong); Ch. 2 ← chương 2 (xong); Ch. 3 yêu cầu và kiến trúc (mới, xong); Ch. 4 ← chương 3 (xong); Ch. 5 cài đặt và đảm bảo chất lượng (mới, xong); Ch. 6 ← chương 4 (xong, chờ khoá); Ch. 7 ← chương 5 (đang làm); Ch. 8 ← chương 6 (chưa). Sửa nội dung thì sửa cả hai bản tới 4/12.
 
 Khung sáu chương theo đề xuất ngày 6/11 (quyết định #16 của ROADMAP: giữ ba câu hỏi của đề cương, thêm câu hỏi con và luận điểm xuyên suốt; chờ cô). Mỗi mục ghi: viết gì, lấy nội dung từ tài liệu nào của dự án, dùng kết quả nào và kết quả đó **đã có** hay **còn chờ**. Lịch viết theo ROADMAP mục 1.3: chương 4 và 5 từ 7/11, bản thảo đầy đủ 4/12. Thuật ngữ dùng theo `THUAT_NGU.md`; mục "Danh mục thuật ngữ và chữ viết tắt" ở đầu quyển chép từ đó.
 

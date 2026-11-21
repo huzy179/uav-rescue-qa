@@ -197,7 +197,7 @@ Mỗi bước có cùng bố cục: **Làm gì**, **Vì sao**, **Cách khác** (
 | Chỉ dùng bộ có sẵn (AFO, SeaDronesSee) làm tập test | Đó là người bơi ngoài biển, không phải cảnh lũ (mái nhà, nước đục, rác); vẫn dùng làm tập đánh giá phụ cho người dưới nước |
 | Tự bay UAV quay | Không có thiết bị, không có lũ đúng lúc |
 
-**Trạng thái.** **Chưa bắt đầu gán. Đây là rủi ro lớn nhất của đồ án** (ROADMAP 1.1). Đã trích và lọc tay 212 khung từ 10 video, đóng gói sẵn 10 task CVAT; 4/11 gộp hai video cùng nguồn San Angelo, còn 188 khung; công cụ chuyển nhãn và chấm (`scripts/eval_flood.sh`) đã sẵn sàng. 4 trong 10 video dưới 1080p (hai video 480p, hai video 720p), trái với LABELING mục 1: cần quyết giữ hay tải lại **trước khi** gán các video đó. Phương án dự phòng nếu không kịp: khoá với tối thiểu 150 khung, hoặc lùi khoá tối đa tới 11/11 (quyết định #10, hỏi cô).
+**Trạng thái (22/11).** Đang gán: 2/10 video có box, thiếu thuộc tính và thẻ; khoá đề xuất 25/11. **Đây là rủi ro lớn nhất của đồ án** (ROADMAP 1.1). Trước đó: Đã trích và lọc tay 212 khung từ 10 video, đóng gói sẵn 10 task CVAT; 4/11 gộp hai video cùng nguồn San Angelo, còn 188 khung; công cụ chuyển nhãn và chấm (`scripts/eval_flood.sh`) đã sẵn sàng. 4 trong 10 video dưới 1080p (hai video 480p, hai video 720p), trái với LABELING mục 1: cần quyết giữ hay tải lại **trước khi** gán các video đó. Phương án dự phòng nếu không kịp: khoá với tối thiểu 150 khung, hoặc lùi khoá tối đa tới 11/11 (quyết định #10, hỏi cô).
 
 **Ở đâu:** `docs/LABELING.md`, `tools/extract_frames.py` (logic ở `eval/frames.py`), `tools/convert_cvat.py`, `tools/check_leakage.py`; dữ liệu ở `data/raw/flood/`, `data/processed/flood/`.
 
@@ -463,14 +463,14 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 
 ---
 
-## 8. Trạng thái tổng hợp (7/11/2026)
+## 8. Trạng thái tổng hợp (22/11/2026)
 
 | Bước | Trạng thái |
 |---|---|
 | 1. Hình học camera | Xong |
 | 2. Mô hình nền | Xong |
 | 3. Dữ liệu công khai | VisDrone, AFO, C2A, HydroVigilance, SeaDronesSee-MOT đã tải và chuyển; FinlandProper tạm bỏ (162 GB, máy chủ không cho tải từng phần) |
-| 4. Tập test lũ | **Chưa gán; gán 7–9/11, khoá 11/11** (quyết định #10; lịch ở LABELING mục 9); giữ 4 video dưới 1080p (#15); khoảng tin cậy theo video (#7); 4/11 gộp hai video cùng nguồn San Angelo (còn 188 khung, 9 nguồn); kiểm tra trùng với 5 thư mục train (kể cả C2A) không thấy cặp nào (`flood_truoc_khoa.md`). Ban đầu 212 khung từ 10 video đã trích, lọc tay, đóng gói zip cho CVAT (`Downloads/floodeye_cvat`); lịch gán ở LABELING mục 9. Gán xong thì `scripts/eval_flood.sh <thư mục file xuất>` chạy trọn: chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu (`eval/recall_by_tag.py`) |
+| 4. Tập test lũ | **Đang gán: 2/10 video có box (59 khung, 148 người), thiếu thuộc tính và thẻ; khoá đề xuất 25/11** (trễ so với 11/11, quyết định #10; lịch ở LABELING mục 9); giữ 4 video dưới 1080p (#15); khoảng tin cậy theo video (#7); gộp hai video San Angelo (188 khung, 9 nguồn). Chuỗi chấm có so cặp và bảng tự động (`eval/flood_tables.py`); độ nhất quán khi gán lại đo bằng `tools/relabel_agreement.py`
 | 5. Cách đo | Xong; thêm chấm khối xác nhận theo track trên video thật (`eval/track_confirm_eval.py`) |
 | 6. E0, E1, E4 | Xong; 7/11 chạy lại E0, E4 và cắt ô tự viết trên RTX 5060 vì thư mục kết quả trên Mac không còn, kết luận không đổi (`visdrone_baseline.md`, `visdrone_tiled_vs_sahi.md`) |
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |
@@ -483,7 +483,7 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 | Giao diện thử nghiệm | Xong 3/11 (`python -m console`): xem lỗi từng ảnh (bỏ sót, báo nhầm theo nhóm kích thước và thẻ), chạy thử pipeline, trạm mặt đất; dùng cho phân tích lỗi chương 5 và demo. **7/11: Sân thử** mô phỏng (chỉnh tham số hoặc câu hỏi "nếu… thì sao" dựng sẵn, chạy, xem trên màn hình điều phối, bảng so sánh; TECHNICAL 11.4) |
 | Hiểu dự án | Xong 5/11: tab đầu của `python -m console`, nền tối: bản đồ dự án (ví dụ đời thường, kết quả kèm thanh so sánh, 19 câu hỏi tự kiểm tra), đọc tài liệu có giải thích thuật ngữ khi di chuột (`docs/THUAT_NGU.md`), câu hỏi nghiên cứu và câu hỏi con kèm trạng thái (mục 1.3), thẻ ghi nhớ, tìm kiếm, xem mã |
 | Demo bảo vệ | **10/11: kịch bản viết lại theo ba câu hỏi**, ảnh so sánh trên tập lũ (`tools/demo_panels.py`, quy tắc chọn khung ghi trước khi khoá), lệnh soát `kiem-tra`, video thiết bị dựng lại theo hồ sơ đã hiệu chỉnh (không cấu hình nào theo kịp 8 khung/giây). Xong 4/11 (`scripts/demo_bao_ve.sh`): phát lại SDS v21 theo thời gian thực với thiết bị giả lập, không cần GPU hay internet; video so hai thiết bị. **6/11: màn hình điều phối** một trang (video trên drone, drone và vùng đã quét trên bản đồ, cảnh báo còn kẹt trên drone khi mất sóng, đoạn đường bay lỡ khi mất sóng được gửi bù; TECHNICAL 10.6, 12.5) và **chuyến quét mô phỏng** có ảnh tổng hợp (`hotay_quet`, `sim/render.py`) để thấy vùng đã quét lớn dần, vì đoạn SeaDronesSee nhìn thẳng xuống thì drone gần như đứng yên; **đối chiếu đáp án** trên bản đồ (người được cảnh báo riêng, nằm trong vùng tìm, bỏ sót, sự cố báo nhầm; TECHNICAL 12.6); **công cụ cho đội đi cứu** (vị trí thuyền, khoảng cách và hướng, thứ tự đi cứu, GPX; TECHNICAL 12.7) |
-| 13. Luận văn | Đã báo cáo ý tưởng thuật toán với cô 23/10 (slide 22 trang); dàn ý sáu chương (`DAN_Y_LUAN_VAN.md`); nháp chương 1–5 và khung chương 6 (7–8/11, `docs/luan_van/`; chương 2 còn tra trích dẫn; danh mục tài liệu đã tra `tai_lieu_tham_khao.md`), câu hỏi 2 điền 8/11; còn chờ tập lũ (**[CHỜ KHOÁ]**) |
+| 13. Luận văn | **Viết tiếng Anh, giãn dòng 1,5 (#21, 21/11)**, theo mẫu MSE của FPT University; tám chương (thêm chương 3 yêu cầu và kiến trúc, chương 5 cài đặt và đảm bảo chất lượng), kế hoạch và lịch ở `KE_HOACH_QUYEN.md`. Bản tiếng Anh `docs/thesis/`: chương 1–6 xong 21/11, chương 7, 8 đang làm; trích dẫn tác giả–năm (`references.bib`); số kiểm bằng `tools/check_thesis_numbers.py`. Nháp tiếng Việt `docs/luan_van/` (chương 1–5, khung chương 6) là nguồn nội dung; còn chờ tập lũ (**[CHỜ KHOÁ]**, `[UPDATE AFTER LOCK]`)
 
 Kết quả chính tới nay: fine-tune tăng mạnh người nhỏ trên VisDrone (`visdrone_E2.md`); thêm AFO giữ được người dưới nước (`E2c.md`), nhưng trên tập nước độc lập SeaDronesSee chưa hơn mô hình gốc (`sds_det.md`). Lý do một phần là cỡ người: E2c yếu với người to; **thu nhỏ khung theo độ cao bay** (`--target-person-px`) đưa E2c cắt ô trên SDS 4K từ AP50 0,235 lên 0,531, ngang mô hình gốc (`scale_by_altitude.md`). Cảnh báo lặp của geo: chặn ở biên (`--suppress-s`) làm mất người ở cảnh đông nên tắt; gộp thành sự cố ở trạm mặt đất thay thế (`alert_memory.md`).
 

@@ -2,7 +2,7 @@
 
 Đề tài: Nghiên cứu phát hiện người kích thước nhỏ từ ảnh UAV trong vùng ngập lụt, hướng tới xử lý trên thiết bị biên.
 
-Mốc cố định: nộp đề cương **16/10** · khung code **30/10** · khoá tập test lũ **11/11** (lùi từ 4/11, quyết định #10) · bắt đầu RQ2 **9/11** · bảo vệ **15/12/2026**.
+Mốc cố định: nộp đề cương **16/10** · khung code **30/10** · khoá tập test lũ **đề xuất 25/11** (lùi từ 4/11 và 11/11, quyết định #10; chờ cô xác nhận) · khoá mã **28/11** · bản thảo **4/12** · bắt đầu RQ2 **9/11** · bảo vệ **15/12/2026**.
 Ngân sách thời gian: khoảng 150 giờ (Phụ lục B của đề cương); từ 21/10 dành 15–20 giờ mỗi tuần.
 
 Kế hoạch điều chỉnh ngày 21/10/2026 (mục 1). Lịch gốc theo đề cương xem lịch sử git của file này.
@@ -15,18 +15,19 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 
 ### 1.1. Trạng thái và nhật ký
 
-**Trạng thái 8/11** (chi tiết từng khâu: TONG_QUAN mục 8; mỗi kết quả một file trong `docs/results/`):
+**Trạng thái 22/11** (chi tiết từng khâu: TONG_QUAN mục 8; mỗi kết quả một file trong `docs/results/`):
 
 | Mảng | Trạng thái |
 |---|---|
-| Dữ liệu | **Rủi ro lớn nhất.** Tập test lũ 188 khung từ 9 nguồn, **chưa gán**; gán 7–9/11, khoá **11/11** (#10). Đã rà trùng với 5 tập train (`flood_truoc_khoa.md`) |
-| Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ |
-| Câu hỏi 2 (tốc độ) | **Xong 8/11** (`rq2_t4.md`): chín biến thể trên Kaggle T4; chọn FP16 với thu nhỏ theo độ cao; INT8 không đáng (nhanh thêm ít, nén độ tin cậy); hồ sơ thiết bị đã hiệu chỉnh, thiết bị yếu mô phỏng xong. Chương 5 mục 5.2 đã điền |
-| Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới (tần số, độ cao, GPS, la bàn, mạng, mất theo cụm, nhóm người) và ba đoạn SeaDronesSee thật |
-| Viết | Nháp chương 1–5 (7–8/11), câu hỏi 2 đã điền; chờ tập lũ; chương 2 còn tra trích dẫn và đọc toàn văn; khung chương 6 |
+| Dữ liệu | **Rủi ro lớn nhất.** Tập test lũ: 2/10 video đã gán box (59 khung, 148 người), còn thiếu thuộc tính và thẻ; còn 8 video, 129 khung. Khoá **đề xuất 25/11** (trễ so với 11/11). Nếu tới hạn chưa xong: khoá với các video đã gán trọn, quy tắc ghi trước khi chấm (báo cáo 13/11) |
+| Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ; chuỗi chấm đã có so cặp và bảng tự động (`eval/flood_tables.py`) |
+| Câu hỏi 2 (tốc độ) | **Xong 8/11** (`rq2_t4.md`); đổi cỡ khung trên GPU bật 10/11 (#20, sơ bộ). Notebook đo lại trên T4 đã chuẩn bị (`rq2_t4_gpuresize.yaml`), chưa chạy, có thể bỏ |
+| Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới và ba đoạn SeaDronesSee thật |
+| Viết | **Quyển viết tiếng Anh, giãn dòng 1,5 (#21)**, tám chương (`KE_HOACH_QUYEN.md`). Bản tiếng Anh `docs/thesis/`: chương 1–6 xong 21/11 (chương 3, 5 viết mới), chương 7, 8 đang làm; số kiểm bằng `tools/check_thesis_numbers.py`. Nháp tiếng Việt `docs/luan_van/` là nguồn nội dung |
 | Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
+| Demo | Kịch bản theo ba câu hỏi (`DEMO_BAO_VE.md`), video thiết bị có chữ tiếng Việt có dấu (13/11); chờ ảnh tập lũ; ngôn ngữ trình bày chờ cô |
 
-Từ nay tới 11/11 ưu tiên gán nhãn; mã chỉ viết khi khoá tập hoặc một thí nghiệm cần.
+Tới 25/11 ưu tiên gán nhãn; mã chỉ sửa khi khoá tập hoặc dựng quyển cần, khoá mã 28/11.
 
 **Nhật ký 7/11** (mỗi mục một file kết quả; trạng thái mỗi cải tiến ở `CAI_TIEN.md`):
 - Viết: nháp chương 1 (mở đầu), chương 3 (phương pháp), chương 4, chương 5.
@@ -36,6 +37,8 @@ Từ nay tới 11/11 ưu tiên gán nhãn; mã chỉ viết khi khoá tập ho�
 - 8/11: **câu hỏi 2 xong** (`rq2_t4.md`): FP16 nhanh hơn PyTorch 1,833–3,028 lần gần như không mất độ chính xác; INT8 mất một nửa recall vận hành < 8 px ở conf 0,25 vì nén độ tin cậy; biên Pareto chọn FP16 + thu nhỏ theo độ cao; thu nhỏ khung 4K trên CPU (46,28 ms) chậm hơn suy luận 6 ô. Hồ sơ thiết bị thêm số hạng thu nhỏ khung; mô phỏng thiết bị yếu: Orin NX, Orin Nano Super chỉ đạt 4 khung/giây ở 30–50 m. Sửa lỗi bảng so cặp của `rq2_report.py` (cặp cùng B bị đè), thêm biên Pareto và phân bố độ tin cậy.
 - 10/11: **demo bảo vệ viết lại** theo ba câu hỏi (`DEMO_BAO_VE.md`): ảnh so sánh trên tập lũ dựng bằng `tools/demo_panels.py` theo ba quy tắc chọn khung ghi trước khi khoá; lệnh soát `scripts/demo_bao_ve.sh kiem-tra`; video thiết bị dựng lại theo hồ sơ đã hiệu chỉnh: không cấu hình nào theo kịp 8 khung/giây (AGX Orin khung gốc 3,76, Nano khung gốc 2,52, Nano thu nhỏ 3,76), bản 4/11 nói theo kịp là sai và đã bỏ.
 - 10/11: **đổi cỡ khung trên GPU** (`--gpu-resize`, `gpu_resize.md`, sơ bộ trên RTX 5060): SeaDronesSee val chặng chuẩn bị khung 21,34 → 5,39 ms (trung vị), độ chính xác không khác có ý nghĩa; nguyên nhân gốc là Ultralytics ép OpenCV chạy một luồng. Bật mặc định (#20).
+- 22/11: cập nhật tài liệu theo quyển tiếng Anh (ROADMAP trạng thái và lịch, TONG_QUAN mục 8, LABELING mục 9, DAN_Y, README, TECHNICAL, CLAUDE.md, rule, skill); khoá tập lũ đề xuất 25/11.
+- 21/11: bản tiếng Anh chương 1–6 trong `docs/thesis/` (chương 3 yêu cầu và kiến trúc, chương 5 cài đặt và đảm bảo chất lượng viết mới), `references.bib`, `tools/check_thesis_numbers.py`.
 - 21/11: cô chốt quyển viết **tiếng Anh**, giãn dòng 1,5 (#21); kế hoạch quyển và lịch tới bảo vệ ở `docs/KE_HOACH_QUYEN.md`; khoá tập lũ đề xuất 25/11.
 - 21/11: chuẩn bị ngày khoá: `scripts/eval_flood.sh` thêm so cặp (E1–E2, E2–E2c, E1–E2c, E2c–E3, E2c–E4tiled, E2c–E2e nếu chạy) và `eval/flood_tables.py` ghép mọi bảng tập lũ cho luận văn; `tools/relabel_agreement.py` đo độ nhất quán khi gán lại 20 khung. Chạy thử trên nhãn 2 task (chỉ thống kê nhãn, không chạy mô hình).
 - 13/11: chữ có dấu trên video demo (dựng lại video, số khung/giây không đổi); `--gpu-resize` tắt được bằng `--no-gpu-resize` và mỗi biến thể câu hỏi 2 ghi rõ `gpu_resize` (trước đó `configs/edge.yaml` bật nên chạy lại `rq2_t4.yaml` sẽ không còn đo cv2); notebook đo lại trên T4 (`rq2_t4_gpuresize.yaml`), chờ chạy.
@@ -74,10 +77,10 @@ Cột "Gán nhãn" là số khung tập test lũ đã gán, cộng dồn.
 | 24–30/10 | Gán nhãn; tải FinlandProper, chia theo video, `check_leakage` (thực tế: FinlandProper tạm bỏ) | E2 lượt 2 (VisDrone + FinlandProper) trên Kaggle (thực tế: E2c = VisDrone + AFO, xong 23/10; E3 xong 28/10) | Bộ chuyển nhãn FinlandProper; yaml đầu P2 cho E3 | Chương 3 | 150 | 30/10: E2 lượt 1 đầy đủ; tiến độ gán nhãn |
 | 31/10–6/11 | Gán nốt, rà theo LABELING mục 7, `check_leakage` với mọi tập train, **khoá** (`MANIFEST.sha256`) | ~~E3 (P2) trên Kaggle~~ (xong 28/10); E2e (E2c + C2A) trên Kaggle; RQ2 trên T4 nếu kịp | | Chương 4 | 188; khoá lùi tới 11/11 (#10) | 6/11: tiến độ gán nhãn, lý do lùi khoá |
 | 7–13/11 | **Khoá 11/11**: rà, `check_leakage` (kể cả C2A), `MANIFEST.sha256` | E0–E2c, E3, E4 (cắt ô, không thu nhỏ: tập lũ không có độ cao bay, quyết định #13) trên tập lũ; ~~E5 (YOLO11s)~~ (cắt 7/11); E6 nếu cô duyệt; recall theo loại nhiễu; **RQ2 trên T4 bắt đầu sớm 7/11** (chạy thử hai biến thể xong; lần chạy đủ đầu lỗi xuất INT8 với TensorRT 11, đã ghim TensorRT 10 và chạy lại) | ~~Script recall theo thẻ nhiễu~~, ~~`rescale_dataset.py`~~, ~~notebook RQ2 trên Kaggle~~, ~~xử lý sau RQ2 (`scripts/after_rq2.py`)~~ (đã có); 7/11 làm thêm các mục `CAI_TIEN.md` không cần GPU (xem các khối cập nhật 7/11) | Chương 5 (RQ1) | | 13/11: bảng RQ1 đầy đủ |
-| 14–20/11 | | 3 seed cho cấu hình cuối (nếu đủ giờ GPU, không thì ghi giới hạn); ~~**RQ3** quét đủ lưới (mô phỏng)~~ (phần lớn xong 6–7/11) + ~~điều tra cơ chế `bytetrack_cmc` bỏ sót~~ (xong 26/10); RQ2 xong (dự kiến sớm hơn, ngay khi Kaggle chạy xong: `after_rq2.py`, `rq3_device.yaml`) | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
-| 21–27/11 | | Phân tích lỗi; demo trên video lũ thật; ~~hiệu chỉnh hồ sơ thiết bị từ RQ2 và `rq3_device.yaml`~~ (xong 8/11); ~~đổi cỡ khung trên GPU (CAI_TIEN mục 2)~~ (xong 10/11, tuỳ chọn, #20) | | Chương 5 (RQ2, RQ3), chương 6 | | 27/11: demo bảo vệ (`scripts/demo_bao_ve.sh`), diễn tập một lần có mạng để giữ ô bản đồ |
-| 28/11–4/12 | | | **Đóng băng mã 28/11** | Bản thảo đầy đủ | | 4/12: bản thảo |
-| 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng | | 11/12: bản hoàn chỉnh |
+| 14–20/11 | Gán nhãn (thực tế 22/11: 2/10 video) | 3 seed cho cấu hình cuối (nếu đủ giờ GPU, không thì ghi giới hạn); ~~**RQ3** quét đủ lưới (mô phỏng)~~ (phần lớn xong 6–7/11) + ~~điều tra cơ chế `bytetrack_cmc` bỏ sót~~ (xong 26/10); RQ2 xong (dự kiến sớm hơn, ngay khi Kaggle chạy xong: `after_rq2.py`, `rq3_device.yaml`) | ~~Recall theo kích thước trong mô phỏng~~ (đã có, `RecallCurve`); thay đường recall E6 thử bằng đường đo trên tập lũ nếu có | | | 20/11: kết quả RQ2, RQ3 |
+| 21–27/11 | Gán nốt, gán lại 20 khung, **khoá 25/11** (đề xuất), chấm ngay (`scripts/eval_flood.sh`, `demo_panels.py`) | Phân tích lỗi trên tập lũ; ~~hiệu chỉnh hồ sơ thiết bị~~ (xong 8/11); ~~đổi cỡ khung trên GPU~~ (xong 10/11, #20); đo lại trên T4 nếu còn giờ (có thể bỏ) | ~~So cặp và bảng tập lũ tự động, kiểm số quyển~~ (xong 21/11) | Quyển tiếng Anh (#21): ~~chương 1–6~~ (xong 21/11), chương 7, 8, tóm tắt (`KE_HOACH_QUYEN.md`) | | 27/11: kết quả tập lũ, tiến độ quyển |
+| 28/11–4/12 | | | **Đóng băng mã 28/11**; dựng file Word (pandoc, cần học viên đồng ý cài) | Bản thảo tiếng Anh đầy đủ, kiểm số | | 4/12: bản thảo |
+| 5–11/12 | | | | Sửa theo góp ý; slide; video demo dự phòng; diễn tập | | 11/12: bản hoàn chỉnh |
 
 ### 1.4. Ngân sách GPU Kaggle
 

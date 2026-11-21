@@ -28,6 +28,7 @@ scripts/eval_flood.sh <thư mục file xuất CVAT>   # cả chuỗi trên tập
 .venv/bin/python scripts/after_rq2.py --rq2 runs/rq2   # sau khi tải kết quả đo tốc độ từ Kaggle về
 .venv/bin/python -m console                      # giao diện thử nghiệm, http://localhost:8501
 scripts/demo_bao_ve.sh kiem-tra                  # soát mọi thứ demo bảo vệ cần (docs/DEMO_BAO_VE.md)
+.venv/bin/python tools/check_thesis_numbers.py   # mọi số thập phân trong quyển tiếng Anh (docs/thesis/) phải có trong nguồn đã đo
 ```
 
 Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Skill: `/run-experiment` (chạy và chấm một thí nghiệm E0–E6), `/try-improvement` (thử một mục của `CAI_TIEN.md` từ đầu tới khi ghi kết quả), `/friday-report` (báo cáo tuần gửi cô hướng dẫn).
@@ -45,7 +46,7 @@ Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Ski
 
 - Không đưa `data/`, `runs/`, trọng số (`*.pt`, `*.onnx`, `*.engine`) lên git.
 - Không ghi số liệu vào tài liệu nếu số đó không đọc được từ một file trong `runs/`. Không làm tròn hay ước lượng thay cho số đo.
-- Không sửa nhãn hay thành phần tập test lũ sau khi đã khoá (khoá 11/11/2026, lùi từ 4/11; `MANIFEST.sha256`).
+- Không sửa nhãn hay thành phần tập test lũ sau khi đã khoá (khoá đề xuất 25/11/2026, lùi từ 4/11 và 11/11; `MANIFEST.sha256`).
 - Không dùng mô hình gán nhãn trước cho tập test lũ, và không chọn tham số (conf, `--target-person-px`, N…) trên tập đó.
 - Không coi thời gian đo trên máy cá nhân (Mac MPS, RTX 5060 trên WSL) là số liệu cho thiết bị biên; chỉ dùng để so sánh tương đối.
 - Không chọn tay khung tập lũ để trình bày: ảnh cho slide và demo lấy theo ba quy tắc cố định của `tools/demo_panels.py` (`docs/DEMO_BAO_VE.md`).

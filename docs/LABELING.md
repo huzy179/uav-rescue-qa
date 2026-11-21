@@ -1,6 +1,6 @@
 # Hướng dẫn gán nhãn tập test lũ
 
-Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 của [TECHNICAL.md](TECHNICAL.md)): 188 khung đã trích và lọc tay từ 10 video (9 nguồn: texas và sanangelo cùng một nguồn, mục 6), khoá **11/11/2026** (lùi từ 4/11, quyết định #10 của ROADMAP). Tập nhỏ nên mỗi nhãn sai đều kéo lệch kết quả; ưu tiên nhất quán hơn tốc độ. Gặp trường hợp hướng dẫn này chưa nói tới thì dừng, quyết một lần, ghi thêm vào mục 6, rồi mới gán tiếp.
+Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 của [TECHNICAL.md](TECHNICAL.md)): 188 khung đã trích và lọc tay từ 10 video (9 nguồn: texas và sanangelo cùng một nguồn, mục 6), khoá **đề xuất 25/11/2026** (lùi từ 4/11 và 11/11, quyết định #10 của ROADMAP; chờ cô xác nhận). Tập nhỏ nên mỗi nhãn sai đều kéo lệch kết quả; ưu tiên nhất quán hơn tốc độ. Gặp trường hợp hướng dẫn này chưa nói tới thì dừng, quyết một lần, ghi thêm vào mục 6, rồi mới gán tiếp.
 
 ## 1. Chọn video và khung
 
@@ -139,3 +139,13 @@ Lịch lại ngày 5/11: 5–6/11 học toàn bộ dự án trước (tab "Hiể
 | 9/11 | 188 |
 | 10/11 | Gán lại 20 khung trong 50 khung đầu (sau ít nhất hai ngày, mục 7); rà toàn bộ theo mục 7 |
 | 11/11 | Chuyển nhãn, `check_leakage`, khoá (mục 8) |
+
+Lịch lại ngày 22/11: tới 21/11 đã gán box 2/10 video (01 washington, 02 thainguyen; 59 khung, 148 người) nhưng chưa đánh dấu thuộc tính và thẻ (chạy thử chuyển nhãn 12/11 thấy mọi thuộc tính là `false`, không thẻ nào). Hạn mới:
+
+| Hạn | Việc |
+|---|---|
+| 22–24/11 | Bổ sung thuộc tính, thẻ, vùng bỏ qua cho 01, 02; gán 8 video còn lại (129 khung); xuất từng task ngay khi xong để chạy thử chuyển nhãn |
+| 24/11 | Gán lại 20 khung trong 01, 02 (task CVAT riêng), so bằng `tools/relabel_agreement.py` (mục 7) |
+| 25/11 | Xuất lại cả 10 task, chuyển nhãn, `check_leakage`, khoá (mục 8), chấm |
+
+Nếu tới 25/11 chưa xong: khoá với các video đã gán trọn (không lấy nửa video), ghi số khung thực tế vào giới hạn; quy tắc này ghi trước khi chấm (báo cáo 13/11, tin gửi cô 21/11).

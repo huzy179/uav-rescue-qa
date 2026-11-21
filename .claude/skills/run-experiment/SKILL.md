@@ -63,7 +63,7 @@ Cập nhật file của tập trong `docs/results/` (tạo mới theo bố cục
 - thêm lệnh vừa chạy vào mục "Tái lập";
 - chép `eval_by_size.png` sang `docs/results/` nếu bảng có thay đổi.
 
-Không sửa số của thí nghiệm không được chạy lại. Thí nghiệm đổi trạng thái thì cập nhật cùng lúc bảng trạng thái ở TONG_QUAN mục 8 và ROADMAP mục 4.
+Không sửa số của thí nghiệm không được chạy lại. Số mới đưa vào luận văn thì cập nhật cả `docs/luan_van/chuong5.md` lẫn `docs/thesis/ch7_results.md` (tiếng Anh, dấu chấm), rồi chạy `tools/check_thesis_numbers.py`. Thí nghiệm đổi trạng thái thì cập nhật cùng lúc bảng trạng thái ở TONG_QUAN mục 8 và ROADMAP mục 4.
 
 ## 6. Báo lại
 

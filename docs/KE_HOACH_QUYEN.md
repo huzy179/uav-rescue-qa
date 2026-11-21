@@ -10,13 +10,13 @@ Nháp tiếng Việt trong `docs/luan_van/` là nguồn nội dung; bản tiến
 |---|---|---|---|
 | Trang bìa (hai trang), Abstract (≤ 150 từ), Acknowledgments | Theo mẫu Word | Viết mới | Chờ kết quả lũ (tóm tắt) |
 | Table of Contents, List of Tables, List of Figures, List of Appendices, List of Abbreviations | Sinh khi dựng Word; bảng viết tắt từ `THUAT_NGU.md` | Tự động + `THUAT_NGU.md` | Chờ |
-| Ch. 1 Introduction | Bối cảnh, ba ràng buộc, câu hỏi nghiên cứu, đóng góp, phạm vi, bố cục | `chuong1.md` | Dịch |
-| Ch. 2 Background and Related Work | Phát hiện vật nhỏ, ảnh UAV cho cứu nạn, theo dõi, thiết bị biên, khoảng trống | `chuong2.md`, `tai_lieu_tham_khao.md` | Dịch, đổi trích dẫn |
-| **Ch. 3 System Requirements and Architecture** (mới) | Bên liên quan và kịch bản sử dụng; yêu cầu chức năng theo vai trò (drone, trạm mặt đất, điều phối viên, đội cứu hộ); yêu cầu phi chức năng (tốc độ, chịu mất sóng, chạy không mạng, tái lập, chạy trên thiết bị biên); kiến trúc hai phía và luồng dữ liệu; quyết định thiết kế | `chuong3.md` mục 3.1, `TECHNICAL.md` mục 7–12, `ROADMAP.md` mục 2–3 | Viết mới |
-| Ch. 4 Methods | Hình học camera, phát hiện và cắt ô, thu nhỏ theo độ cao, tần số theo độ cao, xác nhận theo mặt đất, gửi cảnh báo, công cụ giả lập | `chuong3.md` mục 3.2–3.8 | Dịch |
-| **Ch. 5 Implementation and Quality Assurance** (mới) | Công nghệ và cấu trúc mã; giao diện từng khối và bản giả; ràng buộc kiến trúc; kiểm thử tự động (số test, phạm vi, ví dụ tính tay); tái lập (`run_config.json`, ghim phiên bản, khoá tập test bằng mã băm); triển khai (Docker, nhóm cài đặt edge/ground); màn hình điều phối và công cụ cho đội cứu hộ | `.claude/rules/pipeline.md`, `tests/`, `pyproject.toml`, `TECHNICAL.md` mục 10–12, `DEMO_BAO_VE.md` | Viết mới |
-| Ch. 6 Data and Experimental Setup | Dữ liệu, tập lũ tự gán nhãn, cách đo, thí nghiệm, môi trường | `chuong4.md` | Dịch; điền Bảng 4.4 sau khoá |
-| Ch. 7 Results and Discussion | Ba câu hỏi nghiên cứu, luận điểm xuyên suốt, phân tích lỗi, minh hoạ hệ thống | `chuong5.md`, `runs/flood/bang.md` | Dịch; điền phần lũ sau khoá |
+| Ch. 1 Introduction | Bối cảnh, ba ràng buộc, câu hỏi nghiên cứu, đóng góp, phạm vi, bố cục | `chuong1.md` | **Xong 21/11** (`ch1_introduction.md`) |
+| Ch. 2 Background and Related Work | Phát hiện vật nhỏ, ảnh UAV cho cứu nạn, theo dõi, thiết bị biên, khoảng trống | `chuong2.md`, `tai_lieu_tham_khao.md` | **Xong 21/11** (`ch2_background.md`, `references.bib`) |
+| **Ch. 3 System Requirements and Architecture** (mới) | Bên liên quan và kịch bản sử dụng; yêu cầu chức năng theo vai trò (drone, trạm mặt đất, điều phối viên, đội cứu hộ); yêu cầu phi chức năng (tốc độ, chịu mất sóng, chạy không mạng, tái lập, chạy trên thiết bị biên); kiến trúc hai phía và luồng dữ liệu; quyết định thiết kế | `chuong3.md` mục 3.1, `TECHNICAL.md` mục 7–12, `ROADMAP.md` mục 2–3 | **Xong 21/11** (`ch3_requirements_architecture.md`) |
+| Ch. 4 Methods | Hình học camera, phát hiện và cắt ô, thu nhỏ theo độ cao, tần số theo độ cao, xác nhận theo mặt đất, gửi cảnh báo, công cụ giả lập | `chuong3.md` mục 3.2–3.8 | **Xong 21/11** (`ch4_methods.md`) |
+| **Ch. 5 Implementation and Quality Assurance** (mới) | Công nghệ và cấu trúc mã; giao diện từng khối và bản giả; ràng buộc kiến trúc; kiểm thử tự động (số test, phạm vi, ví dụ tính tay); tái lập (`run_config.json`, ghim phiên bản, khoá tập test bằng mã băm); triển khai (Docker, nhóm cài đặt edge/ground); màn hình điều phối và công cụ cho đội cứu hộ | `.claude/rules/pipeline.md`, `tests/`, `pyproject.toml`, `TECHNICAL.md` mục 10–12, `DEMO_BAO_VE.md` | **Xong 21/11** (`ch5_implementation_qa.md`); cập nhật số test lúc khoá mã |
+| Ch. 6 Data and Experimental Setup | Dữ liệu, tập lũ tự gán nhãn, cách đo, thí nghiệm, môi trường | `chuong4.md` | **Xong 21/11** (`ch6_data_setup.md`); điền Bảng 6.4 sau khoá |
+| Ch. 7 Results and Discussion | Ba câu hỏi nghiên cứu, luận điểm xuyên suốt, phân tích lỗi, minh hoạ hệ thống | `chuong5.md`, `runs/flood/bang.md` | Đang dịch; điền phần lũ sau khoá |
 | Ch. 8 Conclusion and Future Work | Trả lời câu hỏi, đóng góp, giới hạn, hướng phát triển | `chuong6.md` | Dịch sau Ch. 7 |
 | References | Tác giả–năm (APA) | `tai_lieu_tham_khao.md` → `docs/thesis/references.bib` | Chuyển |
 | Appendices | A. Hướng dẫn gán nhãn tóm tắt; B. Lệnh tái lập từng bảng; C. Bảng phụ; D. Danh sách test | `LABELING.md`, `docs/results/`, `tests/` | Viết |
@@ -42,8 +42,8 @@ Trễ thì cắt theo thứ tự: phụ lục C, D → minh hoạ hệ thống t
 
 - **Viết:** Markdown trong `docs/thesis/` (mỗi chương một file, `ch1_introduction.md`…). Thuật ngữ tiếng Anh theo cột "Tiếng Anh" của `THUAT_NGU.md`; mã thí nghiệm luôn kèm tên mô tả.
 - **Dựng Word:** pandoc với file tham chiếu dựng từ mẫu của trường (kiểu chữ, lề, giãn dòng 1,5, đánh số trang i, ii… rồi 1, 2…), trích dẫn bằng citeproc (APA). **Cần cài pandoc: hỏi học viên trước.**
-- **Kiểm số:** script so mọi số trong `docs/thesis/` với số trong `docs/results/` (đổi dấu phẩy sang chấm); số không tìm thấy được liệt kê để kiểm tay. Chạy trước mỗi lần gửi.
-- **Kiểm thuật ngữ:** cùng script báo các từ tiếng Việt còn sót và mã thí nghiệm đứng trơn.
+- **Kiểm số:** `tools/check_thesis_numbers.py` (có từ 21/11) so mọi số thập phân trong `docs/thesis/` với nguồn đã đo (đổi dấu phẩy sang chấm); số không tìm thấy được liệt kê để kiểm tay. Chạy trước mỗi lần gửi.
+- **Kiểm thuật ngữ:** cùng script báo chữ tiếng Việt còn sót; mã thí nghiệm đứng trơn kiểm bằng mắt.
 - Sửa nội dung thì sửa cả nháp tiếng Việt lẫn bản tiếng Anh cho tới 4/12; sau 4/12 bản tiếng Anh là bản chính.
 
 ## 4. Cần hỏi cô

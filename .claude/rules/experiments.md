@@ -53,6 +53,7 @@ Kế hoạch thí nghiệm ở mục 4 của `docs/ROADMAP.md`; cách đo ở m�
 - Số trong bảng chép từ CSV trong `runs/` (`eval_by_size.csv`, `compare.csv`, `recall_by_pixels.csv`…), ba chữ số thập phân, dấu phẩy. Hiệu số và tỉ lệ cũng đọc từ CSV, không tự tính rồi làm tròn.
 - Khi một kết quả mới làm đổi kết luận của file cũ, thêm một dòng trỏ sang file mới trong file cũ thay vì sửa số cũ.
 - Ghi rõ file cấu hình nào sinh ra bảng nào.
+- Quyển luận văn tiếng Anh (`docs/thesis/`) chép số từ `docs/results/` với dấu chấm thập phân, không làm tròn lại; chạy `tools/check_thesis_numbers.py` sau mỗi lần sửa chương. Kết quả mới thì cập nhật cả nháp tiếng Việt (`docs/luan_van/`) lẫn chương tiếng Anh tương ứng (chương 7 cho kết quả, `KE_HOACH_QUYEN.md` mục 1 cho ánh xạ).
 
 ## Huấn luyện
 

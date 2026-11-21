@@ -218,6 +218,17 @@ python training/train.py --config configs/experiments/E2_s0.yaml --resume # ch�
 
 Thư mục `--output` chứa trọng số (`weights/best.pt`), `results.csv`, `data.yaml` và `run_config.json`.
 
+## Quyển luận văn
+
+Quyển viết tiếng Anh (quyết định #21), tám chương, mỗi chương một file Markdown trong `docs/thesis/` (`ch1_introduction.md` … ), trích dẫn bằng khoá pandoc (`[@redmon2016yolo]`) trong `docs/thesis/references.bib`, dấu chấm thập phân. Kế hoạch và lịch: `docs/KE_HOACH_QUYEN.md`. Nháp tiếng Việt cùng nội dung ở `docs/luan_van/`. Trước mỗi lần gửi:
+
+```bash
+.venv/bin/python tools/check_thesis_numbers.py   # số thập phân không có trong docs/results, configs, runs/gsd, runs/qa… và chữ tiếng Việt còn sót
+grep -rn "\[UPDATE\|\[PENDING\|\[CITATION\|\[FIGURE\|\[CHECK" docs/thesis/   # chỗ còn chờ
+```
+
+Số đếm test và dòng mã của chương 5 ở `runs/qa/` (chạy lại lúc khoá mã: `pytest --junitxml=runs/qa/pytest.xml`). Dựng file Word bằng pandoc từ mẫu của trường: chưa làm (28/11).
+
 ## Công cụ khác
 
 ```bash

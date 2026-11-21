@@ -57,7 +57,7 @@ Hoà thì lấy tên file nhỏ nhất. Đây là chọn ảnh minh hoạ, khôn
 
 | Việc | Lệnh hoặc cách làm | Khi nào |
 |---|---|---|
-| Ảnh so sánh trên tập lũ | `.venv/bin/python tools/demo_panels.py --images data/processed/flood/images/test --labels data/processed/flood/labels/test --ignore data/processed/flood/ignore/test --run-a runs/flood/E1 --run-b runs/flood/E2c --title-a "YOLO26s gốc" --title-b "Đã tinh chỉnh (E2c)" --output runs/demo/flood_panels` | Ngay sau khi chấm tập lũ (sau 11/11) |
+| Ảnh so sánh trên tập lũ | `.venv/bin/python tools/demo_panels.py --images data/processed/flood/images/test --labels data/processed/flood/labels/test --ignore data/processed/flood/ignore/test --run-a runs/flood/E1 --run-b runs/flood/E2c --title-a "YOLO26s gốc" --title-b "Đã tinh chỉnh (E2c)" --output runs/demo/flood_panels` | Ngay sau khi chấm tập lũ (khoá đề xuất 25/11) |
 | Phát hiện cho mọi khung SDS (một lần, cần GPU) | `scripts/demo_bao_ve.sh chuan-bi sds_v21_goc` và `... chuan-bi sds_v21_px10` | Đã có |
 | Chuyến quét mô phỏng (không cần GPU, khoảng 20 giây) | `scripts/demo_bao_ve.sh chuan-bi hotay_quet` | Đã có |
 | Video so sánh thiết bị | `scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super`; Nano khung gốc và thu nhỏ: lệnh ghép ở mục "Video Nano" dưới | Làm lại 10/11 theo hồ sơ đã hiệu chỉnh 8/11, dựng lại 13/11 với chữ có dấu (số khung/giây không đổi); làm lại nếu hồ sơ đổi |
