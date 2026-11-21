@@ -10,6 +10,7 @@
 - [docs/TECHNICAL.md](docs/TECHNICAL.md): giải thích kỹ thuật. Mỗi mục gắn nhãn `[Đã có]` hoặc `[Thiết kế]`; khi cài xong một phần thì đổi nhãn của mục đó.
 - [docs/THUAT_NGU.md](docs/THUAT_NGU.md): thuật ngữ và ký hiệu chuẩn; tài liệu mới dùng đúng tên trong đó.
 - [docs/DAN_Y_LUAN_VAN.md](docs/DAN_Y_LUAN_VAN.md): dàn ý sáu chương, mỗi mục dùng kết quả nào, đã có hay còn chờ.
+- [docs/KE_HOACH_QUYEN.md](docs/KE_HOACH_QUYEN.md): quyển tiếng Anh (quyết định #21), cấu trúc tám chương, lịch tới bảo vệ. Bản tiếng Anh ở `docs/thesis/`; nháp tiếng Việt ở `docs/luan_van/`.
 - [docs/DEMO_BAO_VE.md](docs/DEMO_BAO_VE.md): kịch bản demo bảo vệ, chuẩn bị, câu hỏi dễ gặp.
 - [docs/CAI_TIEN.md](docs/CAI_TIEN.md): điểm yếu đã đo và cách cải thiện (bằng chứng, cách sửa, chi phí, kiểm chứng, trạng thái); cải thiện mới thì thêm một dòng ở đây.
 - [README.md](README.md): cài đặt, dữ liệu, lệnh chạy, định dạng file kết quả.
@@ -33,7 +34,7 @@ Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Ski
 
 ## Quy ước
 
-- Docstring, chú thích, thông báo lỗi và tài liệu viết bằng tiếng Việt. Số thập phân trong tài liệu dùng dấu phẩy (0,497).
+- Docstring, chú thích, thông báo lỗi và tài liệu viết bằng tiếng Việt. Số thập phân trong tài liệu dùng dấu phẩy (0,497). Riêng quyển luận văn trong `docs/thesis/` viết tiếng Anh, dấu chấm thập phân (0.497), cùng số với `docs/results/`.
 - Module có mã (không tính `__init__.py` rỗng) mở đầu bằng `from __future__ import annotations` và có type hint.
 - Script dòng lệnh dùng `argparse` cùng `shared.config.parse_args_with_config`: khoá YAML trùng tên tham số, tham số gõ tay được ưu tiên.
 - Phụ thuộc ghim đúng phiên bản trong `pyproject.toml`, chia theo nhóm `edge`, `ground`, `dev`. Nhóm `edge` phải cài được trên Jetson; nhóm `ground` không có torch. Hỏi trước khi thêm thư viện mới.

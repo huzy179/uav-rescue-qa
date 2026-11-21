@@ -1,5 +1,7 @@
 # Dàn ý luận văn
 
+> **21/11:** quyển viết tiếng Anh, tám chương (quyết định #21). Cấu trúc mới và cách ánh xạ từ sáu chương dưới đây: `KE_HOACH_QUYEN.md` mục 1. Dàn ý này vẫn là nguồn nội dung theo từng mục.
+
 Khung sáu chương theo đề xuất ngày 6/11 (quyết định #16 của ROADMAP: giữ ba câu hỏi của đề cương, thêm câu hỏi con và luận điểm xuyên suốt; chờ cô). Mỗi mục ghi: viết gì, lấy nội dung từ tài liệu nào của dự án, dùng kết quả nào và kết quả đó **đã có** hay **còn chờ**. Lịch viết theo ROADMAP mục 1.3: chương 4 và 5 từ 7/11, bản thảo đầy đủ 4/12. Thuật ngữ dùng theo `THUAT_NGU.md`; mục "Danh mục thuật ngữ và chữ viết tắt" ở đầu quyển chép từ đó.
 
 Ký hiệu trạng thái: **Có** (có file kết quả), **Chờ** (chưa chạy hoặc chờ tập lũ), **Viết** (không cần số liệu, chỉ cần viết), **Nháp** (đã có bản nháp trong `docs/luan_van/`).
