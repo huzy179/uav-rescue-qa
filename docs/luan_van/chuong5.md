@@ -59,7 +59,7 @@ Dưới khoảng 6 px cả hai mô hình gần như không thấy người; mu�
 
 Giới hạn: 1.055 người lặp lại ở năm mức thu nhỏ nên các nhóm cỡ không độc lập; 11 video nên khoảng tin cậy rất rộng (bảng đầy đủ kèm khoảng tin cậy ở `e6_sds_pilot.md`); thu nhỏ ảnh không tái tạo nhiễu cảm biến và nhoè của camera thật.
 
-**Trên tập ảnh lũ.** [CHỜ KHOÁ] Bảng AP50 và recall vận hành theo bốn nhóm cỡ của các mô hình trên 188 khung lũ, bootstrap theo nguồn (9 cụm), IoU 0,5 và 0,3 cho nhóm dưới 8 px. Nguồn dự kiến: `docs/results/flood.md`, sinh từ `scripts/eval_flood.sh`.
+**Trên tập ảnh lũ.** [CHỜ KHOÁ] Bảng AP50 và recall vận hành theo bốn nhóm cỡ của các mô hình trên 188 khung lũ, bootstrap theo nguồn (9 cụm), IoU 0,5 và 0,3 cho nhóm dưới 8 px. Nguồn dự kiến: `docs/results/flood.md`, chép từ `runs/flood/bang.md` mà `scripts/eval_flood.sh` sinh ra.
 
 ### 5.1.2. Dữ liệu huấn luyện nào giúp (RQ1b)
 

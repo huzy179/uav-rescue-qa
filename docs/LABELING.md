@@ -91,7 +91,7 @@ Ghi vào đây mỗi trường hợp mới gặp và cách đã xử lý, kèm n
 ## 7. Kiểm tra chất lượng
 
 - Sau mỗi 50 khung, xem lại toàn bộ ở mức phóng 100% để tìm người bị sót; người sót thường nằm ở mép ảnh và vùng lóa.
-- Ít nhất hai ngày sau khi gán 50 khung đầu (và trước khi khoá), gán lại 20 khung trong số đó mà không nhìn nhãn cũ, rồi so sánh. Lệch nhiều (số người khác nhau, hoặc box lệch quá 2 px ở người nhỏ) thì sửa hướng dẫn và rà lại cả lô.
+- Ít nhất hai ngày sau khi gán 50 khung đầu (và trước khi khoá), gán lại 20 khung trong số đó mà không nhìn nhãn cũ (một task CVAT riêng chỉ có 20 khung đó), rồi so sánh bằng `.venv/bin/python tools/relabel_agreement.py --orig exports/*.zip --relabel <file xuất task gán lại> --output runs/flood/relabel_agreement` (số người ghép được, bỏ sót, lệch mép theo nhóm cỡ, độ trùng thuộc tính và thẻ; số cho chương 4). Lệch nhiều (số người khác nhau, hoặc box lệch quá 2 px ở người nhỏ) thì sửa hướng dẫn và rà lại cả lô.
 - Trước khi khoá: mọi khung có nhãn hoặc được xác nhận là không có người; mọi video có dòng trong `sources.csv`.
 
 ## 8. Khoá tập
@@ -120,6 +120,8 @@ scripts/eval_flood.sh exports/ E1 E2 E2c E3 E4tiled
     --ignore data/processed/flood/ignore/test --run-a runs/flood/E1 --run-b runs/flood/E2c \
     --title-a "YOLO26s gốc" --title-b "Đã tinh chỉnh (E2c)" --output runs/demo/flood_panels
 ```
+
+Bước 4 cũng so cặp các mô hình (bootstrap cặp theo nguồn) và ghép mọi bảng cho luận văn vào `runs/flood/bang.md` (`eval/flood_tables.py`: Bảng 4.4, bảng theo cỡ, so cặp, theo loại nhiễu).
 
 Giữ lại thư mục `exports/` và commit dòng mã băm của `MANIFEST.sha256` vào tài liệu kết quả, để chứng minh tập không đổi sau khi khoá.
 

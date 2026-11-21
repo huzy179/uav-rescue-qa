@@ -6,7 +6,8 @@
 #   scripts/eval_flood.sh exports/ E1 E2c            # chỉ những thí nghiệm này (mặc định: mọi configs/experiments/*_flood.yaml)
 #
 # Các bước: tools/convert_cvat.py -> dự đoán từng thí nghiệm (bỏ qua thí nghiệm chưa có trọng số hoặc đã có kết quả)
-# -> eval_by_size.py ở IoU 0,5 và 0,3, có vùng bỏ qua, bootstrap theo video -> recall_by_tag.py.
+# -> eval_by_size.py ở IoU 0,5 và 0,3, có vùng bỏ qua, bootstrap theo video -> recall_by_tag.py -> so cặp
+# (compare_runs.py) -> eval/flood_tables.py ghép thành bảng Markdown.
 # Không đọc nhãn để chọn gì cho mô hình; tập test đã khoá thì không sửa nhãn sau khi xem kết quả (CLAUDE.md).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -62,4 +63,19 @@ for run in "${runs[@]}"; do
 done
 $PY eval/recall_by_tag.py --runs "${runs[@]}" --annotations "$D" --split test --ignore "$D/ignore/test" \
     --cluster-pattern "$CLUSTER" --output runs/flood/eval_tags
-echo "Xong. Bảng theo kích thước: runs/flood/eval_*_iou*/eval_by_size.csv; theo loại nhiễu: runs/flood/eval_tags/recall_by_tag.csv"
+# So cặp bằng bootstrap cặp theo video (B − A), các cặp cố định trước khi khoá: mỗi bước thêm dữ liệu hay đổi cách chạy
+# so với bước trước nó, như trên VisDrone và SeaDronesSee. Cặp nào thiếu một lần chạy thì bỏ qua.
+PAIRS=("E1 E2" "E2 E2c" "E1 E2c" "E2c E3" "E2c E4tiled" "E2c E2e")
+for pair in "${PAIRS[@]}"; do
+  read -r a b <<< "$pair"
+  [ -f "runs/flood/$a/boxes.csv" ] && [ -f "runs/flood/$b/boxes.csv" ] || continue
+  for iou in 0.5 0.3; do
+    out="runs/flood/compare_${a}_${b}_iou$iou"
+    [ -f "$out/compare.csv" ] && continue
+    $PY eval/compare_runs.py --a "runs/flood/$a" --b "runs/flood/$b" --images "$D/images/test" --labels "$D/labels/test" \
+        --ignore "$D/ignore/test" --iou "$iou" --cluster-pattern "$CLUSTER" --output "$out"
+  done
+done
+$PY eval/flood_tables.py --names "${names[@]}" --output runs/flood/bang.md
+echo "Xong. Bảng theo kích thước: runs/flood/eval_*_iou*/eval_by_size.csv; so cặp: runs/flood/compare_*/compare.csv;"
+echo "theo loại nhiễu: runs/flood/eval_tags/recall_by_tag.csv; mọi bảng dạng Markdown cho luận văn: runs/flood/bang.md"

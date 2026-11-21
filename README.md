@@ -285,7 +285,7 @@ Mô phỏng thêm: `python -m sim.make_rq3 ... --pattern zigzag --leg-m 200` (ba
 
 Thêm 7/11: `--group-size 4 --group-spread-m 2` (người đứng theo nhóm), `--net-burst 10 10` ở `edge.main` (mất gói theo cụm, `rq3_burst.yaml`), `--group-count clusters` (đếm người theo cụm, tuỳ chọn, `rq3_group.yaml`; chấm trên video SeaDronesSee bằng `eval/group_count_eval.py`). Ngưỡng tin cậy theo cỡ box (kết quả âm): `python eval/conf_by_size.py --help`. Mỗi kết quả một file trong `docs/results/`, lệnh tái lập ở cuối file.
 
-Nhãn tập lũ từ CVAT: `python tools/convert_cvat.py --xml task1.zip task2.zip … --images data/raw/flood/frames --dst data/processed/flood --split test` (nhận nhiều file xuất "CVAT for images 1.1", .zip hoặc .xml). Cả bước chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu: `scripts/eval_flood.sh <thư mục chứa các file xuất>`.
+Nhãn tập lũ từ CVAT: `python tools/convert_cvat.py --xml task1.zip task2.zip … --images data/raw/flood/frames --dst data/processed/flood --split test` (nhận nhiều file xuất "CVAT for images 1.1", .zip hoặc .xml). Cả bước chuyển nhãn, dự đoán mọi `*_flood.yaml`, chấm theo kích thước và theo loại nhiễu, so cặp các mô hình và ghép bảng cho luận văn (`runs/flood/bang.md`): `scripts/eval_flood.sh <thư mục chứa các file xuất>`. Độ nhất quán khi gán lại 20 khung: `tools/relabel_agreement.py` (LABELING mục 7).
 
 Dữ liệu: chia theo video, kiểm tra rò rỉ, xem kích thước người khi huấn luyện (TECHNICAL mục 13.4, 15.6):
 
