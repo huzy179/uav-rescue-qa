@@ -1,6 +1,6 @@
 # Hướng dẫn gán nhãn tập test lũ
 
-Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 của [TECHNICAL.md](TECHNICAL.md)): 188 khung đã trích và lọc tay từ 10 video (9 nguồn: texas và sanangelo cùng một nguồn, mục 6), khoá **đề xuất 25/11/2026** (lùi từ 4/11 và 11/11, quyết định #10 của ROADMAP; chờ cô xác nhận). Tập nhỏ nên mỗi nhãn sai đều kéo lệch kết quả; ưu tiên nhất quán hơn tốc độ. Gặp trường hợp hướng dẫn này chưa nói tới thì dừng, quyết một lần, ghi thêm vào mục 6, rồi mới gán tiếp.
+Tập test lũ là tập chính để kết luận về cảnh lũ (mục 15.1 của [TECHNICAL.md](TECHNICAL.md)): 188 khung đã trích và lọc tay từ 10 video (9 nguồn: texas và sanangelo cùng một nguồn, mục 6), **đã khoá 24/11/2026 01:23** (đề xuất 25/11, lùi từ 4/11 và 11/11, quyết định #10 của ROADMAP; kết quả ở `docs/results/flood.md`). Tập nhỏ nên mỗi nhãn sai đều kéo lệch kết quả; ưu tiên nhất quán hơn tốc độ. Gặp trường hợp hướng dẫn này chưa nói tới thì dừng, quyết một lần, ghi thêm vào mục 6, rồi mới gán tiếp.
 
 ## 1. Chọn video và khung
 
@@ -149,3 +149,5 @@ Lịch lại ngày 22/11: tới 21/11 đã gán box 2/10 video (01 washington, 0
 | 25/11 | Xuất lại cả 10 task, chuyển nhãn, `check_leakage`, khoá (mục 8), chấm |
 
 Nếu tới 25/11 chưa xong: khoá với các video đã gán trọn (không lấy nửa video), ghi số khung thực tế vào giới hạn; quy tắc này ghi trước khi chấm (báo cáo 13/11, tin gửi cô 21/11).
+
+**Thực tế:** gán xong cả 10 video ngày 23/11 (bảy video còn lại trong một task gộp vì gói miễn phí của CVAT giới hạn số task), khoá sớm một ngày, 24/11 01:23. Không gán lại 20 khung theo mục 7; Texas và Huế tình cờ được gán hai lần cùng ngày (task gộp là bản chấm, hai task riêng giữ ở `exports/hai_lan_gan_2311/`), dùng làm chỉ báo độ nhất quán. Sau khoá phát hiện khung `thainguyen-6W-QUHCh4ok_003120` có đám đông nhưng không có nhãn; không sửa, ghi giới hạn và phân tích độ nhạy trong `flood.md`. Bài học cho lần sau: khung đám đông không tách được từng người phải có vùng `ignore`, không để trống (mục 3).

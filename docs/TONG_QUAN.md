@@ -463,14 +463,14 @@ Những nguyên tắc này trả lời câu hỏi "làm sao tin được kết q
 
 ---
 
-## 8. Trạng thái tổng hợp (22/11/2026)
+## 8. Trạng thái tổng hợp (24/11/2026)
 
 | Bước | Trạng thái |
 |---|---|
 | 1. Hình học camera | Xong |
 | 2. Mô hình nền | Xong |
 | 3. Dữ liệu công khai | VisDrone, AFO, C2A, HydroVigilance, SeaDronesSee-MOT đã tải và chuyển; FinlandProper tạm bỏ (162 GB, máy chủ không cho tải từng phần) |
-| 4. Tập test lũ | **Đang gán: 2/10 video có box (59 khung, 148 người), thiếu thuộc tính và thẻ; khoá đề xuất 25/11** (trễ so với 11/11, quyết định #10; lịch ở LABELING mục 9); giữ 4 video dưới 1080p (#15); khoảng tin cậy theo video (#7); gộp hai video San Angelo (188 khung, 9 nguồn). Chuỗi chấm có so cặp và bảng tự động (`eval/flood_tables.py`); độ nhất quán khi gán lại đo bằng `tools/relabel_agreement.py`
+| 4. Tập test lũ | **Đã khoá 24/11 01:23 và chấm** (`docs/results/flood.md`): 188 khung, 509 người, 109 khung không có người, 0 vùng bỏ qua; không rò rỉ. Kết quả trái dự đoán: tinh chỉnh (E2c) không nâng AP50 so với mô hình gốc (0,148 so với 0,269 trên tập khoá; bỏ khung thainguyen_003120 thiếu nhãn, phát hiện sau khoá: 0,233 so với 0,286) nhưng tăng recall người < 8 px và 8–16 px có ý nghĩa; mô hình gốc mạnh hơn rõ ở người > 32 px; P2 không khác; cắt ô tăng recall, không tăng AP50. Khoá trễ so với 11/11 (quyết định #10); giữ 4 video dưới 1080p (#15); khoảng tin cậy theo video (#7); gộp hai video San Angelo (188 khung, 9 nguồn). Chuỗi chấm có so cặp và bảng tự động (`eval/flood_tables.py`); độ nhất quán khi gán lại đo bằng `tools/relabel_agreement.py`
 | 5. Cách đo | Xong; thêm chấm khối xác nhận theo track trên video thật (`eval/track_confirm_eval.py`) |
 | 6. E0, E1, E4 | Xong; 7/11 chạy lại E0, E4 và cắt ô tự viết trên RTX 5060 vì thư mục kết quả trên Mac không còn, kết luận không đổi (`visdrone_baseline.md`, `visdrone_tiled_vs_sahi.md`) |
 | 7. Bộ cắt ô | Xong, đã đối chiếu SAHI |

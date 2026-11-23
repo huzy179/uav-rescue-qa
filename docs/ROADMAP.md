@@ -2,7 +2,7 @@
 
 Đề tài: Nghiên cứu phát hiện người kích thước nhỏ từ ảnh UAV trong vùng ngập lụt, hướng tới xử lý trên thiết bị biên.
 
-Mốc cố định: nộp đề cương **16/10** · khung code **30/10** · khoá tập test lũ **đề xuất 25/11** (lùi từ 4/11 và 11/11, quyết định #10; chờ cô xác nhận) · khoá mã **28/11** · bản thảo **4/12** · bắt đầu RQ2 **9/11** · bảo vệ **15/12/2026**.
+Mốc cố định: nộp đề cương **16/10** · khung code **30/10** · khoá tập test lũ **đã khoá 24/11** (đề xuất 25/11, lùi từ 4/11 và 11/11, quyết định #10) · khoá mã **28/11** · bản thảo **4/12** · bắt đầu RQ2 **9/11** · bảo vệ **15/12/2026**.
 Ngân sách thời gian: khoảng 150 giờ (Phụ lục B của đề cương); từ 21/10 dành 15–20 giờ mỗi tuần.
 
 Kế hoạch điều chỉnh ngày 21/10/2026 (mục 1). Lịch gốc theo đề cương xem lịch sử git của file này.
@@ -15,19 +15,19 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 
 ### 1.1. Trạng thái và nhật ký
 
-**Trạng thái 22/11** (chi tiết từng khâu: TONG_QUAN mục 8; mỗi kết quả một file trong `docs/results/`):
+**Trạng thái 24/11** (chi tiết từng khâu: TONG_QUAN mục 8; mỗi kết quả một file trong `docs/results/`):
 
 | Mảng | Trạng thái |
 |---|---|
-| Dữ liệu | **Rủi ro lớn nhất.** Tập test lũ: 2/10 video đã gán box (59 khung, 148 người), còn thiếu thuộc tính và thẻ; còn 8 video, 129 khung. Khoá **đề xuất 25/11** (trễ so với 11/11). Nếu tới hạn chưa xong: khoá với các video đã gán trọn, quy tắc ghi trước khi chấm (báo cáo 13/11) |
-| Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. Chờ tập lũ; chuỗi chấm đã có so cặp và bảng tự động (`eval/flood_tables.py`) |
+| Dữ liệu | **Tập test lũ đã khoá 24/11 01:23**: 188 khung, 10 video (9 nguồn), 509 người, 109 khung không có người, 0 vùng bỏ qua; không rò rỉ (`flood.md`). Sau khoá phát hiện khung `thainguyen_003120` có đám đông nhưng không có nhãn: giữ khoá, báo thêm phân tích độ nhạy bỏ khung đó. Không gán lại 20 khung; thay bằng phép đo hai lần gán cùng ngày (Texas, Huế, 37 khung) |
+| Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. **Tập lũ xong 24/11** (`flood.md`): tinh chỉnh không nâng AP50 trên ảnh lũ (E2c 0,148 so với E1 0,269 trên tập khoá; bỏ khung thiếu nhãn 0,233 so với 0,286), nhưng tăng recall người < 8 px và 8–16 px có ý nghĩa; E1 mạnh hơn rõ ở người > 32 px; P2 không khác; cắt ô tăng recall, không tăng AP50 |
 | Câu hỏi 2 (tốc độ) | **Xong 8/11** (`rq2_t4.md`); đổi cỡ khung trên GPU bật 10/11 (#20, sơ bộ). Notebook đo lại trên T4 đã chuẩn bị (`rq2_t4_gpuresize.yaml`), chưa chạy, có thể bỏ |
 | Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới và ba đoạn SeaDronesSee thật |
 | Viết | **Quyển viết tiếng Anh, giãn dòng 1,5 (#21)**, tám chương (`KE_HOACH_QUYEN.md`). Bản tiếng Anh `docs/thesis/`: chương 1–6 xong 21/11 (chương 3, 5 viết mới), chương 7, 8 đang làm; số kiểm bằng `tools/check_thesis_numbers.py`. Nháp tiếng Việt `docs/luan_van/` là nguồn nội dung |
 | Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
-| Demo | Kịch bản theo ba câu hỏi (`DEMO_BAO_VE.md`), video thiết bị có chữ tiếng Việt có dấu (13/11); chờ ảnh tập lũ; ngôn ngữ trình bày chờ cô |
+| Demo | Kịch bản theo ba câu hỏi (`DEMO_BAO_VE.md`), video thiết bị có chữ tiếng Việt có dấu (13/11); ảnh tập lũ đã dựng 24/11 theo ba quy tắc (`runs/demo/flood_panels`); ngôn ngữ trình bày chờ cô |
 
-Tới 25/11 ưu tiên gán nhãn; mã chỉ sửa khi khoá tập hoặc dựng quyển cần, khoá mã 28/11.
+Từ 24/11 ưu tiên điền kết quả tập lũ vào quyển (chương 7, 8, tóm tắt); mã chỉ sửa khi dựng quyển cần, khoá mã 28/11.
 
 **Nhật ký 7/11** (mỗi mục một file kết quả; trạng thái mỗi cải tiến ở `CAI_TIEN.md`):
 - Viết: nháp chương 1 (mở đầu), chương 3 (phương pháp), chương 4, chương 5.
@@ -37,6 +37,7 @@ Tới 25/11 ưu tiên gán nhãn; mã chỉ sửa khi khoá tập hoặc dựng 
 - 8/11: **câu hỏi 2 xong** (`rq2_t4.md`): FP16 nhanh hơn PyTorch 1,833–3,028 lần gần như không mất độ chính xác; INT8 mất một nửa recall vận hành < 8 px ở conf 0,25 vì nén độ tin cậy; biên Pareto chọn FP16 + thu nhỏ theo độ cao; thu nhỏ khung 4K trên CPU (46,28 ms) chậm hơn suy luận 6 ô. Hồ sơ thiết bị thêm số hạng thu nhỏ khung; mô phỏng thiết bị yếu: Orin NX, Orin Nano Super chỉ đạt 4 khung/giây ở 30–50 m. Sửa lỗi bảng so cặp của `rq2_report.py` (cặp cùng B bị đè), thêm biên Pareto và phân bố độ tin cậy.
 - 10/11: **demo bảo vệ viết lại** theo ba câu hỏi (`DEMO_BAO_VE.md`): ảnh so sánh trên tập lũ dựng bằng `tools/demo_panels.py` theo ba quy tắc chọn khung ghi trước khi khoá; lệnh soát `scripts/demo_bao_ve.sh kiem-tra`; video thiết bị dựng lại theo hồ sơ đã hiệu chỉnh: không cấu hình nào theo kịp 8 khung/giây (AGX Orin khung gốc 3,76, Nano khung gốc 2,52, Nano thu nhỏ 3,76), bản 4/11 nói theo kịp là sai và đã bỏ.
 - 10/11: **đổi cỡ khung trên GPU** (`--gpu-resize`, `gpu_resize.md`, sơ bộ trên RTX 5060): SeaDronesSee val chặng chuẩn bị khung 21,34 → 5,39 ms (trung vị), độ chính xác không khác có ý nghĩa; nguyên nhân gốc là Ultralytics ép OpenCV chạy một luồng. Bật mặc định (#20).
+- 24/11: **khoá tập lũ** (188 khung, 509 người, `MANIFEST.sha256` 566 file) và chấm E1, E2, E2c, E3, E4tiled (`flood.md`): kết quả trái dự đoán, tinh chỉnh không nâng AP50 trên ảnh lũ, chỉ tăng recall người nhỏ. Khung thainguyen_003120 thiếu nhãn (đám đông), phát hiện sau khoá: giữ khoá, thêm phân tích độ nhạy. Ảnh demo theo ba quy tắc; `relabel_agreement.py` sửa để chạy dạng script.
 - 22/11: cập nhật tài liệu theo quyển tiếng Anh (ROADMAP trạng thái và lịch, TONG_QUAN mục 8, LABELING mục 9, DAN_Y, README, TECHNICAL, CLAUDE.md, rule, skill); khoá tập lũ đề xuất 25/11.
 - 21/11: bản tiếng Anh chương 1–6 trong `docs/thesis/` (chương 3 yêu cầu và kiến trúc, chương 5 cài đặt và đảm bảo chất lượng viết mới), `references.bib`, `tools/check_thesis_numbers.py`.
 - 21/11: cô chốt quyển viết **tiếng Anh**, giãn dòng 1,5 (#21); kế hoạch quyển và lịch tới bảo vệ ở `docs/KE_HOACH_QUYEN.md`; khoá tập lũ đề xuất 25/11.
@@ -263,7 +264,7 @@ Câu hỏi con của RQ1–RQ3 (RQ1a…RQ3e), trả lời bằng thí nghiệm n
 | E1 | 1280 | Đã có |
 | E2 | Fine-tune (VisDrone; FinlandProper tạm bỏ) | Xong: E2 (VisDrone), **E2c (+ AFO), mô hình chính**; E2b (+ C2A) và E2d (+ HydroVigilance) không chạy, cấu hình xoá 7/11; E2e (E2c + C2A) xong 7/11, kết quả âm: kém E2c ở người nhỏ, không hơn có ý nghĩa ở người to (#14, `E2e.md`) |
 | E3 | E2c + đầu P2 | Xong 28/10, không đáng chi phí (`docs/results/E3.md`) |
-| E4 | E2c + cắt ô | Xong trên VisDrone và SDS; thêm biến thể thu nhỏ theo độ cao (`--target-person-px`), chỉ đánh giá trên SDS (#13); trên tập lũ chờ nhãn, chỉ cắt ô |
+| E4 | E2c + cắt ô | Xong trên VisDrone và SDS; thêm biến thể thu nhỏ theo độ cao (`--target-person-px`), chỉ đánh giá trên SDS (#13); trên tập lũ chỉ cắt ô, xong 24/11 (`flood.md`) |
 | E5 | E2c với YOLO11s | **Cắt 7/11** (việc đầu tiên trong thứ tự cắt, mục 1.5; tiết kiệm khoảng 10 giờ GPU); cấu hình đã xoá, lấy lại từ lịch sử git nếu cô yêu cầu |
 | E6 | Recall theo số pixel trên người (thu nhỏ nhiều mức); 48 MP và 4K là hai điểm trên đường cong | Đã có `tools/rescale_dataset.py`, `eval/recall_by_pixels.py`; chạy thử trên SDS (`e6_sds_pilot.md`); xem mục 5.3 |
 

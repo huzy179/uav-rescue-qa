@@ -46,7 +46,7 @@ Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Ski
 
 - Không đưa `data/`, `runs/`, trọng số (`*.pt`, `*.onnx`, `*.engine`) lên git.
 - Không ghi số liệu vào tài liệu nếu số đó không đọc được từ một file trong `runs/`. Không làm tròn hay ước lượng thay cho số đo.
-- Không sửa nhãn hay thành phần tập test lũ sau khi đã khoá (khoá đề xuất 25/11/2026, lùi từ 4/11 và 11/11; `MANIFEST.sha256`).
+- Không sửa nhãn hay thành phần tập test lũ sau khi đã khoá (đã khoá 24/11/2026; `MANIFEST.sha256`).
 - Không dùng mô hình gán nhãn trước cho tập test lũ, và không chọn tham số (conf, `--target-person-px`, N…) trên tập đó.
 - Không coi thời gian đo trên máy cá nhân (Mac MPS, RTX 5060 trên WSL) là số liệu cho thiết bị biên; chỉ dùng để so sánh tương đối.
 - Không chọn tay khung tập lũ để trình bày: ảnh cho slide và demo lấy theo ba quy tắc cố định của `tools/demo_panels.py` (`docs/DEMO_BAO_VE.md`).

@@ -23,12 +23,12 @@ Nháp tiếng Việt trong `docs/luan_van/` là nguồn nội dung; bản tiến
 
 ## 2. Lịch
 
-Mốc cứng: khoá tập lũ 25/11, khoá mã 28/11, bản thảo gửi cô 4/12, bản hoàn chỉnh 11/12, bảo vệ 15/12.
+Mốc cứng: khoá tập lũ 25/11 (**đã khoá 24/11**, `docs/results/flood.md`), khoá mã 28/11, bản thảo gửi cô 4/12, bản hoàn chỉnh 11/12, bảo vệ 15/12.
 
 | Ngày | Claude | Học viên |
 |---|---|---|
 | 21–24/11 | Dựng `docs/thesis/`; dịch Ch. 1, 2, 4, 6; viết Ch. 3, 5; chuyển tài liệu tham khảo sang `.bib`; script kiểm số (mục 3) | Gán nhãn 8 video còn lại, bổ sung thuộc tính và thẻ cho 01, 02; gán lại 20 khung (LABELING mục 7); hỏi cô các câu ở mục 4 |
-| 25/11 | Chuyển nhãn, kiểm tra rò rỉ, khoá, chấm (`scripts/eval_flood.sh`), ảnh demo; `docs/results/flood.md` | Xuất 10 task; xác nhận khoá |
+| 24/11 | ~~Chuyển nhãn, kiểm tra rò rỉ, khoá, chấm (`scripts/eval_flood.sh`), ảnh demo; `docs/results/flood.md`~~ (xong 24/11, sớm một ngày) | ~~Xuất 10 task; xác nhận khoá~~ (xong) |
 | 26–27/11 | Điền kết quả lũ vào nháp tiếng Việt và Ch. 7; dịch Ch. 7, 8; viết Abstract | Đọc Ch. 1–3 tiếng Anh, sửa chỗ sai ý |
 | 28/11 | **Khoá mã.** Dựng file Word lần đầu từ mẫu của trường; hình và bảng | Chạy notebook Kaggle đo lại thu nhỏ trên GPU nếu còn giờ (có thể bỏ) |
 | 29/11–3/12 | Sửa theo góp ý của học viên; danh mục bảng, hình, viết tắt; kiểm số toàn quyển | Đọc toàn quyển; viết Acknowledgments; xin văn bản áp dụng nếu có (mục 5) |
