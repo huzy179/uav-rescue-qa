@@ -74,14 +74,25 @@ Sau rà soát, tập có **188 khung từ 9 nguồn**, với số khung mỗi ng
 
 **Quy tắc gán nhãn.** Gán bằng CVAT với hai nhãn: `person` (một người) và `ignore` (vùng không gán được). Một người được gán khi chắc chắn là người, kể cả khi chỉ thấy một phần: người lội, bơi, bám vật nổi, đứng trên mái nhà, ngồi trên thuyền; người chỉ vài pixel nếu nhận ra được nhờ hình dáng, bóng hoặc chuyển động ở các khung lân cận. Không gán bóng phản chiếu, bóng đổ, người trong xe hay trong nhà mà không thấy cơ thể. Vật không chắc là người hay không được phủ bằng vùng bỏ qua. Box bao sát phần nhìn thấy được, không đoán phần chìm; người dưới 16 px được vẽ ở mức phóng 300–400%, vì lệch 1–2 px ở cỡ này đủ làm IoU tụt dưới ngưỡng. Mỗi box có hai thuộc tính: *ngập một phần* (nước che từ đầu gối trở lên) và *bị che* (vật khác che từ khoảng một phần ba cơ thể). Mỗi ảnh có bốn thẻ nhiễu: *lóa* (lóa nắng đủ che một người), *thời tiết* (mưa, sương, tối), *nhòe* và *vật trôi* (rác, đồ vật cỡ một người); thẻ dùng để đo recall theo loại nhiễu (câu hỏi con về nhiễu của cảnh lũ).
 
-**Kiểm tra chất lượng và khoá.** Sau mỗi 50 khung, toàn bộ được xem lại ở mức phóng 100% để tìm người bị sót. Ít nhất hai ngày sau, 20 khung được gán lại mà không nhìn nhãn cũ để đo độ nhất quán của người gán: **[CHỜ KHOÁ: kết quả gán lại, `tools/relabel_agreement.py`]**. Khi đủ khung và rà xong, toàn bộ ảnh, nhãn, vùng bỏ qua, thuộc tính và thẻ được **khoá** bằng mã băm SHA-256; từ đó không sửa nhãn và không thêm bớt khung, và công cụ chấm từ chối chạy nếu mã băm lệch. Nhãn sai phát hiện sau khi khoá được ghi vào phần giới hạn chứ không sửa. Mọi tham số (ngưỡng tin cậy, cỡ người mục tiêu khi thu nhỏ, số lần thấy để xác nhận…) được chọn trên các tập khác trước khi chạy trên tập ảnh lũ, và mỗi cấu hình cuối chỉ chạy một lần trên tập này. Không dùng mô hình để gán nhãn trước cho tập ảnh lũ, để nhãn không thiên về những gì mô hình đã thấy.
+**Kiểm tra chất lượng và khoá.** Kế hoạch là xem lại toàn bộ ở mức phóng 100% sau mỗi 50 khung và, ít nhất hai ngày sau, gán lại 20 khung mà không nhìn nhãn cũ. Vì gán nhãn trễ, lần gán lại không được làm. Riêng hai video (Texas và Huế, 37 khung, 72 người) được gán hai lần trong cùng ngày ở hai task CVAT riêng; lần đầu là bản được chấm. Ghép ở IoU 0,5, 58 trên 72 người có ở cả hai lần (61 ở IoU 0,3), 14 người chỉ có ở bản chấm, 10 chỉ có ở bản kia; IoU trung vị của các box ghép được là 0,738, độ lệch mép lớn nhất trung vị 3,890 px. Thuộc tính và thẻ khớp kém hơn (ngập một phần 0,500, bị che 0,655; loá 0,649, vật trôi 0,595, nhoè 0,892) (`docs/results/flood.md`). Hai lần gán cùng ngày nên đây chỉ là chỉ báo về độ nhất quán, không thay cho phép đo đã định. Khi gán xong, toàn bộ ảnh, nhãn, vùng bỏ qua, thuộc tính và thẻ được **khoá** bằng mã băm SHA-256 ngày 24/11/2026 (566 file); từ đó không sửa nhãn và không thêm bớt khung, và công cụ chấm từ chối chạy nếu mã băm lệch. Nhãn sai phát hiện sau khi khoá được ghi vào phần giới hạn chứ không sửa: sau khi chấm phát hiện một khung có đám đông nhìn rõ mà không có nhãn (mục 5.1). Mọi tham số (ngưỡng tin cậy, cỡ người mục tiêu khi thu nhỏ, số lần thấy để xác nhận…) được chọn trên các tập khác trước khi chạy trên tập ảnh lũ, và mỗi cấu hình cuối chỉ chạy một lần trên tập này. Không dùng mô hình để gán nhãn trước cho tập ảnh lũ, để nhãn không thiên về những gì mô hình đã thấy.
 
-**Bảng 4.4.** Thống kê tập ảnh lũ sau khi khoá. **[CHỜ KHOÁ: chép từ `runs/flood/bang.md`]**
+**Bảng 4.4.** Thống kê tập ảnh lũ sau khi khoá (`docs/results/flood.md`); nhóm cỡ theo cạnh ngắn của box.
 
-| Nguồn | Khung | Độ phân giải | Người | < 8 px | 8–16 px | 16–32 px | > 32 px | Khung không có người |
+| Video | Khung | Độ phân giải | Người | < 8 px | 8–16 px | 16–32 px | > 32 px | Khung không có người |
 |---|---|---|---|---|---|---|---|---|
-| … | | | | | | | | |
-| **Tổng** | **188** | | | | | | | |
+| duvall-2HE-TIf4Lk0 | 15 | 854×480 | 0 | 0 | 0 | 0 | 0 | 15 |
+| hue-BIxBHs0dZ3s | 22 | 1920×1080 | 51 | 2 | 27 | 21 | 1 | 7 |
+| hue-short-Ak83K9FSBTY | 23 | 1080×1920 | 35 | 4 | 5 | 16 | 10 | 9 |
+| mientrung-short-A-i9t2kJMlU | 23 | 1080×1920 | 0 | 0 | 0 | 0 | 0 | 23 |
+| nidarx-flood-1 | 8 | 1920×1080 | 241 | 22 | 116 | 81 | 22 | 0 |
+| sanangelo-police | 15 | 1280×720 | 5 | 0 | 0 | 0 | 5 | 13 |
+| texas-xBvDRr6vy-k | 15 | 1280×720 | 21 | 3 | 4 | 3 | 11 | 7 |
+| thainguyen-6W-QUHCh4ok | 29 | 854×480 | 98 | 57 | 41 | 0 | 0 | 20 |
+| vn-tuoitre-1 | 8 | 1920×1080 | 5 | 0 | 3 | 2 | 0 | 6 |
+| washington-D4xd0xNP9Gg | 30 | 1920×1080 | 53 | 0 | 9 | 13 | 31 | 9 |
+| **Tổng** (9 nguồn, 10 video) | 188 | | 509 | 88 | 205 | 136 | 80 | 109 |
+
+Cả tập có 70 người ngập một phần, 68 người bị che; 42 khung có thẻ loá, 1 thời tiết xấu, 54 nhoè, 117 vật trôi; không có vùng bỏ qua. Một nguồn (nidarx-flood-1) chiếm 241 trên 509 người trong 8 khung, và hai video không có người nào, nên số chung bị vài nguồn chi phối; đây cũng là lý do bootstrap theo nguồn.
 
 Tập ảnh lũ không có dữ liệu độ cao bay (video tải từ Internet không kèm telemetry), nên kỹ thuật thu nhỏ theo độ cao bay chỉ được đánh giá trên SeaDronesSee và trong mô phỏng, không trên tập này.
 

@@ -6,7 +6,7 @@
 
 **Câu hỏi 1: phát hiện người nhỏ trong ảnh UAV vùng lũ chính xác tới mức nào, kỹ thuật nào giúp được bao nhiêu.**
 
-Dữ liệu huấn luyện quyết định nhiều nhất. Tinh chỉnh trên ảnh UAV đô thị (VisDrone) nâng mạnh khả năng thấy người nhỏ; thêm ảnh người dưới nước (AFO) giữ được người bơi mà không mất nhiều ở người nhỏ; trộn thẳng ảnh thảm hoạ ghép người cỡ to (C2A) làm mất người nhỏ (chương 5, mục 5.1.2). Trên ảnh độ phân giải vừa, thay đổi kiến trúc (tầng P2) và cắt ô giúp rất ít so với dữ liệu (mục 5.1.3). Mô hình tinh chỉnh cho người nhỏ lại yếu với người to; trên ảnh 4K có độ cao bay thật, thu nhỏ khung theo độ cao bù được điểm yếu này (mục 5.1.4). Dưới khoảng 6–8 px, không mô hình nào trong luận văn thấy người một cách đáng tin; đây là giới hạn dưới của khâu phát hiện, và cách chữa còn lại là bay thấp hơn. [CHỜ KHOÁ] Mức chính xác trên tập ảnh lũ theo nhóm cỡ người, ảnh hưởng của nhiễu riêng cảnh lũ, và mức chuyển được từ ảnh đô thị, biển sang cảnh lũ (mục 5.1.1, 5.1.5, 5.1.6).
+Dữ liệu huấn luyện quyết định nhiều nhất. Tinh chỉnh trên ảnh UAV đô thị (VisDrone) nâng mạnh khả năng thấy người nhỏ; thêm ảnh người dưới nước (AFO) giữ được người bơi mà không mất nhiều ở người nhỏ; trộn thẳng ảnh thảm hoạ ghép người cỡ to (C2A) làm mất người nhỏ (chương 5, mục 5.1.2). Trên ảnh độ phân giải vừa, thay đổi kiến trúc (tầng P2) và cắt ô giúp rất ít so với dữ liệu (mục 5.1.3). Mô hình tinh chỉnh cho người nhỏ lại yếu với người to; trên ảnh 4K có độ cao bay thật, thu nhỏ khung theo độ cao bù được điểm yếu này (mục 5.1.4). Dưới khoảng 6–8 px, không mô hình nào trong luận văn thấy người một cách đáng tin; đây là giới hạn dưới của khâu phát hiện, và cách chữa còn lại là bay thấp hơn. Trên tập ảnh lũ tự gán nhãn, kết quả trái dự đoán: tinh chỉnh tăng recall người dưới 16 px có ý nghĩa nhưng không tăng AP50, vì báo nhầm nhiều hơn; mô hình gốc giữ AP50 cao nhất (0,269 so với 0,148 của mô hình chính; 0,286 so với 0,233 khi bỏ một khung thiếu nhãn) và mạnh hơn rõ với người to. Thứ hạng trên ảnh lũ giống tập người dưới biển hơn tập đô thị, nên chọn mô hình theo ảnh đô thị là không đủ. Ảnh hưởng riêng của loá, nhoè, vật trôi không đo được trên 188 khung (mục 5.1.1, 5.1.5, 5.1.6).
 
 **Câu hỏi 2: cấu hình nào đạt tần số xử lý cần thiết mà giữ recall cao nhất.**
 
@@ -22,7 +22,7 @@ Khi chỉ xử lý vài khung mỗi giây, gom phát hiện theo toạ độ m�
 
 [CHỜ #19: viết theo cách trình bày cô duyệt; bản hiện tại theo chương 1, mục 1.4.]
 
-1. Tập đánh giá ảnh lũ từ UAV tự gán nhãn và cách đánh giá theo cỡ người, khoảng tin cậy theo video. [CHỜ KHOÁ] số khung, số người, phân bố cỡ.
+1. Tập đánh giá ảnh lũ từ UAV tự gán nhãn và cách đánh giá theo cỡ người, khoảng tin cậy theo video. 188 khung từ 9 nguồn, 509 người (88 dưới 8 px, 205 từ 8 đến 16 px), khoá bằng mã băm trước khi chạy mô hình.
 2. Thu nhỏ khung theo độ cao bay trong pipeline thiết bị biên, đo cùng lúc độ chính xác theo cỡ người và khối lượng tính (hướng đã có công trình trước, chương 2, mục 2.2).
 3. Phân tích và đo xác nhận theo toạ độ mặt đất so với theo dõi trên ảnh khi xử lý ít khung, cho bài toán cứu nạn.
 
@@ -31,6 +31,7 @@ Kèm theo: hệ thống hoàn chỉnh từ video tới bản đồ, các công c
 ## 6.3. Giới hạn
 
 - **Dữ liệu lũ nhỏ.** Tập ảnh lũ có 188 khung từ 9 nguồn, khoảng tin cậy theo nguồn nên rộng; video lũ công khai không có độ cao bay, nên thu nhỏ theo độ cao không đánh giá được trên cảnh lũ.
+- **Nhãn tập lũ do một người gán, có lỗi đã biết.** Một khung có đám đông nhìn rõ nhưng không có nhãn, phát hiện sau khi khoá; không sửa, báo kèm phân tích độ nhạy bỏ khung đó (mục 5.1.1). Không làm lần gán lại theo kế hoạch; chỉ có hai lần gán cùng ngày trên 37 khung, 58 trên 72 người khớp, thẻ loá và vật trôi khớp kém. Không có vùng bỏ qua nào; một nguồn chiếm gần một nửa số người.
 - **Không bay thật, không có thiết bị biên.** Tốc độ đo trên GPU T4 và chỉ so tương đối; thiết bị yếu là ước lượng từ giả lập. Khâu xác nhận, định vị, gửi phần lớn đánh giá bằng mô phỏng; phần trên video thật gồm ba đoạn biển, drone gần như đứng yên hoặc camera nghiêng.
 - **Mô phỏng có thể bỏ qua đúng hiện tượng quyết định kết quả.** Ví dụ ở mục 5.3.5: cách đếm người theo nhóm tốt hơn trong mô phỏng nhưng kém hơn trên video thật, vì mô phỏng không có hiện tượng một người tách thành nhiều cụm khi GPS trôi.
 - **Một seed** cho phần lớn thí nghiệm huấn luyện; không có đối chứng đời mô hình (thí nghiệm YOLO11 bị cắt).
@@ -41,6 +42,7 @@ Kèm theo: hệ thống hoàn chỉnh từ video tới bản đồ, các công c
 
 - Đo trên thiết bị Jetson thật, gồm điện năng và giảm xung khi nóng; hiệu chỉnh lại giả lập thời gian thiết bị bằng số đo đó.
 - Mở rộng tập ảnh lũ, nhất là video có telemetry để đánh giá thu nhỏ theo độ cao trên cảnh lũ.
+- Giảm báo nhầm của mô hình tinh chỉnh trên ảnh lũ (nguyên nhân chính khiến AP50 không tăng dù recall người nhỏ tăng): chọn ngưỡng tin cậy cho cảnh lũ trên một tập lũ riêng có nhãn, hoặc thêm ảnh lũ không có người vào dữ liệu huấn luyện làm mẫu âm.
 - Đo đổi cỡ khung trên GPU trên chính thiết bị biên (đã cài và thử sơ bộ trên máy cá nhân, mục 5.2.1), hoặc giải mã video ở độ phân giải thấp hơn khi bay thấp, vì đây là khâu chậm nhất của cấu hình được chọn và là chỗ thiết bị yếu thiếu sức (mục 5.2).
 - Nếu cần INT8: chọn ngưỡng tin cậy riêng cho mô hình nén trên tập val và hiệu chỉnh INT8 với ảnh có nước.
 - Ảnh nhiệt kết hợp ảnh màu cho ban đêm và người bị che khuất.

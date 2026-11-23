@@ -59,7 +59,41 @@ Dưới khoảng 6 px cả hai mô hình gần như không thấy người; mu�
 
 Giới hạn: 1.055 người lặp lại ở năm mức thu nhỏ nên các nhóm cỡ không độc lập; 11 video nên khoảng tin cậy rất rộng (bảng đầy đủ kèm khoảng tin cậy ở `e6_sds_pilot.md`); thu nhỏ ảnh không tái tạo nhiễu cảm biến và nhoè của camera thật.
 
-**Trên tập ảnh lũ.** [CHỜ KHOÁ] Bảng AP50 và recall vận hành theo bốn nhóm cỡ của các mô hình trên 188 khung lũ, bootstrap theo nguồn (9 cụm), IoU 0,5 và 0,3 cho nhóm dưới 8 px. Nguồn dự kiến: `docs/results/flood.md`, chép từ `runs/flood/bang.md` mà `scripts/eval_flood.sh` sinh ra.
+**Trên tập ảnh lũ.** Bảng 5.x là kết quả chính của câu hỏi 1 trên dữ liệu đích: năm mô hình chốt trước, mỗi mô hình chạy một lần sau khi khoá tập (188 khung, 509 người, chương 4), bootstrap theo 9 nguồn (`flood.md`).
+
+**Bảng 5.x.** AP50 và recall vận hành (conf 0,25) trên tập ảnh lũ, IoU 0,5; cột cuối là AP50 nhóm dưới 8 px ở IoU 0,3. Trong ngoặc: khoảng tin cậy 95%.
+
+| Mô hình | Chỉ số | Tất cả | <8 px | 8–16 px | 16–32 px | >32 px | <8 px, IoU 0,3 |
+|---|---|---|---|---|---|---|---|
+| Gốc (E1) | AP50 | 0,269 (0,183–0,411) | 0,123 (0,015–0,258) | 0,124 (0,092–0,182) | 0,332 (0,182–0,585) | 0,661 (0,515–0,911) | 0,298 (0,070–0,414) |
+|  | Recall | 0,216 (0,164–0,332) | 0,057 (0,000–0,085) | 0,098 (0,067–0,159) | 0,279 (0,147–0,522) | 0,588 (0,429–0,781) | |
+| Tinh chỉnh VisDrone (E2) | AP50 | 0,147 (0,062–0,313) | 0,068 (0,012–0,150) | 0,073 (0,049–0,253) | 0,249 (0,063–0,530) | 0,402 (0,225–0,681) | 0,228 (0,076–0,313) |
+|  | Recall | 0,283 (0,207–0,440) | 0,216 (0,043–0,667) | 0,229 (0,123–0,437) | 0,375 (0,209–0,625) | 0,338 (0,151–0,691) | |
+| Mô hình chính (E2c) | AP50 | 0,148 (0,070–0,334) | 0,083 (0,043–0,319) | 0,082 (0,061–0,202) | 0,233 (0,060–0,532) | 0,434 (0,282–0,687) | 0,308 (0,131–0,468) |
+|  | Recall | 0,244 (0,186–0,364) | 0,182 (0,054–0,591) | 0,205 (0,117–0,356) | 0,316 (0,194–0,625) | 0,287 (0,128–0,571) | |
+| Thêm P2 (E3) | AP50 | 0,162 (0,079–0,332) | 0,097 (0,024–0,181) | 0,094 (0,071–0,251) | 0,227 (0,042–0,482) | 0,468 (0,324–0,735) | 0,279 (0,093–0,383) |
+|  | Recall | 0,240 (0,173–0,345) | 0,171 (0,014–0,429) | 0,220 (0,133–0,374) | 0,287 (0,163–0,472) | 0,287 (0,096–0,611) | |
+| Mô hình chính + cắt ô (E4tiled) | AP50 | 0,161 (0,058–0,315) | 0,048 (0,015–0,302) | 0,098 (0,066–0,239) | 0,251 (0,049–0,449) | 0,376 (0,218–0,620) | 0,237 (0,080–0,521) |
+|  | Recall | 0,295 (0,227–0,445) | 0,171 (0,056–0,706) | 0,263 (0,145–0,491) | 0,404 (0,200–0,583) | 0,325 (0,175–0,611) | |
+| | Số người | 509 | 88 | 205 | 136 | 80 | 88 |
+
+Kết quả **trái với dự đoán ghi trước khi chấm** (mục 5.1.6): trên tập khoá, mô hình gốc có AP50 cao nhất, cao hơn mô hình chính 0,120 (khoảng −0,191 đến −0,020 cho hiệu E2c − E1, có ý nghĩa). Theo quy trình đã đặt, việc đầu tiên là kiểm tra cấu hình và nhãn. Cấu hình đúng (cùng cỡ đầu vào 1280, ngưỡng 0,001, cùng quy ước như các tập khác). Nhãn có một lỗi: khung `thainguyen_003120` chụp một đám đông trên đường ngập, nhìn rõ nhiều người, nhưng không có nhãn nào. Các mô hình tinh chỉnh báo 135–167 box conf ≥ 0,25 trên riêng khung này (mô hình gốc 14), tất cả bị tính là báo nhầm; với mô hình chính đó là 152 trên 432 box của cả tập. Theo quy tắc khoá, nhãn không sửa; số chính vẫn là Bảng 5.x, và một phân tích độ nhạy chấm lại y hệt nhưng bỏ riêng khung này (lý do bỏ kiểm được từ ảnh và nhãn, không phụ thuộc mô hình nào tốt hơn).
+
+**Bảng 5.y.** AP50 toàn tập khi bỏ khung thiếu nhãn (187 khung; recall không đổi vì khung không có nhãn).
+
+| Mô hình | AP50, tập khoá | AP50, bỏ khung thiếu nhãn | Precision, tập khoá | Precision, bỏ khung |
+|---|---|---|---|---|
+| Gốc (E1) | 0,269 | 0,286 (0,224–0,411) | 0,615 | 0,667 |
+| Tinh chỉnh VisDrone (E2) | 0,147 | 0,220 (0,141–0,340) | 0,262 | 0,377 |
+| Mô hình chính (E2c) | 0,148 | 0,233 (0,165–0,349) | 0,287 | 0,443 |
+| Thêm P2 (E3) | 0,162 | 0,248 (0,175–0,341) | 0,305 | 0,460 |
+| Cắt ô (E4tiled) | 0,161 | 0,219 (0,128–0,332) | 0,209 | 0,265 |
+
+Khi bỏ khung đó, khoảng cách giữa mô hình chính và mô hình gốc thu hẹp còn −0,053 (−0,166 đến −0,001, p 0,050), vẫn nghiêng về mô hình gốc. Ba điều đứng vững ở cả hai cách tính:
+
+- **Tinh chỉnh đổi precision lấy recall ở người nhỏ.** Recall vận hành của mô hình chính cao hơn mô hình gốc có ý nghĩa ở người dưới 8 px (+0,125; ở IoU 0,3 +0,307) và 8–16 px (+0,107, p 0,050). Mô hình gốc thận trọng hơn (precision 0,615 so với 0,287) và mạnh hơn có ý nghĩa ở người trên 32 px (hiệu AP50 −0,226, recall −0,300): cùng điểm yếu với người to đã thấy trên SeaDronesSee (Bảng 5.2). Ở IoU 0,3 và bỏ khung thiếu nhãn, AP50 nhóm dưới 8 px của mô hình chính cao hơn mô hình gốc có ý nghĩa (+0,047).
+- **Dưới 8 px vẫn là giới hạn:** recall vận hành cao nhất ở nhóm này là 0,216, khoảng tin cậy rất rộng.
+- **P2 không khác mô hình chính** ở nhóm nào; **cắt ô** tăng recall vận hành (+0,051, có ý nghĩa) nhưng không tăng AP50 và có precision thấp nhất (0,209).
 
 ### 5.1.2. Dữ liệu huấn luyện nào giúp (RQ1b)
 
@@ -112,7 +146,7 @@ Thêm AFO vào dữ liệu huấn luyện (E2c) lấy lại người dưới nư
 
 Ở IoU 0,3 kết luận giữ nguyên. Một giải thích hợp lý, chưa kiểm chứng riêng: C2A chiếm 6.129 trên 15.387 ảnh huấn luyện và toàn người cỡ to, nên tỉ lệ người nhỏ trong dữ liệu giảm và mô hình dồn sức vào người to. Điều này đi ngược đúng cái đề tài cần, vì người trong ảnh lũ từ UAV phần lớn nhỏ. Kết quả âm này được giữ trong luận văn vì nó trả lời trực tiếp câu hỏi "thêm dữ liệu thảm hoạ có giúp không": với cách trộn dữ liệu đơn giản thì không. Cách trộn khác (lấy mẫu một phần C2A, cân bằng theo cỡ người) là hướng phát triển (chương 6).
 
-**Trả lời RQ1b.** Ảnh drone đô thị dạy mô hình người nhỏ; ảnh người dưới nước giữ được người bơi mà không mất nhiều ở người nhỏ; ảnh thảm hoạ ghép người to, trộn thẳng vào, làm mất người nhỏ. [CHỜ KHOÁ] Đối chiếu ba mô hình trên tập ảnh lũ.
+**Trả lời RQ1b.** Ảnh drone đô thị dạy mô hình người nhỏ; ảnh người dưới nước giữ được người bơi mà không mất nhiều ở người nhỏ; ảnh thảm hoạ ghép người to, trộn thẳng vào, làm mất người nhỏ. Trên tập ảnh lũ thứ tự này không lặp lại theo AP50: cả hai mô hình tinh chỉnh đều có AP50 thấp hơn mô hình gốc, nhưng recall người nhỏ cao hơn có ý nghĩa; mô hình chính và mô hình chỉ tinh chỉnh VisDrone gần như ngang nhau về AP50 (hiệu +0,002), mô hình chính hơn ở AP50 nhóm dưới 8 px khi ghép ở IoU 0,3 (+0,080, có ý nghĩa) và kém một chút ở recall toàn tập (−0,039, có ý nghĩa). Thêm ảnh người dưới nước vì vậy không làm hại trên ảnh lũ; còn tinh chỉnh nói chung có giúp cho ảnh lũ hay không thì phụ thuộc cách đo (mục 5.1.1, 5.1.6).
 
 Giới hạn chung: mỗi cấu hình một seed (mục 4.5); số epoch khác nhau giữa các lần tinh chỉnh do giới hạn 12 giờ của Kaggle (60 epoch cho E2, 55 cho E2c và E2e).
 
@@ -177,11 +211,34 @@ Giới hạn: một tập, 11 video, người phần lớn to; cỡ mục tiêu 
 
 ### 5.1.5. Nhiễu riêng của cảnh lũ (RQ1e)
 
-[CHỜ KHOÁ] Recall vận hành của mô hình chính theo từng thẻ ảnh của tập lũ (loá nước, vật trôi, nhoè chuyển động, mưa hoặc sương, người trên mái, người dưới nước), kèm số khung và số người mỗi thẻ, khoảng tin cậy theo nguồn. Nhận xét: thẻ nào kém rõ so với toàn tập; vì mỗi thẻ ít khung, chỉ kết luận khi khoảng tin cậy cho phép.
+**Bảng 5.z.** Recall vận hành và báo nhầm mỗi khung của mô hình chính theo thẻ ảnh và thuộc tính người, tập khoá, IoU 0,5 (`flood.md`).
+
+| Tập con | Số người | Recall | Số khung | Báo nhầm mỗi khung |
+|---|---|---|---|---|
+| Tất cả | 509 | 0,244 (0,186–0,364) | 188 | 1,638 (0,309–3,624) |
+| Loá nước | 184 | 0,321 (0,000–0,429) | 42 | 1,738 (0,222–4,408) |
+| Mưa, sương, tối | 4 | 0,500 | 1 | 1,000 |
+| Nhoè | 223 | 0,305 (0,146–0,469) | 54 | 1,407 (0,257–4,709) |
+| Vật trôi | 213 | 0,324 (0,164–0,447) | 117 | 0,863 (0,250–1,855) |
+| Khung không thẻ | 262 | 0,191 (0,000–0,204) | 58 | 3,534 (0,100–6,392) |
+| Người ngập một phần | 70 | 0,243 (0,048–0,461) | | |
+| Người bị che | 68 | 0,279 (0,136–0,535) | | |
+| Người không thuộc tính | 373 | 0,236 (0,165–0,362) | | |
+
+Không thẻ nào cho recall thấp hơn toàn tập một cách rõ ràng; khoảng tin cậy quá rộng để kết luận (chỉ một khung có thời tiết xấu). Khung loá, nhoè, vật trôi thậm chí có recall điểm cao hơn khung không thẻ, có lẽ vì chúng thường là cảnh gần, người to hơn, chứ không phải nhiễu giúp mô hình. Nhóm khung không thẻ có báo nhầm mỗi khung cao nhất, một phần do khung thiếu nhãn (không có thẻ) nằm trong nhóm này. Độ tin của thẻ cũng hạn chế: khi gán hai lần 37 khung, thẻ loá và vật trôi chỉ trùng 0,649 và 0,595 (chương 4). Kết luận cho RQ1e: trên 188 khung này, không đo được ảnh hưởng riêng của loá, nhoè hay vật trôi lên recall.
 
 ### 5.1.6. Từ ảnh đô thị và biển sang cảnh lũ (RQ1f)
 
-[CHỜ KHOÁ] Bảng một dòng cho mỗi mô hình (gốc, tinh chỉnh VisDrone, mô hình chính, thêm C2A, thêm P2): AP50 trên VisDrone test-dev, SeaDronesSee, tập lũ. Câu hỏi cần trả lời: thứ hạng các mô hình trên tập lũ có giống trên hai tập công khai không; nếu khác thì tập nào dự báo tốt hơn cho cảnh lũ.
+**Bảng 5.w.** AP50 toàn bộ (IoU 0,5) của cùng các mô hình trên ba tập (`E2c.md`, `E3.md`, `sds_det.md`, `flood.md`). Mô hình thêm C2A không chạy trên tập lũ (chương 4).
+
+| Mô hình | VisDrone test-dev | SeaDronesSee | Tập lũ, khoá | Tập lũ, bỏ khung thiếu nhãn |
+|---|---|---|---|---|
+| Gốc (E1) | 0,269 | 0,535 | 0,269 | 0,286 |
+| Tinh chỉnh VisDrone (E2) | 0,513 | 0,186 | 0,147 | 0,220 |
+| Mô hình chính (E2c) | 0,507 | 0,468 | 0,148 | 0,233 |
+| Thêm P2 (E3) | 0,510 | 0,408 | 0,162 | 0,248 |
+
+Thứ hạng trên tập lũ **giống SeaDronesSee hơn VisDrone**: mô hình gốc đứng đầu ở cả hai tập có nước, trong khi trên VisDrone nó kém xa. Vậy một tập ảnh đô thị, dù nhiều người nhỏ, không dự báo được mô hình nào tốt cho cảnh lũ; AP50 trên ảnh đô thị đo được độ khó "người nhỏ trên nền phố", không đo được báo nhầm trên mặt nước, mái nhà và đám đông. Khác với SeaDronesSee, trên tập lũ khoảng cách giữa mô hình chính và mô hình chỉ tinh chỉnh VisDrone gần như không còn, có lẽ vì người trong ảnh lũ phần lớn đứng hoặc lội chứ không bơi như AFO và SeaDronesSee.
 
 Dự đoán trước khi chấm, ghi lại để đối chiếu: người trong 188 khung lũ có cả người nhỏ trên mái lẫn người cỡ vừa dưới nước, nên mô hình chính được kỳ vọng hơn mô hình gốc ở người nhỏ và không kém ở người dưới nước. Nếu kết quả trái dự đoán thì việc đầu tiên là kiểm tra cấu hình và nhãn, chưa kết luận ngay.
 
@@ -441,7 +498,9 @@ Mặt trái của luận điểm cũng phải nêu: hệ thống phụ thuộc v
 
 ## 5.5. Phân tích lỗi
 
-[CHỜ KHOÁ] Ảnh bỏ sót và báo nhầm tiêu biểu của mô hình chính trên tập lũ, theo nhóm cỡ và thẻ ảnh, lấy từ báo cáo phân tích lỗi của giao diện thử nghiệm. Dự kiến các nhóm: người dưới 8 px bị bỏ sót; người bị che một phần bởi mái hoặc cây; vật trôi, phao, mảnh mái bị báo nhầm thành người; loá mặt nước. Mỗi nhóm một hình gồm vài ảnh cắt kèm box nhãn và box dự đoán.
+Các khung minh hoạ lấy theo ba quy tắc ghi trước khi khoá (`tools/demo_panels.py`, chương 4), so mô hình gốc với mô hình chính: khung nhiều người nhỏ nhất (`thainguyen_002160`, 69 người đều dưới 16 px: mô hình gốc thấy 11, mô hình chính 27 nhưng thêm 42 báo nhầm so với 7), khung tiêu biểu (`nidarx_000300`) và khung nhiều lỗi nhất (`nidarx_000600`, 67 người: mô hình gốc thấy 7, mô hình chính 19) (`runs/demo/flood_panels/picks.csv`). [Hình 5.x: ba khung, chèn khi dàn trang.]
+
+Loại lỗi lớn nhất về số lượng không phải của mô hình mà của nhãn: đám đông nhìn rõ trong khung `thainguyen_003120` không được gán (mục 5.1.1). Theo hướng dẫn, đám đông không tách được từng người phải được phủ bằng vùng bỏ qua; khung này bị để trống. Một khung khác cùng video (`thainguyen_000144`) cũng không có nhãn và có 17 box conf ≥ 0,25 của mô hình chính; khung này chưa được xem lại. Báo nhầm còn lại tập trung ở video 480p Thái Nguyên, nơi người dưới 16 px và mô hình tinh chỉnh bắn nhiều box nhỏ; phân tích lỗi theo từng ảnh cắt chưa làm.
 
 Hai loại báo nhầm đã thấy trên dữ liệu có nước, ghi lại để đối chiếu: trên AFO, ván, thuyền và vật nổi bị gọi là người (precision vận hành của mô hình gốc 0,300, `afo_E1_E2.md`); trên SeaDronesSee, vật cố định được phát hiện lặp lại thành cảnh báo nhầm (v21: 13 trên 37 cảnh báo, Bảng 5.11).
 
@@ -460,6 +519,6 @@ Phần này không đo gì mới; nó cho thấy các thành phần chạy cùng
 
 [Viết sau khi điền đủ các chỗ chờ. Khung dự kiến:]
 
-- **Câu hỏi 1.** Dữ liệu huấn luyện quyết định nhiều nhất cho người nhỏ; kiến trúc (P2) và cắt ô trên ảnh độ phân giải vừa giúp rất ít. Mô hình tinh chỉnh yếu với người to; thu nhỏ theo độ cao bù được trên SeaDronesSee. Thêm ảnh thảm hoạ người to theo cách đơn giản làm mất người nhỏ. [CHỜ KHOÁ] Kết quả trên tập lũ.
+- **Câu hỏi 1.** Dữ liệu huấn luyện quyết định nhiều nhất cho người nhỏ; kiến trúc (P2) và cắt ô trên ảnh độ phân giải vừa giúp rất ít. Mô hình tinh chỉnh yếu với người to; thu nhỏ theo độ cao bù được trên SeaDronesSee. Thêm ảnh thảm hoạ người to theo cách đơn giản làm mất người nhỏ. Trên tập ảnh lũ, tinh chỉnh tăng recall người nhỏ nhưng không tăng AP50: mô hình gốc thận trọng hơn và giữ AP50 cao nhất, kể cả khi bỏ một khung thiếu nhãn; thứ hạng trên ảnh lũ giống SeaDronesSee hơn VisDrone; không đo được ảnh hưởng riêng của loá, nhoè, vật trôi.
 - **Câu hỏi 2.** Trên T4, TensorRT FP16 nhanh hơn PyTorch 1,833–3,028 lần mà gần như không mất độ chính xác; INT8 nhanh thêm ít và nén độ tin cậy, mất một nửa recall vận hành ở người dưới 8 px với ngưỡng hiện tại. Cấu hình được chọn là FP16 với thu nhỏ theo độ cao, nằm trên biên Pareto với recall cao nhất. Khâu tốn thời gian nhất của nó là thu nhỏ khung 4K, không phải suy luận; theo ước lượng, thiết bị yếu thiếu sức đúng lúc bay thấp.
 - **Câu hỏi 3.** Trong mô phỏng và trên ba đoạn video thật: gom theo toạ độ mặt đất bền hơn theo dõi trên ảnh ở 2 khung mỗi giây; tần số theo độ cao giảm bỏ sót khi bay thấp và giảm tính toán khi bay cao; vùng tìm 95% chứa người thật khi GPS không tệ hơn giả định; thăm dò đường truyền giữ không mất cảnh báo và cắt độ trễ lớn nhất; gộp ở trạm giảm lặp mà không bỏ cảnh báo.

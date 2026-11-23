@@ -8,6 +8,12 @@ Cập nhật 7/11/2026.
 
 ## 1. Phát hiện người (câu hỏi 1)
 
+### 1.0. Mô hình tinh chỉnh báo nhầm nhiều trên ảnh lũ (24/11)
+
+- **Vấn đề.** Trên tập lũ đã khoá, E2c có recall người < 8 px và 8–16 px cao hơn mô hình gốc có ý nghĩa nhưng AP50 thấp hơn (0,148 so với 0,269; bỏ khung thiếu nhãn 0,233 so với 0,286), vì precision ở conf 0,25 chỉ 0,287 so với 0,615 (`flood.md`). Báo nhầm dồn ở video 480p Thái Nguyên và hai video không có người.
+- **Đề xuất (sau bảo vệ):** chọn ngưỡng tin cậy cho cảnh lũ trên một tập lũ riêng có nhãn (không dùng tập test đã khoá); hoặc thêm khung lũ không có người làm mẫu âm khi huấn luyện. Kiểm chứng trên một tập lũ mới, vì tập hiện tại đã dùng để đánh giá.
+- **Trạng thái.** Đề xuất, không làm trước 15/12.
+
 ### 1.1. Mô hình chính yếu với người to (bay thấp)
 
 - **Vấn đề.** E2c mạnh ở người 6–23 px nhưng tụt với người trên 45 px (`e6_sds_pilot.md`). Trên SeaDronesSee, nơi người phần lớn trên 32 px, E2c toàn ảnh 0,468 AP50, chưa hơn mô hình gốc 0,535 (`sds_det.md`).

@@ -2,7 +2,7 @@
 
 > **21/11:** quyển viết tiếng Anh, tám chương (quyết định #21). Cấu trúc mới và cách ánh xạ từ sáu chương dưới đây: `KE_HOACH_QUYEN.md` mục 1. Dàn ý này vẫn là nguồn nội dung theo từng mục.
 >
-> **Bản tiếng Anh (`docs/thesis/`, 22/11):** Ch. 1 ← chương 1 (xong); Ch. 2 ← chương 2 (xong); Ch. 3 yêu cầu và kiến trúc (mới, xong); Ch. 4 ← chương 3 (xong); Ch. 5 cài đặt và đảm bảo chất lượng (mới, xong); Ch. 6 ← chương 4 (xong, chờ khoá); Ch. 7 ← chương 5 (đang làm); Ch. 8 ← chương 6 (chưa). Sửa nội dung thì sửa cả hai bản tới 4/12.
+> **Bản tiếng Anh (`docs/thesis/`, 22/11):** Ch. 1 ← chương 1 (xong); Ch. 2 ← chương 2 (xong); Ch. 3 yêu cầu và kiến trúc (mới, xong); Ch. 4 ← chương 3 (xong); Ch. 5 cài đặt và đảm bảo chất lượng (mới, xong); Ch. 6 ← chương 4 (xong, đã điền số tập lũ 24/11); Ch. 7 ← chương 5 (đang làm); Ch. 8 ← chương 6 (chưa). Sửa nội dung thì sửa cả hai bản tới 4/12.
 
 Khung sáu chương theo đề xuất ngày 6/11 (quyết định #16 của ROADMAP: giữ ba câu hỏi của đề cương, thêm câu hỏi con và luận điểm xuyên suốt; chờ cô). Mỗi mục ghi: viết gì, lấy nội dung từ tài liệu nào của dự án, dùng kết quả nào và kết quả đó **đã có** hay **còn chờ**. Lịch viết theo ROADMAP mục 1.3: chương 4 và 5 từ 7/11, bản thảo đầy đủ 4/12. Thuật ngữ dùng theo `THUAT_NGU.md`; mục "Danh mục thuật ngữ và chữ viết tắt" ở đầu quyển chép từ đó.
 
@@ -61,7 +61,7 @@ Nháp đầy đủ 7/11: `docs/luan_van/chuong4.md` (còn chỗ **[CHỜ KHOÁ]*
 | Mục | Viết gì | Nguồn | Trạng thái |
 |---|---|---|---|
 | 4.1 Dữ liệu huấn luyện | Bốn bộ, cách chuyển về một lớp người, thống kê cỡ người | TONG_QUAN 3.3, TECHNICAL 13.1, 13.4 | Có |
-| 4.2 **Đóng góp: tập ảnh lũ tự gán nhãn** | Chọn video, trích khung, quy tắc gán, rà trùng ảnh, gộp nguồn San Angelo, khoá bằng mã băm | `LABELING.md`, `flood_truoc_khoa.md` | Có (rà); **Chờ** (gán 7–9/11, khoá 11/11) |
+| 4.2 **Đóng góp: tập ảnh lũ tự gán nhãn** | Chọn video, trích khung, quy tắc gán, rà trùng ảnh, gộp nguồn San Angelo, khoá bằng mã băm | `LABELING.md`, `flood_truoc_khoa.md` | **Có** (khoá 24/11, `flood.md`; một khung thiếu nhãn ghi giới hạn) |
 | 4.3 Cách đo | AP, recall theo nhóm kích thước; IoU 0,5 và 0,3; vùng bỏ qua; bootstrap theo video; bootstrap cặp | TECHNICAL mục 5, 15 | Có |
 | 4.4 Các thí nghiệm | Bảng mã thí nghiệm E0–E6 với tên mô tả; RQ2 trên T4; RQ3 bằng mô phỏng và video thật | `THUAT_NGU.md` mục 3, ROADMAP mục 4 | Viết |
 | 4.5 Môi trường | Kaggle T4, máy cá nhân chỉ để so tương đối; ghim phiên bản, commit | TECHNICAL mục 16 | Viết |
@@ -74,12 +74,12 @@ Nháp 7/11: `docs/luan_van/chuong5.md`. Đã viết đủ RQ1a–d (phần SeaDr
 
 | Mục | Câu hỏi con | Kết quả | Trạng thái |
 |---|---|---|---|
-| 5.1 Câu hỏi 1 | RQ1a cỡ người và bỏ sót | `visdrone_E2.md`, `e6_sds_pilot.md`; tập lũ | Có một phần; tập lũ **Chờ** |
+| 5.1 Câu hỏi 1 | RQ1a cỡ người và bỏ sót | `visdrone_E2.md`, `e6_sds_pilot.md`, `flood.md` | **Có** (tập lũ 24/11) |
 | | RQ1b dữ liệu huấn luyện | `visdrone_E2.md`, `E2c.md`, `afo_E1_E2.md`, `E2e.md` (kết quả âm: thêm người to làm kém người nhỏ) | Có |
 | | RQ1c cắt ô, nhánh P2 | `visdrone_baseline.md`, `visdrone_tiled_vs_sahi.md`, `E3.md`; ngưỡng theo cỡ (âm, `conf_by_size.md`) | Có |
 | | RQ1d thu nhỏ theo độ cao | `scale_by_altitude.md`; biến thể âm: `upscale_small.md`, `full_pass.md` | Có, sơ bộ |
-| | RQ1e nhiễu của cảnh lũ | recall theo thẻ ảnh trên tập lũ | **Chờ** tập lũ |
-| | RQ1f chuyển sang cảnh lũ | `sds_det.md` và tập lũ | **Chờ** tập lũ |
+| | RQ1e nhiễu của cảnh lũ | recall theo thẻ ảnh trên tập lũ (`flood.md`) | **Có** (24/11; không đo được ảnh hưởng riêng) |
+| | RQ1f chuyển sang cảnh lũ | `sds_det.md`, `E2c.md`, `E3.md`, `flood.md` | **Có** (24/11; thứ hạng trên lũ giống SeaDronesSee) |
 | 5.2 Câu hỏi 2 | RQ2a, RQ2b nén mô hình, cấu hình tốt nhất | Bảng tốc độ, hiệu độ chính xác theo cặp, biên Pareto trên T4 (`rq2_t4.md`) | **Đã có** (8/11) |
 | | RQ2c thiết bị yếu | Giả lập thời gian thiết bị, hiệu chỉnh từ RQ2 (ước lượng, bảng riêng; mô phỏng `rq3_device.yaml`, `rq2_t4.md` kết quả 4) | **Đã có** (8/11, mô phỏng) |
 | | Đổi cỡ khung trên GPU (sau RQ2b) | Thời gian chặng chuẩn bị khung và so cặp độ chính xác trên SeaDronesSee val (`gpu_resize.md`, sơ bộ trên máy cá nhân) | **Đã có** (10/11, sơ bộ) |
