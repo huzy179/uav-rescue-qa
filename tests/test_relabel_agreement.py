@@ -31,3 +31,14 @@ def test_ghep_bo_sot_va_thua() -> None:
     assert s.loc["all", "occluded_agree"] == 1.0 and s.loc["all", "partly_submerged_agree"] == 0.5
     tags = tag_agreement(orig, relabel).set_index("tag")
     assert tags.loc["glare", "agree"] == 0.5 and tags.loc["blur", "agree"] == 1.0
+
+
+def test_chay_duoc_dang_script():
+    """Lệnh trong LABELING mục 7 gọi `python tools/relabel_agreement.py`, không qua `-m`."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    out = subprocess.run([sys.executable, "tools/relabel_agreement.py", "--help"], cwd=root, capture_output=True, text=True)
+    assert out.returncode == 0, out.stderr

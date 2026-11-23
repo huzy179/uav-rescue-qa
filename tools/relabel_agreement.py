@@ -18,14 +18,18 @@ from __future__ import annotations
 
 import argparse
 import math
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from eval.metrics import iou_matrix
-from shared.config import parse_args_with_config
-from tools.convert_cvat import BOX_ATTRIBUTES, IMAGE_TAGS, ImageLabels, parse_many
+# Chạy dạng `python tools/relabel_agreement.py` thì thư mục tools/ đứng đầu sys.path, không phải gốc dự án.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from eval.metrics import iou_matrix  # noqa: E402
+from shared.config import parse_args_with_config  # noqa: E402
+from tools.convert_cvat import BOX_ATTRIBUTES, IMAGE_TAGS, ImageLabels, parse_many  # noqa: E402
 
 BIN_EDGES = [0, 8, 16, 32, math.inf]
 BIN_NAMES = ["<8", "8-16", "16-32", ">32"]
