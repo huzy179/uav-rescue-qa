@@ -1,0 +1,20 @@
+# Demo phụ: chuỗi SeaDronesSee-MOT val-mavic-DJI_0069-v9 (4K, 30 khung/giây, telemetry thật, hồ Constance, khoảng 38 m,
+# drone DI CHUYỂN khoảng 60 m trong 25 s, khác v21 gần như đứng yên). Cùng cấu hình với sds_v21_goc.yaml (E2c, cắt ô 640,
+# 8 khung/giây, xác nhận geo). Không phải tập test lũ. Chạy bằng scripts/demo_bao_ve.sh.
+source: data/processed/sds_mot/val-mavic-DJI_0069-v9/frames
+source_fps: 30
+telemetry: data/processed/sds_mot/val-mavic-DJI_0069-v9/telemetry.csv
+model: runs/train/E2c_s0/weights/best.pt
+mode: tiled
+tile: 640
+overlap: 0.2
+conf: 0.1
+fps: 8.0
+fov_deg: 82.0
+fov_type: diagonal
+confirm: geo
+radius_m: 3.0
+n_confirm: 3
+window_s: 5.0
+expire_s: 6.0
+link_probe_s: 2.0  # thăm dò đường truyền mỗi 2 s (quyết định #17, docs/results/rq3_network.md)

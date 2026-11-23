@@ -76,7 +76,9 @@ case "$CMD" in
     $PY -m edge.main --config "$CFG" --fps "${SRC_FPS:-30}" --min-views 0 --output "$CACHE" --drain-s 0
     # Lớp đáp án từ nhãn SeaDronesSee của cùng đoạn (thư mục chứa telemetry trong cấu hình), cho nút "Đối chiếu đáp án".
     SEQ=$(dirname "$(sed -n 's/^telemetry: *//p' "$CFG")")
-    [ -f "$SEQ/truth.json" ] && $PY tools/make_truth_layer.py --sds "$SEQ" --config "$CFG" --output "$CACHE/truth_layer.json"
+    if [ -f "$SEQ/truth.json" ]; then
+      $PY tools/make_truth_layer.py --sds "$SEQ" --config "$CFG" --output "$CACHE/truth_layer.json"
+    fi
     ;;
   chay)
     need_cache
