@@ -13,7 +13,9 @@ The system serves four kinds of users.
 - **The rescue team** in a boat or on foot: receives the positions of people and an order in which to visit them.
 - **The researcher** (in this thesis, the author): replays flights, runs experiments and evaluates the system against labels.
 
-Five scenarios describe how they use the system.
+Five scenarios describe how they use the system (Table 3.1).
+
+**Table 3.1.** Use scenarios.
 
 | ID | Scenario | Main actor |
 |---|---|---|
@@ -25,7 +27,7 @@ Five scenarios describe how they use the system.
 
 ## 3.2 Functional Requirements
 
-**Table 3.1.** Functional requirements by component.
+**Table 3.2.** Functional requirements by component.
 
 | ID | Requirement | Component | Verified by |
 |---|---|---|---|
@@ -46,7 +48,7 @@ Five scenarios describe how they use the system.
 
 ## 3.3 Non-Functional Requirements
 
-**Table 3.2.** Non-functional requirements.
+**Table 3.3.** Non-functional requirements.
 
 | ID | Quality | Requirement | How it is met | Verified by |
 |---|---|---|---|---|
@@ -80,7 +82,7 @@ The system has two sides connected by an unreliable link (Figure 3.1).
 
 **Figure 3.2.** [FIGURE] Package view: `edge/` (UAV), `ground/` (ground station), `shared/` (message schema and configuration), `sim/` (simulators), `eval/` (metrics computed from logs), with the rule that `edge/` and `ground/` never import each other.
 
-**Table 3.3.** Components and responsibilities.
+**Table 3.4.** Components and responsibilities.
 
 | Package | Component | Responsibility |
 |---|---|---|
@@ -101,7 +103,7 @@ The system has two sides connected by an unreliable link (Figure 3.1).
 
 ## 3.5 Design Decisions
 
-**Table 3.4.** Main design decisions, alternatives and reasons.
+**Table 3.5.** Main design decisions, alternatives and reasons.
 
 | Decision | Alternative considered | Reason |
 |---|---|---|
