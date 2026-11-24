@@ -384,10 +384,17 @@ def vn(x: float, digits: int) -> str:
 
 
 def change_token(db_path: str) -> str:
-    """Chuỗi đổi khi có cảnh báo, ảnh cắt mới hoặc người vận hành cập nhật sự cố."""
-    with sqlite3.connect(db_path) as db:
-        n_alerts, n_crops = db.execute("SELECT (SELECT COUNT(*) FROM alerts), (SELECT COUNT(*) FROM crops)").fetchone()
-        incidents = db.execute("SELECT COUNT(*), TOTAL(n_alerts), GROUP_CONCAT(status || COALESCE(tag, ''), '') FROM incidents").fetchone()
+    """Chuỗi đổi khi có cảnh báo, ảnh cắt mới hoặc người vận hành cập nhật sự cố.
+
+    File SQLite bị xoá hay tạo lại khi máy chủ còn chạy (ví dụ chạy demo lần mới khi trạm cũ chưa tắt) thì trả một
+    chuỗi cố định thay vì để luồng SSE chết vì thiếu bảng.
+    """
+    try:
+        with sqlite3.connect(db_path) as db:
+            n_alerts, n_crops = db.execute("SELECT (SELECT COUNT(*) FROM alerts), (SELECT COUNT(*) FROM crops)").fetchone()
+            incidents = db.execute("SELECT COUNT(*), TOTAL(n_alerts), GROUP_CONCAT(status || COALESCE(tag, ''), '') FROM incidents").fetchone()
+    except sqlite3.OperationalError:
+        return "khong-co-du-lieu"
     return f"{n_alerts}-{n_crops}-{incidents[0]}-{int(incidents[1])}-{zlib.crc32((incidents[2] or '').encode()):x}"
 
 

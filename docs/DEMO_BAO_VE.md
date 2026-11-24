@@ -68,7 +68,7 @@ Hoà thì lấy tên file nhỏ nhất. Đây là chọn ảnh minh hoạ, khôn
 | Giữ ô bản đồ vùng bay | Diễn tập ít nhất một lần **khi có mạng**, phóng to thu nhỏ quanh vùng bay; ô đã xem nằm trong `runs/ground/tiles` | Đã có, diễn tập lại tuần 7/12 |
 | Video dự phòng toàn bộ demo | Quay màn hình một lần chạy `chay`, lưu `runs/edge/demo_bao_ve/du_phong.mp4`, nhúng vào slide | Tuần 7/12 |
 | Máy chiếu | Thử độ phân giải thật; phóng to trình duyệt để chữ đọc được từ cuối phòng; ảnh so sánh dùng bản `_phong_to` nếu chữ nhỏ | Hôm trước |
-| **Soát lần cuối** | `scripts/demo_bao_ve.sh kiem-tra`: in OK hoặc THIẾU từng mục (dữ liệu phát lại, lớp đáp án, hồ sơ thiết bị, video, ảnh tập lũ, ô bản đồ, thư viện, cổng 8000 và 8001) | Sáng hôm bảo vệ |
+| **Soát lần cuối** | `scripts/demo_bao_ve.sh kiem-tra`: in OK hoặc THIẾU từng mục (dữ liệu phát lại, lớp đáp án, hồ sơ thiết bị, video, ảnh tập lũ, ô bản đồ, thư viện, cổng 8000 và 8001). `chay` cũng tự dừng nếu một trong hai cổng còn bận, để không xoá dữ liệu dưới chân trạm của lần chạy trước | Sáng hôm bảo vệ |
 | Mở sẵn trước khi lên | Terminal đã gõ sẵn lệnh `chay`; trình duyệt mở link màn hình điều phối (`http://localhost:8000/?video=http://localhost:8001/`), toàn màn hình (F11); slide ở trang demo | Trước khi lên |
 
 **Video Nano:**

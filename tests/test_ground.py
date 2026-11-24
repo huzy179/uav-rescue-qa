@@ -179,3 +179,13 @@ def test_incident_keeps_largest_group_size(tmp_path: Path) -> None:
     (inc,) = client.get("/api/incidents").json()
     assert inc["group_size"] == 4 and inc["n_alerts"] == 3
     assert "nhóm khoảng 4 người" in client.get("/api/incidents.gpx").text
+
+
+def test_change_token_khong_loi_khi_file_du_lieu_bi_xoa(tmp_path: Path) -> None:
+    """Demo chạy lại xoá file SQLite khi trạm cũ còn sống: luồng SSE không được chết vì thiếu bảng."""
+    from ground.app import change_token
+
+    db = tmp_path / "g.sqlite"
+    create_app(db, tile_cache=tmp_path / "tiles")
+    db.unlink()
+    assert change_token(str(db)) == "khong-co-du-lieu"

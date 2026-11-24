@@ -89,6 +89,13 @@ case "$CMD" in
     OUTAGE=()
     [ $# -ge 5 ] && OUTAGE=(--net-outage "$4" "$5")
     PORT=8000
+    LIVE=8001
+    # Trạm của lần chạy trước còn sống thì dừng: xoá file dữ liệu dưới chân nó làm bản đồ hỏng.
+    for p in $PORT $LIVE; do
+      if ! $PY -c "import socket,sys; s=socket.socket(); s.bind((\"127.0.0.1\", int(sys.argv[1])))" "$p" 2>/dev/null; then
+        echo "Cổng $p đang bận (lần demo trước chưa tắt?). Tắt nó trước: ss -ltnp | grep $p"; exit 1
+      fi
+    done
     mkdir -p runs/ground
     rm -f runs/ground/demo.sqlite*   # mỗi lần demo bắt đầu với bản đồ trống
     FLOODEYE_GROUND_DB=runs/ground/demo.sqlite FLOODEYE_TILE_CACHE=runs/ground/tiles \
@@ -100,7 +107,6 @@ case "$CMD" in
     if [ -f "$CACHE/truth_layer.json" ]; then
       curl -s -X POST -H "Content-Type: application/json" --data @"$CACHE/truth_layer.json" "http://localhost:$PORT/api/truth" > /dev/null
     fi
-    LIVE=8001
     echo "Màn hình điều phối: http://localhost:$PORT/?video=http://localhost:$LIVE/"
     echo "(mở trên trình duyệt, rồi bấm Enter để bắt đầu chuyến bay)"
     read -r _
