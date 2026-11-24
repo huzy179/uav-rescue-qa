@@ -23,7 +23,7 @@ Tài liệu này chuyển đề cương thành việc cần làm theo tuần (m�
 | Câu hỏi 1 (phát hiện) | Xong trên VisDrone, AFO, SeaDronesSee: mô hình chính E2c; P2, thêm C2A, ngưỡng theo cỡ, phóng to người nhỏ, lượt toàn ảnh đều âm. **Tập lũ xong 24/11** (`flood.md`): tinh chỉnh không nâng AP50 trên ảnh lũ (E2c 0,148 so với E1 0,269 trên tập khoá; bỏ khung thiếu nhãn 0,233 so với 0,286), nhưng tăng recall người < 8 px và 8–16 px có ý nghĩa; E1 mạnh hơn rõ ở người > 32 px; P2 không khác; cắt ô tăng recall, không tăng AP50 |
 | Câu hỏi 2 (tốc độ) | **Xong 8/11** (`rq2_t4.md`); đổi cỡ khung trên GPU bật 10/11 (#20, sơ bộ). Notebook đo lại trên T4 đã chuẩn bị (`rq2_t4_gpuresize.yaml`), chưa chạy, có thể bỏ |
 | Câu hỏi 3 (xác nhận, gửi) | Mô phỏng đủ lưới và ba đoạn SeaDronesSee thật |
-| Viết | **Quyển viết tiếng Anh, giãn dòng 1,5 (#21)**, tám chương (`KE_HOACH_QUYEN.md`). Bản tiếng Anh `docs/thesis/`: chương 1–6 xong 21/11 (chương 3, 5 viết mới), chương 7, 8 đang làm; số kiểm bằng `tools/check_thesis_numbers.py`. Nháp tiếng Việt `docs/luan_van/` là nguồn nội dung |
+| Viết | **Quyển viết tiếng Anh, giãn dòng 1,5 (#21)**, tám chương (`KE_HOACH_QUYEN.md`). Bản tiếng Anh `docs/thesis/`: chương 1–6 xong 21/11 (chương 3, 5 viết mới), chương 7, 8 xong 24/11; số kiểm bằng `tools/check_thesis_numbers.py`. Nháp tiếng Việt `docs/luan_van/` là nguồn nội dung |
 | Thiết bị | Không có Jetson (#2): đo trên T4, thiết bị yếu chỉ ước lượng bằng giả lập |
 | Demo | Kịch bản theo ba câu hỏi (`DEMO_BAO_VE.md`), video thiết bị có chữ tiếng Việt có dấu (13/11); ảnh tập lũ đã dựng 24/11 theo ba quy tắc (`runs/demo/flood_panels`); ngôn ngữ trình bày chờ cô |
 
