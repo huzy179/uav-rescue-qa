@@ -16,7 +16,7 @@ Trên GPU T4 với TensorRT, nén FP16 nhanh hơn PyTorch 1,833–3,028 lần m�
 
 Khi chỉ xử lý vài khung mỗi giây, gom phát hiện theo toạ độ mặt đất bền hơn theo dõi trên ảnh, cả trên ba đoạn video thật có telemetry lẫn trong mô phỏng có nhiễu GPS; bù chuyển động camera bằng telemetry chỉ cứu được theo dõi trên ảnh khi GPS rất ổn định giữa hai khung (mục 5.3.2). Không có một tần số đủ cho mọi độ cao; tính tần số từ độ cao và vận tốc giảm bỏ sót khi bay thấp và giảm tính toán khi bay cao (mục 5.3.1). Vùng tìm 95% chứa người thật khi GPS không tệ hơn giả định; lấy độ chính xác GPS do bộ thu báo giữ được điều đó khi GPS kém đi giữa chuyến, và tự hiệu chỉnh lệch la bàn giảm tách nhầm khi bay cao (mục 5.3.3, mô phỏng). Hàng đợi gửi kèm thăm dò đường truyền không làm mất cảnh báo nào trong mọi kịch bản mất gói, mất sóng, kể cả mất theo cụm; phần trễ còn lại là chính độ dài khoảng mất sóng (mục 5.3.4, mô phỏng). Gộp ở trạm giảm cảnh báo lặp mà không bỏ cảnh báo nào (mục 5.3.5). Phần lớn kết quả câu hỏi 3 là mô phỏng; phần trên video thật dựa vào ba đoạn SeaDronesSee.
 
-**Luận điểm xuyên suốt.** [Viết sau mục 5.4.] Dữ liệu bay sẵn có của UAV giúp ở cả ba khâu: chọn cỡ ảnh khi phát hiện, giảm khối lượng tính để máy yếu theo kịp (số ô từ 32 xuống 6 trên khung 4K), và xác nhận người khi chỉ xử lý vài khung mỗi giây.
+**Luận điểm xuyên suốt.** Dữ liệu bay sẵn có của UAV giúp ở cả ba khâu: chọn cỡ ảnh khi phát hiện, giảm khối lượng tính trên thiết bị biên (số ô từ 32 xuống 6 trên khung 4K), và xác nhận người khi chỉ xử lý vài khung mỗi giây (mục 5.4). Cũng chính sự phụ thuộc này là điểm yếu: telemetry kém hoặc không có, như tập ảnh lũ, thì các lợi ích đó giảm hoặc mất.
 
 ## 6.2. Đóng góp
 
