@@ -30,7 +30,7 @@ Mốc cứng: khoá tập lũ 25/11 (**đã khoá 24/11**, `docs/results/flood.m
 | 21–24/11 | Dựng `docs/thesis/`; dịch Ch. 1, 2, 4, 6; viết Ch. 3, 5; chuyển tài liệu tham khảo sang `.bib`; script kiểm số (mục 3) | Gán nhãn 8 video còn lại, bổ sung thuộc tính và thẻ cho 01, 02; gán lại 20 khung (LABELING mục 7); hỏi cô các câu ở mục 4 |
 | 24/11 | ~~Chuyển nhãn, kiểm tra rò rỉ, khoá, chấm (`scripts/eval_flood.sh`), ảnh demo; `docs/results/flood.md`~~ (xong 24/11, sớm một ngày) | ~~Xuất 10 task; xác nhận khoá~~ (xong) |
 | 26–27/11 | Điền kết quả lũ vào nháp tiếng Việt và Ch. 7; dịch Ch. 7, 8; viết Abstract | Đọc Ch. 1–3 tiếng Anh, sửa chỗ sai ý |
-| 28/11 | **Khoá mã.** Dựng file Word lần đầu từ mẫu của trường; hình và bảng | Chạy notebook Kaggle đo lại thu nhỏ trên GPU nếu còn giờ (có thể bỏ) |
+| 28/11 | **Khoá mã.** Dựng lại file Word (script có từ 25/11) sau khi khoá; hình và bảng | Chạy notebook Kaggle đo lại thu nhỏ trên GPU nếu còn giờ (có thể bỏ) |
 | 29/11–3/12 | Sửa theo góp ý của học viên; danh mục bảng, hình, viết tắt; kiểm số toàn quyển | Đọc toàn quyển; viết Acknowledgments; xin văn bản áp dụng nếu có (mục 5) |
 | 4/12 | | **Gửi bản thảo cho cô** |
 | 5–11/12 | Sửa theo góp ý của cô; slide; cập nhật kịch bản demo theo ngôn ngữ trình bày | Diễn tập demo có bấm giờ, quay video dự phòng; nộp bản hoàn chỉnh 11/12 |
@@ -41,7 +41,7 @@ Trễ thì cắt theo thứ tự: phụ lục C, D → minh hoạ hệ thống t
 ## 3. Cách làm và kiểm tra
 
 - **Viết:** Markdown trong `docs/thesis/` (mỗi chương một file, `ch1_introduction.md`…). Thuật ngữ tiếng Anh theo cột "Tiếng Anh" của `THUAT_NGU.md`; mã thí nghiệm luôn kèm tên mô tả.
-- **Dựng Word:** pandoc với file tham chiếu dựng từ mẫu của trường (kiểu chữ, lề, giãn dòng 1,5, đánh số trang i, ii… rồi 1, 2…), trích dẫn bằng citeproc (APA). **Cần cài pandoc: hỏi học viên trước.**
+- **Dựng Word (có từ 25/11):** `.venv/bin/python tools/build_thesis.py --config configs/thesis.yaml` → `runs/thesis/FloodEye_thesis.docx`. Pandoc 3.6.4 (bản chạy độc lập trong `~/.local/bin`, học viên đồng ý cài 25/11). Mẫu của trường là file `.doc` mà máy không có LibreOffice để chuyển, nên script tự dựng file tham chiếu theo quy định đọc được từ mẫu: A4, lề 2,54/2,54/3,0/2,8 cm, Times New Roman 12, giãn dòng 1,5, không lùi đầu dòng, cách 12 pt trước đoạn, tóm tắt giãn dòng đôi, chương sang trang mới. Thứ tự theo mẫu: hai trang bìa, trang tên đề tài kèm tóm tắt, lời cảm ơn, mục lục, danh mục bảng, danh mục hình, bảng viết tắt, chương 1–8, tài liệu tham khảo (APA 7, `apa.csl`), phụ lục. Bìa không số trang, phần đầu số La Mã, từ chương 1 số Ả Rập. Bỏ ghi chú bản nháp, giữ các dấu [PENDING], [FIGURE]. Mục lục và danh mục bảng là trường Word: mở file, Word hỏi cập nhật trường thì chọn Yes. Thông tin trang bìa ở `configs/thesis.yaml` (tên đề tài tiếng Anh là bản dịch tạm, tên cô hướng dẫn còn trống). Chưa kiểm bằng mắt trong Word: mở và đối chiếu với mẫu trước khi gửi cô.
 - **Kiểm số:** `tools/check_thesis_numbers.py` (có từ 21/11) so mọi số thập phân trong `docs/thesis/` với nguồn đã đo (đổi dấu phẩy sang chấm); số không tìm thấy được liệt kê để kiểm tay. Kiểm mọi file trong `docs/thesis/` (chương, phần mở đầu, phụ lục), bỏ qua số bảng, số hình, số mục. Chạy trước mỗi lần gửi.
 - **Kiểm thuật ngữ:** cùng script báo chữ tiếng Việt còn sót; mã thí nghiệm đứng trơn kiểm bằng mắt.
 - Sửa nội dung thì sửa cả nháp tiếng Việt lẫn bản tiếng Anh cho tới 4/12; sau 4/12 bản tiếng Anh là bản chính.

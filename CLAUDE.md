@@ -29,6 +29,7 @@ scripts/eval_flood.sh <thư mục file xuất CVAT>   # cả chuỗi trên tập
 .venv/bin/python -m console                      # giao diện thử nghiệm, http://localhost:8501
 scripts/demo_bao_ve.sh kiem-tra                  # soát mọi thứ demo bảo vệ cần (docs/DEMO_BAO_VE.md)
 .venv/bin/python tools/check_thesis_numbers.py   # mọi số thập phân trong quyển tiếng Anh (docs/thesis/) phải có trong nguồn đã đo
+.venv/bin/python tools/build_thesis.py --config configs/thesis.yaml   # dựng quyển thành Word (runs/thesis/), cần pandoc
 ```
 
 Luôn dùng `.venv/bin/python`, chạy từ thư mục gốc của dự án. Skill: `/run-experiment` (chạy và chấm một thí nghiệm E0–E6), `/try-improvement` (thử một mục của `CAI_TIEN.md` từ đầu tới khi ghi kết quả), `/friday-report` (báo cáo tuần gửi cô hướng dẫn).

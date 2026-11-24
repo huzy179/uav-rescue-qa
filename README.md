@@ -228,7 +228,7 @@ Quyển viết tiếng Anh (quyết định #21), tám chương, mỗi chương 
 grep -rn "\[UPDATE\|\[PENDING\|\[CITATION\|\[FIGURE\|\[CHECK" docs/thesis/   # chỗ còn chờ
 ```
 
-Số đếm test và dòng mã của chương 5 và phụ lục D ở `runs/qa/` (chạy lại lúc khoá mã: `.venv/bin/python tools/qa_snapshot.py`, ghi `pytest.xml`, `pytest.txt`, `commit.txt`, `code_lines.csv`, `test_files.csv`). Dựng file Word bằng pandoc từ mẫu của trường: chưa làm (28/11).
+Số đếm test và dòng mã của chương 5 và phụ lục D ở `runs/qa/` (chạy lại lúc khoá mã: `.venv/bin/python tools/qa_snapshot.py`, ghi `pytest.xml`, `pytest.txt`, `commit.txt`, `code_lines.csv`, `test_files.csv`). Dựng file Word: `.venv/bin/python tools/build_thesis.py --config configs/thesis.yaml` → `runs/thesis/FloodEye_thesis.docx` (cần pandoc ≥ 3.6 trong PATH hoặc `~/.local/bin`; không phải gói Python). Mở bằng Word và chọn cập nhật trường để điền mục lục, danh mục bảng (`KE_HOACH_QUYEN.md` mục 3).
 
 ## Công cụ khác
 
