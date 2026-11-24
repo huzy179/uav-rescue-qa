@@ -9,84 +9,171 @@
 <script src="/static/leaflet/leaflet.js"></script>
 <style>
   /* Màn hình điều phối: video trên drone, bản đồ (drone, vùng đã quét, sự cố), danh sách sự cố. Nền tối để ảnh vệ
-     tinh và màu cảnh báo nổi trên máy chiếu. Không tải gì từ internet ngoài ô bản đồ qua /tiles. */
+     tinh và màu cảnh báo nổi trên máy chiếu. Không tải gì từ internet ngoài ô bản đồ qua /tiles (phông hệ thống).
+     Cùng bảng màu với tab "Hiểu dự án" (console/learn.css): nền xanh than, nhấn bạc hà; theo các quy tắc của
+     ui-ux-pro-max: chữ tương phản ≥ 4,5:1, màu trạng thái luôn kèm chữ, số dùng chữ số đều cột, tắt hiệu ứng khi máy
+     đặt giảm chuyển động. Mức ưu tiên: cao đỏ, vừa cam, thấp vàng (cùng ngưỡng ground/priority.py). */
   :root {
-    --bg: #0d1117; --panel: #151b23; --panel2: #1c2430; --line: #2a3441; --text: #e6edf3; --muted: #93a1b0;
-    --ok: #3fb950; --warn: #f0a020; --bad: #f85149; --scan: #39c5e0; --accent: #58a6ff;
+    --bg: #0b0f14; --panel: #11161d; --raised: #171e27; --raised2: #1d2632; --line: #26303d; --line-soft: #1d2530;
+    --ink: #f2f5f9; --text: #d5dce5; --muted: #9aa8b8; --faint: #6f7d8e;
+    --mint: #34e0b4; --scan: #3fd0dd; --accent: #6aa8ff; --ok: #3fb950; --warn: #f5b347; --bad: #ff6b61;
+    --p-high: #ff5a4f; --p-mid: #ff9f43; --p-low: #f5d547; --boat: #ffd479;
+    --radius: 12px; --shadow: 0 10px 30px rgba(0,0,0,.45);
+    --font: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, "Segoe UI", sans-serif; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 var(--font); -webkit-font-smoothing: antialiased; }
+  button, input { font: inherit; }
+  :focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+  .num, .kv b, .stat b, .item .t1 { font-variant-numeric: tabular-nums; }
   #app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
-  header { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-  header h1 { font-size: 16px; margin: 0; letter-spacing: .2px; }
-  header h1 span { color: var(--scan); }
-  .kpi { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
-  .chip { padding: 3px 10px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); font-size: 13px; white-space: nowrap; }
-  .chip b { font-variant-numeric: tabular-nums; }
-  #main { display: grid; grid-template-columns: minmax(300px, 30%) 1fr 320px; min-height: 0; }
-  #main.novideo { grid-template-columns: 330px 1fr 320px; }
-  #left, #side { overflow-y: auto; background: var(--panel); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* ---------- Thanh trên ---------- */
+  header { display: flex; align-items: center; gap: 18px; padding: 10px 18px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .logo { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: #123b38; }
+  .brand h1 { font-size: 17px; margin: 0; color: var(--ink); font-weight: 650; letter-spacing: .1px; line-height: 1.15; }
+  .brand h1 small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: .2px; }
+  .state { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+           background: var(--raised); border: 1px solid var(--line); color: var(--muted); }
+  .state i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .state.live { color: var(--mint); border-color: color-mix(in srgb, var(--mint) 45%, transparent); }
+  .state.live i { background: var(--mint); box-shadow: 0 0 0 0 var(--mint); animation: pulse 1.6s infinite; }
+  .state.lost { color: #fff; background: var(--bad); border-color: var(--bad); }
+  .state.lost i { background: #fff; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--mint) 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+  .kpi { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .stat { display: flex; flex-direction: column; min-width: 92px; padding: 5px 14px; border-left: 1px solid var(--line); }
+  .stat span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; white-space: nowrap; }
+  .stat b { font-size: 20px; line-height: 1.2; color: var(--ink); font-weight: 650; }
+  .stat.hot b { color: var(--p-mid); }
+  .chip.truth { align-self: center; padding: 6px 12px; border-radius: 10px; background: color-mix(in srgb, var(--ok) 12%, var(--raised)); border: 1px solid color-mix(in srgb, var(--ok) 50%, transparent); font-size: 13px; }
+  .chip.truth b { color: var(--ink); }
+
+  /* ---------- Ba cột ---------- */
+  #main { display: grid; grid-template-columns: minmax(320px, 30%) 1fr 360px; min-height: 0; }
+  #main.novideo { grid-template-columns: 330px 1fr 360px; }
+  #left, #side { overflow-y: auto; background: var(--panel); padding: 12px; display: flex; flex-direction: column; gap: 12px; }
   #left { border-right: 1px solid var(--line); }
-  #side { border-left: 1px solid var(--line); }
-  .card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
-  .note { color: var(--muted); font-size: 12px; margin-top: 6px; }
-  #video { width: 100%; aspect-ratio: 16 / 9; background: #000 center/contain no-repeat; border-radius: 6px; display: block; object-fit: contain; }
-  .wait { display: grid; place-items: center; aspect-ratio: 16 / 9; border-radius: 6px; background: #000; color: var(--muted); font-size: 13px; text-align: center; padding: 12px; }
-  .uav { display: grid; gap: 6px; }
+  #side { border-left: 1px solid var(--line); padding-top: 0; }
+  .card { background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+  .card h2, .sidehead h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin: 0 0 10px; font-weight: 650; display: flex; align-items: center; gap: 8px; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 8px; line-height: 1.5; }
+  #video { width: 100%; aspect-ratio: 16 / 9; background: #000 center/contain no-repeat; border-radius: 8px; display: block; object-fit: contain; }
+  .wait { display: grid; place-items: center; aspect-ratio: 16 / 9; border-radius: 8px; background: #05070a; color: var(--muted); font-size: 13px; text-align: center; padding: 12px; border: 1px dashed var(--line); }
+  .live-dot { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--bad); letter-spacing: .6px; display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase; }
+  .live-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); }
+
+  /* Thẻ drone */
+  .uav { display: grid; gap: 10px; }
   .uavhead { display: flex; align-items: center; gap: 8px; }
-  .uavhead .name { font-weight: 700; font-size: 15px; }
-  .badge { margin-left: auto; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #0d1117; }
-  .badge.ok { background: var(--ok); } .badge.lost { background: var(--bad); color: #fff; animation: blink 1s steps(2) infinite; } .badge.done { background: var(--muted); }
+  .uavhead .name { font-weight: 650; font-size: 15px; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; }
+  .badge { margin-left: auto; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #06120e; }
+  .badge.ok { background: var(--mint); } .badge.lost { background: var(--bad); color: #fff; animation: blink 1s steps(2) infinite; } .badge.done { background: var(--raised2); color: var(--text); border: 1px solid var(--line); }
   @keyframes blink { 50% { opacity: .55; } }
-  .rows { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 13px; }
-  .rows dt { color: var(--muted); } .rows dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
-  .pipe { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: #0b0f14; margin-top: 2px; }
-  .pipe .got { background: var(--ok); } .pipe .wait2 { background: var(--warn); }
-  .legend { display: flex; gap: 10px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
-  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .tile { background: var(--bg); border: 1px solid var(--line-soft); border-radius: 9px; padding: 7px 9px; min-width: 0; }
+  .tile span { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile b { font-size: 16px; color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tile b small { font-size: 11px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+  .tile.warn b { color: var(--warn); }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; margin: 0; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; text-align: right; color: var(--text); }
+  .pipeline { display: grid; gap: 5px; }
+  .pipehead { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .pipehead b { color: var(--ink); }
+  .pipe { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--bg); border: 1px solid var(--line-soft); }
+  .pipe .got { background: var(--mint); } .pipe .wait2 { background: var(--warn); }
+  .pipelegend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); }
+  .pipelegend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+
+  /* Đội cứu hộ */
+  .rrow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mapbtn { display: inline-flex; align-items: center; gap: 6px; background: var(--raised2); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 550; cursor: pointer; transition: border-color .15s, background .15s; text-decoration: none; }
+  .mapbtn:hover { border-color: var(--faint); }
+  .mapbtn.on { border-color: var(--mint); color: var(--mint); background: color-mix(in srgb, var(--mint) 10%, var(--raised2)); }
+  .mapbtn.truth.on { border-color: var(--ok); color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, var(--raised2)); }
+  .mapbtn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 10px; }
+  #speed { width: 64px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+  .dist { color: var(--boat) !important; }
+  .order { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--boat); color: #0b0f14; font-size: 11px; font-weight: 800; border: 2px solid #0b0f14; }
+  #routeInfo b { color: var(--ink); }
+
+  /* ---------- Bản đồ ---------- */
   #mapwrap { position: relative; min-height: 0; }
-  #map { position: absolute; inset: 0; background: #1b222b repeating-linear-gradient(0deg, transparent 0 63px, #26303b 63px 64px),
-         repeating-linear-gradient(90deg, transparent 0 63px, #26303b 63px 64px); }
-  #banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1000; display: none;
-            background: var(--bad); color: #fff; font-weight: 700; padding: 8px 16px; border-radius: 8px; box-shadow: 0 4px 18px #0008; text-align: center; }
-  #banner small { display: block; font-weight: 400; opacity: .9; }
-  .mapbtn { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font: inherit; font-size: 12px; cursor: pointer; }
-  .mapbtn.on { border-color: var(--scan); color: var(--scan); }
-  .mapbtn.truth.on { border-color: var(--ok); color: var(--ok); }
-  .rrow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-  a.mapbtn { text-decoration: none; display: inline-block; }
-  #speed { width: 56px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 2px 4px; font: inherit; }
-  .dist { color: #ffd479 !important; }
-  .order { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #ffd479; color: #0d1117; font-size: 11px; font-weight: 800; border: 2px solid #0d1117; }
-  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--line); padding: 6px 14px; border-radius: 8px; z-index: 2000; display: none; }
-  .actions a { color: var(--accent); font-size: 12px; align-self: center; margin-left: 4px; }
-  .chip.truth { border-color: var(--ok); }
-  .fa { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; }
-  .grp { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: #ffd479; color: #0d1117; font-size: 11px; font-weight: 700; }
-  .ok-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--ok); color: #0d1117; font-size: 11px; font-weight: 700; }
-  .drone { filter: drop-shadow(0 0 4px #000); transition: transform .25s linear; }
-  #side h2 { margin: 2px 2px 0; }
-  .item { display: grid; grid-template-columns: 56px 1fr; gap: 8px; padding: 8px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line); cursor: pointer; border-left: 4px solid var(--c, var(--muted)); }
-  .item:hover { border-color: var(--accent); }
+  #map { position: absolute; inset: 0; background: #141a22 repeating-linear-gradient(0deg, transparent 0 63px, #1d2530 63px 64px),
+         repeating-linear-gradient(90deg, transparent 0 63px, #1d2530 63px 64px); }
+  #banner { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 1000; display: none;
+            background: var(--bad); color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 12px; box-shadow: var(--shadow); text-align: center; font-size: 15px; }
+  #banner small { display: block; font-weight: 500; opacity: .92; font-size: 12.5px; margin-top: 2px; }
+  .legendbox { position: absolute; left: 12px; bottom: 26px; z-index: 900; max-width: 300px; background: color-mix(in srgb, var(--panel) 92%, transparent);
+               backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); font-size: 12px; }
+  .legendbox summary { cursor: pointer; padding: 8px 12px; font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); list-style: none; display: flex; align-items: center; gap: 6px; }
+  .legendbox summary::-webkit-details-marker { display: none; }
+  .legendbox summary::after { content: "▾"; margin-left: auto; }
+  .legendbox:not([open]) summary::after { content: "▸"; }
+  .legend { display: grid; gap: 5px; padding: 0 12px 10px; color: var(--text); }
+  .legend span { display: flex; align-items: center; gap: 8px; }
+  .legend i { flex: none; display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+  .legend .sep { border-top: 1px solid var(--line); margin: 4px 0 2px; }
+
+  /* ---------- Danh sách sự cố ---------- */
+  .sidehead { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 12px 2px 8px; margin-bottom: -4px; }
+  .sidehead h2 { margin: 0; }
+  .sidehead .cnt { margin-left: auto; background: var(--raised2); color: var(--ink); border-radius: 999px; padding: 1px 9px; font-size: 12px; letter-spacing: 0; }
+  .sidehead .tiers { display: flex; gap: 10px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .sidehead .tiers i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+  #list { display: grid; gap: 8px; }
+  .item { display: grid; grid-template-columns: 64px 1fr; gap: 10px; padding: 10px; border-radius: var(--radius); background: var(--raised); border: 1px solid var(--line); cursor: pointer;
+          position: relative; overflow: hidden; transition: border-color .15s, background .15s; }
+  .item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c, var(--muted)); }
+  .item:hover { border-color: var(--faint); background: var(--raised2); }
   .item.closed { opacity: .5; }
   .item.fresh { animation: fresh 2.4s ease-out; }
-  @keyframes fresh { 0% { box-shadow: 0 0 0 3px var(--warn); background: #3a2f12; } 100% { box-shadow: none; } }
-  .thumb { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; background: #0b0f14; display: grid; place-items: center; color: var(--muted); font-size: 11px; text-align: center; }
-  .item .t1 { font-weight: 600; } .item .t2, .why { color: var(--muted); font-size: 12px; }
-  .empty { color: var(--muted); font-size: 13px; padding: 8px; }
-  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel2); color: var(--text); }
-  .leaflet-popup-content { font-size: 13px; }
-  .leaflet-popup-content img { border-radius: 6px; margin-top: 6px; }
-  .actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
-  .actions button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 3px 8px; font-size: 12px; cursor: pointer; }
-  .actions button:hover { border-color: var(--accent); }
-  .leaflet-control-layers, .leaflet-bar a { background: var(--panel); color: var(--text); }
-  .leaflet-control-attribution { background: #0d1117aa !important; color: var(--muted); }
+  @keyframes fresh { 0% { box-shadow: 0 0 0 2px var(--warn); background: #2e2614; } 100% { box-shadow: none; } }
+  .thumb { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; background: var(--bg); display: grid; place-items: center; color: var(--faint); font-size: 11px; text-align: center; border: 1px solid var(--line-soft); }
+  .item .t1 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-weight: 650; color: var(--ink); font-size: 14px; }
+  .prio { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: #0b0f14; background: var(--c); }
+  .item .t2 { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+  .why { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .why span { font-size: 11px; color: var(--text); background: var(--bg); border: 1px solid var(--line-soft); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+  .why span em { font-style: normal; color: var(--muted); margin-left: 3px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 18px 8px; text-align: center; }
+  .fa, .grp, .ok-tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .fa { background: var(--bad); color: #fff; }
+  .grp { background: color-mix(in srgb, var(--boat) 18%, transparent); color: var(--boat); border: 1px solid color-mix(in srgb, var(--boat) 45%, transparent); }
+  .ok-tag { background: var(--ok); color: #06120e; }
+  .drone { filter: drop-shadow(0 0 4px #000); transition: transform .25s linear; }
+
+  /* ---------- Leaflet ---------- */
+  .leaflet-container { font: 13px/1.45 var(--font); }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--raised); color: var(--text); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .leaflet-popup-content-wrapper { border-radius: var(--radius); }
+  .leaflet-popup-content { font-size: 13px; margin: 12px 14px; }
+  .leaflet-popup-content b { color: var(--ink); }
+  .leaflet-popup-content img { border-radius: 8px; margin-top: 8px; display: block; }
+  .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+  .pophead { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 15px; }
+  .actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .actions button { background: var(--raised2); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  .actions button:hover { border-color: var(--mint); }
+  .actions a { color: var(--accent); font-size: 12px; align-self: center; margin-left: 4px; }
+  .leaflet-control-layers, .leaflet-bar a, .leaflet-bar a:hover { background: var(--panel); color: var(--ink); border-color: var(--line); }
+  .leaflet-bar { border: 1px solid var(--line) !important; border-radius: 10px !important; overflow: hidden; box-shadow: var(--shadow) !important; }
+  .leaflet-control-layers { border: 1px solid var(--line) !important; border-radius: 10px !important; box-shadow: var(--shadow) !important; }
+  .leaflet-control-layers-toggle { filter: invert(1) brightness(1.4); }
+  .leaflet-control-attribution { background: #0b0f14aa !important; color: var(--muted); }
   .leaflet-control-attribution a { color: var(--muted); }
+  .leaflet-tooltip { background: var(--raised); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .leaflet-top.leaflet-left .mapbtn { display: flex; margin-top: 8px; box-shadow: var(--shadow); background: var(--panel); }
+  #toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--raised2); color: var(--ink); border: 1px solid var(--line); padding: 8px 16px; border-radius: 10px; z-index: 2000; display: none; box-shadow: var(--shadow); }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  @media (max-width: 1100px) { #main, #main.novideo { grid-template-columns: 300px 1fr 300px; } .tiles { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 900px) {
     #main, #main.novideo { grid-template-columns: 1fr; grid-template-rows: auto 60vh auto; }
     #left, #side { border: 0; }
+    .kpi { margin-left: 0; }
   }
 </style>
 </head>
@@ -94,19 +181,23 @@
 <div id="toast" role="status"></div>
 <div id="app">
   <header>
-    <h1>FloodEye · <span>trạm điều phối</span></h1>
+    <div class="brand">
+      <div class="logo"><svg width="20" height="20" viewBox="-8 -8 16 16" aria-hidden="true"><path d="M0,-7 L5,6 L0,3 L-5,6 Z" fill="#34e0b4"/></svg></div>
+      <h1>FloodEye<small>Trạm điều phối cứu hộ</small></h1>
+    </div>
+    <span class="state" id="kState"><i></i><span>Chờ drone</span></span>
     <div class="kpi">
-      <span class="chip">Drone <b id="kUav">0</b></span>
-      <span class="chip">Sự cố đang mở <b id="kOpen">0</b></span>
-      <span class="chip">Cảnh báo đã nhận <b id="nalerts">0</b></span>
-      <span class="chip">Thời gian bay <b id="kTime">–</b></span>
       <span class="chip truth" id="kTruth" hidden title="Đối chiếu trực tiếp để minh hoạ; số chính thức ở docs/results"></span>
+      <div class="stat"><span>Drone</span><b id="kUav">0</b></div>
+      <div class="stat hot"><span>Sự cố đang mở</span><b id="kOpen">0</b></div>
+      <div class="stat"><span>Cảnh báo đã nhận</span><b id="nalerts">0</b></div>
+      <div class="stat"><span>Thời gian bay</span><b id="kTime">–</b></div>
     </div>
   </header>
   <div id="main">
     <aside id="left">
       <section class="card" id="videoCard">
-        <h2>Màn hình trên drone</h2>
+        <h2>Màn hình trên drone <span class="live-dot">trực tiếp</span></h2>
         <div id="videoBox"><div class="wait">Đang chờ video từ drone…</div></div>
         <div class="note">Chỉ để trình bày: drone thật không gửi video về trạm, chỉ gửi toạ độ, ảnh cắt nhỏ và trạng thái.</div>
       </section>
@@ -114,34 +205,40 @@
       <section class="card" id="rescueCard">
         <h2>Đội cứu hộ</h2>
         <div class="rrow">
-          <button class="mapbtn" id="btnBoat">Đặt vị trí thuyền</button>
-          <button class="mapbtn" id="btnRoute">Gợi ý thứ tự đi cứu</button>
-          <a class="mapbtn" href="/api/incidents.gpx" download title="Sự cố đang mở dạng GPX, nạp vào máy định vị cầm tay hoặc điện thoại">Tải GPX</a>
+          <button class="mapbtn" id="btnBoat"><svg viewBox="0 0 24 24"><path d="M3 17h18l-3 4H6z"/><path d="M12 3v14M12 3l6 7h-6"/></svg>Đặt vị trí thuyền</button>
+          <button class="mapbtn" id="btnRoute"><svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/></svg>Gợi ý thứ tự đi cứu</button>
+          <a class="mapbtn" href="/api/incidents.gpx" download title="Sự cố đang mở dạng GPX, nạp vào máy định vị cầm tay hoặc điện thoại"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Tải GPX</a>
         </div>
         <div id="boatInfo" class="note">Chưa đặt vị trí thuyền: bấm "Đặt vị trí thuyền" rồi bấm lên bản đồ (kéo được).</div>
-        <div class="note">Tốc độ thuyền <input id="speed" type="number" min="0.5" max="20" step="0.5" value="3"> m/s</div>
+        <label class="field">Tốc độ thuyền <input id="speed" type="number" min="0.5" max="20" step="0.5" value="3"> m/s</label>
         <div id="routeInfo" class="note"></div>
       </section>
-      <section class="card">
-        <h2>Chú giải bản đồ</h2>
-        <div class="legend">
-          <span><i style="background:var(--scan);opacity:.6"></i>Vùng đã quét</span>
-          <span><i style="border:2px solid var(--scan);background:none"></i>Camera đang nhìn</span>
-          <span><i style="background:#d62728"></i>Sự cố ưu tiên cao</span>
-          <span><i style="border:1px dashed #ccc;background:none"></i>Vùng tìm 95%</span>
-        </div>
-        <div class="legend" id="truthLegend" hidden style="margin-top:6px">
-          <span><i style="background:var(--ok);border-radius:50%"></i>Người thật: được cảnh báo riêng</span>
-          <span><i style="border:2px solid var(--ok);border-radius:50%;background:none"></i>Trong vùng tìm (bị gộp)</span>
-          <span><i style="background:var(--bad);border-radius:50%"></i>Bỏ sót</span>
-          <span><i style="border:2px solid #fff;border-radius:50%;background:none"></i>Đang trong tầm, chưa xác nhận</span>
-          <span><i style="border:2px dashed var(--bad);background:none"></i>Sự cố báo nhầm</span>
-        </div>
-      </section>
     </aside>
-    <div id="mapwrap"><div id="map"></div><div id="banner"></div></div>
+    <div id="mapwrap">
+      <div id="map"></div><div id="banner" role="alert"></div>
+      <details class="legendbox" open>
+        <summary>Chú giải</summary>
+        <div class="legend">
+          <span><i style="background:var(--scan);opacity:.45"></i>Vùng đã quét</span>
+          <span><i style="border:2px solid var(--scan)"></i>Camera đang nhìn</span>
+          <span><i style="background:var(--p-high);border-radius:50%"></i>Sự cố ưu tiên cao · <i style="background:var(--p-mid);border-radius:50%"></i>vừa · <i style="background:var(--p-low);border-radius:50%"></i>thấp</span>
+          <span><i style="border:1px dashed #ccc;border-radius:50%"></i>Vùng tìm 95% quanh sự cố</span>
+        </div>
+        <div class="legend" id="truthLegend" hidden>
+          <span class="sep"></span>
+          <span><i style="background:var(--ok);border-radius:50%"></i>Người thật: được cảnh báo riêng</span>
+          <span><i style="border:2px solid var(--ok);border-radius:50%"></i>Trong vùng tìm (bị gộp)</span>
+          <span><i style="background:var(--bad);border-radius:50%"></i>Bỏ sót</span>
+          <span><i style="border:2px solid #fff;border-radius:50%"></i>Đang trong tầm, chưa xác nhận</span>
+          <span><i style="border:2px dashed var(--bad)"></i>Sự cố báo nhầm</span>
+        </div>
+      </details>
+    </div>
     <aside id="side">
-      <h2 class="card" style="padding:8px 12px">Sự cố theo ưu tiên (<span id="count">0</span>)</h2>
+      <div class="sidehead">
+        <h2>Sự cố theo ưu tiên <span class="cnt" id="count">0</span></h2>
+        <div class="tiers"><span><i style="background:var(--p-high)"></i>cao</span><span><i style="background:var(--p-mid)"></i>vừa</span><span><i style="background:var(--p-low)"></i>thấp</span><span><i style="background:#888"></i>đã đóng</span></div>
+      </div>
       <div id="list"><div class="empty">Chưa có sự cố.</div></div>
     </aside>
   </div>
@@ -217,14 +314,14 @@
     for (const u of uavs) {
       const stale = !u.done && u.age_s > STALE_S;
       if (stale) lost.push(u);
-      const color = stale ? "#93a1b0" : "#39c5e0";
+      const color = stale ? "#9aa8b8" : "#3fd0dd";
       let d = drones[u.uav_id];
       if (!d) {
         d = drones[u.uav_id] = {
           // Hợp các vùng camera đã nhìn: một đa giác nhiều vòng, luật nonzero, nên chỗ chồng nhau không đậm dần.
-          coverage: L.polygon([], { stroke: false, fillColor: "#39c5e0", fillOpacity: .22, fillRule: "nonzero", interactive: false }).addTo(coverageLayer),
+          coverage: L.polygon([], { stroke: false, fillColor: "#3fd0dd", fillOpacity: .22, fillRule: "nonzero", interactive: false }).addTo(coverageLayer),
           track: L.polyline([], { color: "#ffffff", weight: 2, opacity: .7, dashArray: "6 6", interactive: false }).addTo(trackLayer),
-          view: L.polygon([], { color: "#39c5e0", weight: 2, fill: false, interactive: false }).addTo(droneLayer),
+          view: L.polygon([], { color: "#3fd0dd", weight: 2, fill: false, interactive: false }).addTo(droneLayer),
           marker: L.marker([u.lat, u.lon], { zIndexOffset: 1000 }).addTo(droneLayer).bindTooltip(u.uav_id, { direction: "top", offset: [0, -16] }),
         };
       }
@@ -236,6 +333,9 @@
     }
     const box = document.getElementById("uavs");
     if (cards.length) box.replaceChildren(...cards);
+    const st = document.getElementById("kState");
+    const [cls, text] = lost.length ? ["lost", "Mất liên lạc"] : !uavs.length ? ["", "Chờ drone"] : flightDone ? ["", "Hết chuyến"] : ["live", "Đang bay"];
+    st.className = "state " + cls; st.lastElementChild.textContent = text;
     const banner = document.getElementById("banner");
     if (lost.length) {
       const u = lost[0];
@@ -255,7 +355,7 @@
   let shownAll = false;
   let fittedUav = false;
   // Biểu tượng vẽ bằng SVG thay cho emoji: máy chiếu hoặc trình duyệt thiếu phông emoji vẫn hiện đúng.
-  const DRONE_SVG = '<svg width="16" height="16" viewBox="-8 -8 16 16" style="vertical-align:-2px"><path d="M0,-7 L5,6 L0,3 L-5,6 Z" fill="#39c5e0"/></svg>';
+  const DRONE_SVG = '<svg width="16" height="16" viewBox="-8 -8 16 16" style="vertical-align:-2px"><path d="M0,-7 L5,6 L0,3 L-5,6 Z" fill="#3fd0dd"/></svg>';
   const SIGNAL_SVG = '<svg width="18" height="14" viewBox="0 0 18 14" style="vertical-align:-1px"><path d="M1 13h2M6 13V9M10 13V5M14 13V1" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M1 1l16 12" stroke="#fff" stroke-width="2"/></svg>';
 
   // Tự hiệu chỉnh la bàn trên drone (--yaw-calib): chưa bật thì không hiện dòng này.
@@ -279,20 +379,24 @@
     const total = Math.max(created, 1);
     const sec = document.createElement("section");
     sec.className = "card uav";
+    const gpsWarn = u.gps_acc_m != null && u.gps_acc_m > 3;
     sec.innerHTML = `<div class="uavhead"><span class="name">${DRONE_SVG} ${esc(u.uav_id)}</span>${badge}</div>
-      <dl class="rows">
-        <dt>Độ cao</dt><dd>${fmt(u.alt_m, 0)} m</dd>
-        <dt>Tốc độ</dt><dd>${u.speed_mps == null ? "–" : fmt(u.speed_mps) + " m/s"}</dd>
-        <dt>Xử lý</dt><dd>${fmt(u.fps)} khung/giây</dd>
+      <div class="tiles">
+        <div class="tile"><span>Độ cao</span><b>${fmt(u.alt_m, 0)}<small>m</small></b></div>
+        <div class="tile"><span>Tốc độ</span><b>${u.speed_mps == null ? "–" : fmt(u.speed_mps)}<small>m/s</small></b></div>
+        <div class="tile"><span>Xử lý</span><b>${fmt(u.fps)}<small>khung/s</small></b></div>
+        ${u.gps_acc_m == null ? "" : `<div class="tile${gpsWarn ? " warn" : ""}" title="Độ chính xác ngang do bộ thu GPS tự báo (1σ); vùng tìm 95% rộng khoảng 2,45 lần"><span>GPS</span><b>±${fmt(u.gps_acc_m)}<small>m</small></b></div>`}
+      </div>
+      <dl class="kv">
         <dt>Thiết bị</dt><dd>${u.device ? esc(u.device.replace(/\s*\(.*\)\s*$/, "")) + " · giả lập thời gian" : "máy chạy demo"}</dd>
         <dt>Telemetry</dt><dd>${u.telemetry_real ? "thật (từ file bay)" : "giả lập"}</dd>
-        ${u.gps_acc_m == null ? "" : `<dt title="Độ chính xác ngang do bộ thu GPS tự báo (1σ); vùng tìm 95% rộng khoảng 2,45 lần">GPS</dt><dd style="color:${u.gps_acc_m > 3 ? "var(--warn)" : "inherit"}">±${fmt(u.gps_acc_m)} m</dd>`}
         ${compassRow(u)}
-        <dt>Cảnh báo tạo trên drone</dt><dd>${created}</dd>
-        <dt>Đã tới trạm</dt><dd>${got}</dd>
-        <dt>Còn kẹt trên drone</dt><dd style="color:${waiting ? "var(--warn)" : "inherit"}">${waiting}</dd>
       </dl>
-      <div class="pipe" title="Xanh: đã tới trạm · cam: còn trên drone"><div class="got" style="width:${100 * got / total}%"></div><div class="wait2" style="width:${100 * waiting / total}%"></div></div>
+      <div class="pipeline">
+        <div class="pipehead"><span>Cảnh báo tạo trên drone <b>${created}</b></span><span>đã tới trạm <b>${got}</b></span></div>
+        <div class="pipe" title="Xanh: đã tới trạm · cam: còn trên drone"><div class="got" style="width:${100 * got / total}%"></div><div class="wait2" style="width:${100 * waiting / total}%"></div></div>
+        <div class="pipelegend"><span><i style="background:var(--mint)"></i>đã tới trạm</span><span style="color:${waiting ? "var(--warn)" : "inherit"}"><i style="background:var(--warn)"></i>còn kẹt trên drone: ${waiting}</span></div>
+      </div>
       ${stale ? `<div class="note">Số liệu là lần nhận cuối, ${Math.round(u.age_s)} s trước.</div>` : ""}`;
     return sec;
   }
@@ -308,8 +412,19 @@
   // Màu theo điểm ưu tiên (ground/priority.py); sự cố đã đóng màu xám.
   function color(inc) {
     if (inc.status !== "open") return "#888888";
-    return inc.priority >= 3 ? "#d62728" : inc.priority >= 1.5 ? "#ff7f0e" : "#e6b800";
+    return inc.priority >= 3 ? "#ff5a4f" : inc.priority >= 1.5 ? "#ff9f43" : "#f5d547";
   }
+  // Màu luôn kèm chữ (người mù màu, máy chiếu lệch màu).
+  function tier(inc) {
+    if (inc.status !== "open") return { resolved: "đã cứu", false_alarm: "báo nhầm" }[inc.status] || "đã đóng";
+    return inc.priority >= 3 ? "cao" : inc.priority >= 1.5 ? "vừa" : "thấp";
+  }
+  const prioPill = (inc) => `<span class="prio" style="--c:${color(inc)}">${tier(inc)} · ${fmt(inc.priority, 2)}</span>`;
+  // Lý do ưu tiên từ ground/priority.py, dạng "độ tin cậy 0,64 (+0,64)": mỗi lý do một mẩu, phần điểm cộng mờ hơn.
+  const reasons = (inc) => `<div class="why">${inc.priority_reasons.map(r => {
+    const m = /^(.*?)\s*\(([^)]*)\)$/.exec(r);
+    return m ? `<span>${esc(m[1])}<em>${esc(m[2])}</em></span>` : `<span>${esc(r)}</span>`;
+  }).join("")}</div>`;
 
   async function update(id, body) {
     await fetch(`/api/incidents/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -319,18 +434,18 @@
   // Mỗi sự cố (ground/incidents.py) là một điểm; mở ra thấy ảnh cắt mới nhất, lý do ưu tiên và nút cho người vận hành.
   function popup(inc) {
     const a = inc.alerts[0];
-    const crop = a && a.has_crop ? `<br><img src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" width="200">` : "<br><i>Chưa có ảnh cắt</i>";
+    const crop = a && a.has_crop ? `<br><img src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" width="220">` : "<br><i>Chưa có ảnh cắt</i>";
     const ids = inc.alerts.map(x => x.alert_id).join(", ");
     const id = inc.incident_id;
     const actions = inc.status === "open"
       ? `<button onclick='update(${id}, {tag: "water"})'>Dưới nước</button><button onclick='update(${id}, {tag: "roof"})'>Trên mái</button>`
         + `<button onclick='update(${id}, {status: "resolved"})'>Đã cứu</button><button onclick='update(${id}, {status: "false_alarm"})'>Báo nhầm</button>`
       : `<button onclick='update(${id}, {status: "open"})'>Mở lại</button>`;
-    return `<b>Sự cố #${id}</b> · ưu tiên ${inc.priority.toFixed(2).replace(".", ",")}`
-      + ((inc.group_size || 1) > 1 ? ` · <b>nhóm khoảng ${inc.group_size} người</b> (thấy cùng lúc trong 5 m)` : "") + `<br>${inc.n_alerts} cảnh báo từ ${inc.uav_ids.map(esc).join(", ")}`
+    return `<div class="pophead"><b>Sự cố #${id}</b>${prioPill(inc)}</div>`
+      + ((inc.group_size || 1) > 1 ? `<b>Nhóm khoảng ${inc.group_size} người</b> (thấy cùng lúc trong 5 m)<br>` : "") + `${inc.n_alerts} cảnh báo từ ${inc.uav_ids.map(esc).join(", ")}`
       + ` · thấy lần đầu ở giây ${fmt(inc.first_t, 0)} của chuyến bay<br>`
       + `Vùng tìm (95%): bán kính ${fmt(R95 * inc.position_error_m)} m · độ tin cậy cao nhất ${fmt(inc.max_confidence, 2)}`
-      + `<div class="why">${inc.priority_reasons.map(esc).join("; ")}</div>`
+      + reasons(inc)
       + `${crop}<div class="actions">${actions}</div>`
       + `<div class="actions"><button onclick='copyCoords(${inc.lat}, ${inc.lon})'>Chép toạ độ</button>`
       + `<button onclick='legTo(${id})'>Đường từ thuyền</button>`
@@ -353,7 +468,7 @@
       const isNew = !seen.has(key) && !firstLoad;
       seen.add(key);
       if (!markers[key]) {
-        markers[key] = L.circleMarker([inc.lat, inc.lon], { weight: 2, fillOpacity: .85 }).addTo(incidentLayer).bindPopup("", { maxWidth: 260 });
+        markers[key] = L.circleMarker([inc.lat, inc.lon], { weight: 2, fillOpacity: .85 }).addTo(incidentLayer).bindPopup("", { maxWidth: 280 });
         areas[key] = L.circle([inc.lat, inc.lon], { radius: 1, weight: 1, dashArray: "4 4", fillOpacity: 0.08, interactive: false }).addTo(areaLayer);
       }
       areas[key].setLatLng([inc.lat, inc.lon]).setRadius(R95 * inc.position_error_m).setStyle({ color: c });
@@ -365,10 +480,10 @@
       item.className = "item" + (inc.status === "open" ? "" : " closed") + (isNew ? " fresh" : "");
       item.style.setProperty("--c", c);
       const thumb = a ? `<img class="thumb" src="/api/alerts/${encodeURIComponent(a.alert_id)}/crop" alt="">` : '<div class="thumb">chưa có ảnh</div>';
-      const group = (inc.group_size || 1) > 1 ? ` <span class="grp">nhóm ~${inc.group_size} người</span>` : "";
-      item.innerHTML = `${thumb}<div><div class="t1">#${key} · ưu tiên ${fmt(inc.priority, 2)}${group}</div>`
-        + `<div class="t2">giây ${fmt(inc.first_t, 0)} · ${inc.n_alerts} cảnh báo · ${inc.uav_ids.length} drone · ±${fmt(R95 * inc.position_error_m)} m</div>`
-        + `<div class="why">${inc.priority_reasons.map(esc).join("; ")}</div></div>`;
+      const group = (inc.group_size || 1) > 1 ? ` <span class="grp">~${inc.group_size} người</span>` : "";
+      item.innerHTML = `${thumb}<div style="min-width:0"><div class="t1">#${key} ${prioPill(inc)}${group}</div>`
+        + `<div class="t2">giây ${fmt(inc.first_t, 0)} · ${inc.n_alerts} cảnh báo · ${inc.uav_ids.length} drone · vùng tìm ±${fmt(R95 * inc.position_error_m)} m</div>`
+        + `${reasons(inc)}</div>`;
       item.onclick = () => { follow = false; followControl.button.classList.remove("on"); map.setView([inc.lat, inc.lon], 19); markers[key].openPopup(); };
       items.push(item);
       listItems[key] = item;
