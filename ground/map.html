@@ -116,6 +116,10 @@
   .legend { display: grid; gap: 5px; padding: 0 12px 10px; color: var(--text); }
   .legend span { display: flex; align-items: center; gap: 8px; }
   .legend i { flex: none; display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+  .legend[hidden], .chip[hidden] { display: none; }
+  #simbadge { position: absolute; top: 14px; right: 70px; z-index: 900; display: none; max-width: 340px; padding: 8px 12px; border-radius: 10px;
+              background: color-mix(in srgb, var(--warn) 16%, var(--panel)); border: 1px solid var(--warn); color: var(--ink); font-size: 12.5px; box-shadow: var(--shadow); }
+  #simbadge b { color: var(--warn); }
   .legend .sep { border-top: 1px solid var(--line); margin: 4px 0 2px; }
 
   /* ---------- Danh sách sự cố ---------- */
@@ -216,6 +220,7 @@
     </aside>
     <div id="mapwrap">
       <div id="map"></div><div id="banner" role="alert"></div>
+      <div id="simbadge"><b>Vị trí giả lập.</b> Video không có telemetry (GPS, độ cao): drone đặt đứng yên ở 50 m tại một điểm cố định, nên vị trí trên bản đồ chỉ minh hoạ, không phải nơi quay.</div>
       <details class="legendbox" open>
         <summary>Chú giải</summary>
         <div class="legend">
@@ -333,6 +338,8 @@
     }
     const box = document.getElementById("uavs");
     if (cards.length) box.replaceChildren(...cards);
+    // Telemetry giả lập (video không có GPS): ghi rõ trên bản đồ là vị trí chỉ minh hoạ.
+    document.getElementById("simbadge").style.display = uavs.some(u => !u.telemetry_real) ? "block" : "none";
     const st = document.getElementById("kState");
     const [cls, text] = lost.length ? ["lost", "Mất liên lạc"] : !uavs.length ? ["", "Chờ drone"] : flightDone ? ["", "Hết chuyến"] : ["live", "Đang bay"];
     st.className = "state " + cls; st.lastElementChild.textContent = text;

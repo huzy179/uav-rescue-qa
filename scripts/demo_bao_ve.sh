@@ -8,6 +8,8 @@
 #   scripts/demo_bao_ve.sh so-sanh sds_v21_goc agx_orin_64gb orin_nano_super   # video hai thiết bị cạnh nhau
 #   scripts/demo_bao_ve.sh chuan-bi hotay_quet && scripts/demo_bao_ve.sh chay hotay_quet orin_nano_super 60 80
 #                                                           # chuyến bay mô phỏng quét vùng (ảnh tổng hợp), mất sóng giây 60–80
+#   scripts/demo_bao_ve.sh chuan-bi lu_nidarx-flood-1 && scripts/demo_bao_ve.sh chay lu_nidarx-flood-1 orin_nano_super
+#                                                           # video lũ đã gán nhãn, telemetry giả lập (vị trí chỉ minh hoạ)
 #   scripts/demo_bao_ve.sh kiem-tra                         # trước hôm bảo vệ: soát đủ dữ liệu, video, ô bản đồ, cổng
 #
 # Kịch bản: configs/demo/<tên>.yaml. Thiết bị: configs/devices/<tên>.yaml (ước lượng, không phải số đo; xem
@@ -43,6 +45,7 @@ if [ "$CMD" = kiem-tra ]; then
   echo "Ảnh tập lũ (sau khi khoá, tools/demo_panels.py):"
   check 0 "tập test lũ đã khoá" test -f data/processed/flood/MANIFEST.sha256
   check 0 "ảnh so sánh trên tập lũ" test -s runs/demo/flood_panels/picks.csv
+  for c in configs/demo/lu_*.yaml; do n=$(basename "$c" .yaml); check 0 "$n: phát hiện (màn hình điều phối trên video lũ)" test -s "runs/edge/demo_cache/$n/detections.jsonl"; done
   echo "Chạy không cần mạng:"
   check 1 "ô bản đồ đã lưu (diễn tập một lần có mạng)" nonempty_dir runs/ground/tiles
   check 1 "Leaflet đóng gói sẵn" test -s ground/static/leaflet/leaflet.js
