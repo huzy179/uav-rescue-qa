@@ -108,7 +108,7 @@ repeat: keep the highest remaining box; drop every remaining box whose IoS with 
 IoS = intersection area / area of the smaller box
 ```
 
-IoS (intersection over the smaller box) is used instead of IoU because a half box lies entirely inside the full box, giving an IoS close to 1 but an IoU of only about 0.5. Merging **keeps the highest-scoring box** rather than fusing coordinates as SAHI does: coordinate fusion was tried and dropped, because one large low-score box covering a crowd turned each person's box into a box of the whole group. In a paired bootstrap on VisDrone val, the tiler is 0.006 AP50 below SAHI (confidence interval −0.011 to −0.003) but slightly better for people below 8 px (`visdrone_tiled_vs_sahi.md`; Chapter 7, Table 7.6).
+IoS (intersection over the smaller box) is used instead of IoU because a half box lies entirely inside the full box, giving an IoS close to 1 but an IoU of only about 0.5. Merging **keeps the highest-scoring box** rather than fusing coordinates as SAHI does: coordinate fusion was tried and dropped, because one large low-score box covering a crowd turned each person's box into a box of the whole group. In a paired bootstrap on VisDrone val, the tiler is 0.006 AP50 below SAHI (confidence interval −0.011 to −0.003) but slightly better for people below 8 px (`visdrone_tiled_vs_sahi.md`; Chapter 7, Table 7.8).
 
 ### 4.3.4 Confidence Threshold
 
@@ -241,7 +241,7 @@ This mechanism delivers each message **at least once**: if the ground station's 
 
 ### 4.7.3 Merging Alerts into Incidents
 
-The station attaches each new alert to the nearest open **incident** within 5 m and 300 s (flight clock), or opens a new incident; an incident's position is the mean of its alerts. Alerts from two different UAVs use a wider radius, the root sum of squares of the two alerts' position errors, because the GPS receivers of two UAVs are independent. The map shows incidents instead of individual alerts; no alert is discarded, so a wrong merge only makes the map less clear and never loses a person. The 5 m radius was chosen on three SeaDronesSee sequences (Chapter 7, Table 7.15). The merging rule is a pure function and runs inside one SQLite transaction.
+The station attaches each new alert to the nearest open **incident** within 5 m and 300 s (flight clock), or opens a new incident; an incident's position is the mean of its alerts. Alerts from two different UAVs use a wider radius, the root sum of squares of the two alerts' position errors, because the GPS receivers of two UAVs are independent. The map shows incidents instead of individual alerts; no alert is discarded, so a wrong merge only makes the map less clear and never loses a person. The 5 m radius was chosen on three SeaDronesSee sequences (Chapter 7, Table 7.24). The merging rule is a pure function and runs inside one SQLite transaction.
 
 ### 4.7.4 Priority and Rescue-Team Tools
 

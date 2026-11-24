@@ -486,15 +486,13 @@ Giới hạn: ba đoạn video, đối chiếu với nhãn trong không gian ả
 
 ## 5.4. Luận điểm xuyên suốt: dữ liệu bay giúp cả ba khâu
 
-[Viết sau khi đủ 5.1–5.3. Khung dự kiến dưới đây.]
-
 Ba kết quả ở ba câu hỏi có chung một cơ chế: **dùng telemetry sẵn có của drone (độ cao, GPS, hướng) thay cho một giả định cố định**.
 
 - **Phát hiện (RQ1d):** độ cao cho biết người sẽ to bao nhiêu pixel, nên chọn được mức thu nhỏ đưa người về cỡ mô hình làm tốt. Trên SeaDronesSee 4K, cách này nâng AP50 của mô hình chính khi cắt ô từ 0,235 lên 0,531 (Bảng 5.8).
 - **Tốc độ (RQ2c):** cùng mức thu nhỏ đó giảm số ô phải chạy; cùng độ cao và vận tốc cho biết cần bao nhiêu khung mỗi giây (Bảng 5.10). Trên khung 4K, số ô giảm từ 32 xuống 6 và tổng thời gian trung vị với FP16 từ 120,57 ms xuống 77,34 ms trên T4 (Bảng 5.8a), đồng thời AP50 tăng.
 - **Xác nhận (RQ3b):** GPS và hướng cho phép ghép các lần thấy theo toạ độ mặt đất, không cần box chồng lấn giữa hai khung; nhờ đó xác nhận được người ở 2 khung mỗi giây, nơi tracker trên ảnh gãy (Bảng 5.11, 5.12).
 
-Mặt trái của luận điểm cũng phải nêu: hệ thống phụ thuộc vào chất lượng telemetry. GPS tệ hơn giả định làm vùng tìm 95% không còn đủ (Bảng 5.13), la bàn lệch gây tách nhầm khi bay cao, và góc gimbal nhiễu làm phép chiếu theo góc nghiêng kém hơn ở một số đoạn (mục 5.3.2).
+Mặt trái của luận điểm cũng phải nêu: hệ thống phụ thuộc vào chất lượng telemetry. GPS tệ hơn giả định làm vùng tìm 95% không còn đủ (Bảng 5.13), la bàn lệch gây tách nhầm khi bay cao, và góc gimbal nhiễu làm phép chiếu theo góc nghiêng kém hơn ở một số đoạn (mục 5.3.2). Khi không có telemetry, như tập ảnh lũ, không dùng được thu nhỏ theo độ cao và kết quả chỉ còn phụ thuộc detector (mục 5.1.1).
 
 ## 5.5. Phân tích lỗi
 
@@ -516,8 +514,6 @@ Phần này không đo gì mới; nó cho thấy các thành phần chạy cùng
 [Hình 5.x: ảnh chụp màn hình điều phối khi đang quét; Hình 5.y: bản đồ sau chuyến bay với lớp đối chiếu. Chụp khi dàn trang, từ `scripts/demo_bao_ve.sh`.]
 
 ## Tóm tắt chương
-
-[Viết sau khi điền đủ các chỗ chờ. Khung dự kiến:]
 
 - **Câu hỏi 1.** Dữ liệu huấn luyện quyết định nhiều nhất cho người nhỏ; kiến trúc (P2) và cắt ô trên ảnh độ phân giải vừa giúp rất ít. Mô hình tinh chỉnh yếu với người to; thu nhỏ theo độ cao bù được trên SeaDronesSee. Thêm ảnh thảm hoạ người to theo cách đơn giản làm mất người nhỏ. Trên tập ảnh lũ, tinh chỉnh tăng recall người nhỏ nhưng không tăng AP50: mô hình gốc thận trọng hơn và giữ AP50 cao nhất, kể cả khi bỏ một khung thiếu nhãn; thứ hạng trên ảnh lũ giống SeaDronesSee hơn VisDrone; không đo được ảnh hưởng riêng của loá, nhoè, vật trôi.
 - **Câu hỏi 2.** Trên T4, TensorRT FP16 nhanh hơn PyTorch 1,833–3,028 lần mà gần như không mất độ chính xác; INT8 nhanh thêm ít và nén độ tin cậy, mất một nửa recall vận hành ở người dưới 8 px với ngưỡng hiện tại. Cấu hình được chọn là FP16 với thu nhỏ theo độ cao, nằm trên biên Pareto với recall cao nhất. Khâu tốn thời gian nhất của nó là thu nhỏ khung 4K, không phải suy luận; theo ước lượng, thiết bị yếu thiếu sức đúng lúc bay thấp.
