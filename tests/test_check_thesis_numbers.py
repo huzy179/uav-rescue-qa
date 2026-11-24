@@ -20,3 +20,15 @@ def test_tim_so_dau_phay_va_bao_tieng_viet(tmp_path: Path) -> None:
     missing, vn = check([ch], source_text([tmp_path / "kq.md", tmp_path / "bang.csv"]))
     assert [(line, n) for _, line, n in missing] == [(2, "0.999")]
     assert [line for _, line, _ in vn] == [3]
+
+
+def test_bo_qua_so_bang_va_so_muc(tmp_path: Path) -> None:
+    from tools.check_thesis_numbers import labels_in
+
+    ch = tmp_path / "ch7.md"
+    ch.write_text("## 7.3 Results\n\n**Table 7.11.** Recall by tag.\n\nAs Tables 7.11 and 7.3 show, AP50 0.999.\n",
+                  encoding="utf-8")
+    labels = labels_in([ch])
+    assert labels == {"7.3", "7.11"}
+    missing, _ = check([ch], "", labels)
+    assert [n for _, _, n in missing] == ["0.999"]
