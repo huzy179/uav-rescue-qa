@@ -1,0 +1,8 @@
+# Dựng quyển tiếng Anh sang Word (tools/build_thesis.py): thông tin trang bìa theo mẫu Thesis_Template_MSE_FPT University.
+# Tên đề tài tiếng Anh là bản dịch tạm của tên trong ROADMAP: đối chiếu với đề cương đã nộp trước khi gửi.
+title: "Detecting Small People in UAV Imagery of Flooded Areas for Edge Devices"
+author: "Mai Tran Huy"
+supervisor: "[SUPERVISOR NAME]"
+year: "2026"
+degree: "Master of Software Engineering"
+output: runs/thesis/FloodEye_thesis.docx
