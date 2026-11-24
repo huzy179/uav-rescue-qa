@@ -8,8 +8,8 @@ Nháp tiếng Việt trong `docs/luan_van/` là nguồn nội dung; bản tiến
 
 | Phần | Nội dung | Nguồn | Trạng thái |
 |---|---|---|---|
-| Trang bìa (hai trang), Abstract (≤ 150 từ), Acknowledgments | Theo mẫu Word | Viết mới | Chờ kết quả lũ (tóm tắt) |
-| Table of Contents, List of Tables, List of Figures, List of Appendices, List of Abbreviations | Sinh khi dựng Word; bảng viết tắt từ `THUAT_NGU.md` | Tự động + `THUAT_NGU.md` | Chờ |
+| Trang bìa (hai trang), Abstract (≤ 150 từ), Acknowledgments | Theo mẫu Word | Viết mới | **Tóm tắt xong 25/11** (`front_matter.md`, 147 từ); trang bìa khi dựng Word; lời cảm ơn học viên viết |
+| Table of Contents, List of Tables, List of Figures, List of Appendices, List of Abbreviations | Sinh khi dựng Word; bảng viết tắt từ `THUAT_NGU.md` | Tự động + `THUAT_NGU.md` | Bảng viết tắt xong 25/11 (`front_matter.md`); các mục lục chờ dựng Word |
 | Ch. 1 Introduction | Bối cảnh, ba ràng buộc, câu hỏi nghiên cứu, đóng góp, phạm vi, bố cục | `chuong1.md` | **Xong 21/11** (`ch1_introduction.md`) |
 | Ch. 2 Background and Related Work | Phát hiện vật nhỏ, ảnh UAV cho cứu nạn, theo dõi, thiết bị biên, khoảng trống | `chuong2.md`, `tai_lieu_tham_khao.md` | **Xong 21/11** (`ch2_background.md`, `references.bib`) |
 | **Ch. 3 System Requirements and Architecture** (mới) | Bên liên quan và kịch bản sử dụng; yêu cầu chức năng theo vai trò (drone, trạm mặt đất, điều phối viên, đội cứu hộ); yêu cầu phi chức năng (tốc độ, chịu mất sóng, chạy không mạng, tái lập, chạy trên thiết bị biên); kiến trúc hai phía và luồng dữ liệu; quyết định thiết kế | `chuong3.md` mục 3.1, `TECHNICAL.md` mục 7–12, `ROADMAP.md` mục 2–3 | **Xong 21/11** (`ch3_requirements_architecture.md`) |
@@ -19,7 +19,7 @@ Nháp tiếng Việt trong `docs/luan_van/` là nguồn nội dung; bản tiến
 | Ch. 7 Results and Discussion | Ba câu hỏi nghiên cứu, luận điểm xuyên suốt, phân tích lỗi, minh hoạ hệ thống | `chuong5.md`, `runs/flood/bang.md` | **Xong 24/11** (`ch7_results.md`, bảng đánh số liên tục 7.1–7.24); chờ chèn hình |
 | Ch. 8 Conclusion and Future Work | Trả lời câu hỏi, đóng góp, giới hạn, hướng phát triển | `chuong6.md` | **Xong 24/11** (`ch8_conclusion.md`); đóng góp chờ #19 |
 | References | Tác giả–năm (APA) | `tai_lieu_tham_khao.md` → `docs/thesis/references.bib` | Chuyển |
-| Appendices | A. Hướng dẫn gán nhãn tóm tắt; B. Lệnh tái lập từng bảng; C. Bảng phụ; D. Danh sách test | `LABELING.md`, `docs/results/`, `tests/` | Viết |
+| Appendices | A. Hướng dẫn gán nhãn tóm tắt; B. Lệnh tái lập từng bảng; C. Bảng phụ; D. Danh sách test | `LABELING.md`, `docs/results/`, `tests/` | **A, B, D xong 25/11** (`appendix_a_labeling.md`, `appendix_b_reproduction.md`, `appendix_d_tests.md`; D lấy số từ `tools/qa_snapshot.py`, cập nhật lúc khoá mã); C chưa viết, cắt đầu tiên khi trễ |
 
 ## 2. Lịch
 
@@ -42,7 +42,7 @@ Trễ thì cắt theo thứ tự: phụ lục C, D → minh hoạ hệ thống t
 
 - **Viết:** Markdown trong `docs/thesis/` (mỗi chương một file, `ch1_introduction.md`…). Thuật ngữ tiếng Anh theo cột "Tiếng Anh" của `THUAT_NGU.md`; mã thí nghiệm luôn kèm tên mô tả.
 - **Dựng Word:** pandoc với file tham chiếu dựng từ mẫu của trường (kiểu chữ, lề, giãn dòng 1,5, đánh số trang i, ii… rồi 1, 2…), trích dẫn bằng citeproc (APA). **Cần cài pandoc: hỏi học viên trước.**
-- **Kiểm số:** `tools/check_thesis_numbers.py` (có từ 21/11) so mọi số thập phân trong `docs/thesis/` với nguồn đã đo (đổi dấu phẩy sang chấm); số không tìm thấy được liệt kê để kiểm tay. Chạy trước mỗi lần gửi.
+- **Kiểm số:** `tools/check_thesis_numbers.py` (có từ 21/11) so mọi số thập phân trong `docs/thesis/` với nguồn đã đo (đổi dấu phẩy sang chấm); số không tìm thấy được liệt kê để kiểm tay. Kiểm mọi file trong `docs/thesis/` (chương, phần mở đầu, phụ lục), bỏ qua số bảng, số hình, số mục. Chạy trước mỗi lần gửi.
 - **Kiểm thuật ngữ:** cùng script báo chữ tiếng Việt còn sót; mã thí nghiệm đứng trơn kiểm bằng mắt.
 - Sửa nội dung thì sửa cả nháp tiếng Việt lẫn bản tiếng Anh cho tới 4/12; sau 4/12 bản tiếng Anh là bản chính.
 

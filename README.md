@@ -228,7 +228,7 @@ Quyển viết tiếng Anh (quyết định #21), tám chương, mỗi chương 
 grep -rn "\[UPDATE\|\[PENDING\|\[CITATION\|\[FIGURE\|\[CHECK" docs/thesis/   # chỗ còn chờ
 ```
 
-Số đếm test và dòng mã của chương 5 ở `runs/qa/` (chạy lại lúc khoá mã: `pytest --junitxml=runs/qa/pytest.xml`). Dựng file Word bằng pandoc từ mẫu của trường: chưa làm (28/11).
+Số đếm test và dòng mã của chương 5 và phụ lục D ở `runs/qa/` (chạy lại lúc khoá mã: `.venv/bin/python tools/qa_snapshot.py`, ghi `pytest.xml`, `pytest.txt`, `commit.txt`, `code_lines.csv`, `test_files.csv`). Dựng file Word bằng pandoc từ mẫu của trường: chưa làm (28/11).
 
 ## Công cụ khác
 
