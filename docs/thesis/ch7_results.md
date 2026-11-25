@@ -51,7 +51,7 @@ Lowering IoU from 0.5 to 0.3 raises AP for people below 8 px from 0.167 to 0.339
 | 64–91 | 357 | 0.529 | 0.261 |
 | ≥ 91 | 498 | 0.637 | 0.133 |
 
-**Figure 7.1.** [FIGURE] Operating recall by the person's short side on downscaled SeaDronesSee (`docs/results/e6_sds_recall_by_pixels.png`).
+![**Figure 7.1.** Operating recall by the person's short side on downscaled SeaDronesSee; shaded bands are 95% confidence intervals from the bootstrap by video (`e6_sds_pilot.md`). **Preliminary.**](figures/fig7_1_recall_by_pixels.png){width=90%}
 
 Below about 6 px both models detect almost no one; for the main model to keep a recall of about 0.5, a person needs at least about 6–8 px. This is a lower bound on flight altitude: with a 4K camera and an 82° field of view it corresponds to a specific maximum altitude (table in Chapter 1). Table 7.2 also shows something unexpected: **the main model drops sharply for large people** (from 45 px upwards it is worse than the base model). Section 7.1.4 addresses this weakness.
 
@@ -283,7 +283,7 @@ The AP50 difference below 8 px is −0.018 (95% CI −0.041 to −0.015), while 
 
 **Frame resizing on the GPU (preliminary, measured on the development machine, relative only).** The resizing stage is slow because the Ultralytics library forces OpenCV to run single-threaded when it is loaded. Resizing with torch on the GPU reduces the frame preparation stage on SeaDronesSee val from 21.34 ms to 5.39 ms (median) and the total per image from 50.60 ms to 43.55 ms, with no significant difference in AP50 or recall (AP50 −0.021, 95% CI −0.038 to +0.017; `gpu_resize.md`). It has not been measured on the T4, so the tables above still use CPU resizing.
 
-**Table 7.15.** Pareto front of operating recall versus speed, SeaDronesSee val (`rq2_t4.md`). **[FIGURE]** `runs/rq2/rq2_sds_det.png`.
+**Table 7.15.** Pareto front of operating recall versus speed, SeaDronesSee val (`rq2_t4.md`); plotted in Figure 7.2.
 
 | Configuration | Frames per second at p95 | Operating recall | AP50 | On the front |
 |---|---|---|---|---|
@@ -296,6 +296,8 @@ The AP50 difference below 8 px is −0.018 (95% CI −0.041 to −0.015), while 
 | FP16, tiling at original resolution | 7.50 | 0.372 | 0.234 | |
 | PyTorch, downscaled to 10 px | 6.32 | 0.579 | 0.531 | |
 | PyTorch, tiling at original resolution | 2.48 | 0.374 | 0.234 | |
+
+![**Figure 7.2.** Operating recall versus whole-pipeline speed on the T4, SeaDronesSee val (`rq2_t4.md`). Shape: inference engine; colour: frame preparation; outlined points form the Pareto front. Speeds are for relative comparison only.](figures/fig7_2_pareto.png){width=90%}
 
 **Answer to RQ2a and RQ2b.** On the T4, FP16 is the compression level to use: 1.833–3.028 times faster than PyTorch with accuracy almost unchanged. INT8 adds little speed and, with the current threshold, loses half of the operating recall for people below 8 px because confidence is compressed; using it would require a new threshold chosen on a validation set. The Pareto front has two groups: full image (39.90–44.58 frames per second at p95, operating recall 0.443–0.468) and altitude-based downscaling (11.58–11.98 frames per second, recall 0.554–0.580). Since the rate ceiling needed in Section 7.3.1 is 8 frames per second, the selected configuration is **FP16 with altitude-based downscaling**: the highest recall on the front, and still above the required rate on the T4. Whether a weaker device keeps up is the question of Section 7.2.2.
 
@@ -495,7 +497,7 @@ The other side of the argument must also be stated: the system depends on the qu
 
 The illustrative frames are chosen by three rules fixed before the lock (`tools/demo_panels.py`, Chapter 6), comparing the base model with the main model: the frame with the most small people (`thainguyen_002160`, 69 people all below 16 px: the base model finds 11, the main model 27 but adds 42 false alarms versus 7), a typical frame (`nidarx_000300`) and the frame with the most errors (`nidarx_000600`, 67 people: the base model finds 7, the main model 19) (`runs/demo/flood_panels/picks.csv`).
 
-**Figure 7.2.** [FIGURE] The three frames chosen by the fixed rules, base model and main model side by side.
+**Figure 7.3.** [FIGURE: PENDING DECISION #12, flood frames are copyrighted] The three frames chosen by the fixed rules, base model and main model side by side.
 
 The largest error class by count is not the model's but the labels': the clearly visible crowd in frame `thainguyen_003120` was not labelled (Section 7.1.1). According to the labelling guide, a crowd in which individuals cannot be separated should be covered by an ignore region; this frame was left empty. Another frame from the same video (`thainguyen_000144`) also has no labels and 17 boxes with confidence ≥ 0.25 from the main model; this frame has not been reviewed. The remaining false alarms concentrate in the 480p Thai Nguyen video, where people are below 16 px and the fine-tuned models emit many small boxes; a crop-by-crop error analysis has not been done.
 
@@ -510,7 +512,9 @@ This section measures nothing new; it shows the components running together as o
 - **Two UAVs** reporting to one station (`multi_uav_demo.md`, **illustration**): 37 alerts per UAV merge into 20 incidents, 18 of which are seen by both UAVs; both UAVs replay the same video with different GPS, so this checks the data flow, not merging accuracy.
 - **Sandbox** in the experiment console: change altitude, speed, GPS, network and device, re-run the flight and compare runs side by side.
 
-**Figure 7.3.** [FIGURE] Dispatch screen during a scan. **Figure 7.4.** [FIGURE] Map after the flight with the ground-truth overlay. Captured from `scripts/demo_bao_ve.sh` when the document is laid out.
+![**Figure 7.4.** Dispatch screen during a scan: scanned area, camera footprint, incidents with their 95% search areas, and the incident list ranked by priority with the reason for each score. Captured from `scripts/demo_bao_ve.sh chay hotay_quet orin_nano_super 60 90` (simulated flight over a synthetic flood scene, outage from 60 s to 90 s of flight time); the interface is in Vietnamese for local operators.](figures/fig7_4_dispatch_scan.png){width=100%}
+
+![**Figure 7.5.** Map after the flight with the ground-truth overlay switched on, for illustration only; the official metrics are those of Section 7.3.](figures/fig7_5_dispatch_truth.png){width=100%}
 
 ## Chapter Summary
 

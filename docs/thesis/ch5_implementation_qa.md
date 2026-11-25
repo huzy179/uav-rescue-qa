@@ -112,7 +112,7 @@ Software quality also covers the evaluation itself, since a wrong number in the 
 
 **Experiment console.** A separate local web application lets the researcher run the pipeline on a listed source, compare two runs side by side, and generate an error-analysis report whose examples are selected automatically (largest misses per size group, most confident false alarms). The flood test set appears in the console only after it has been locked.
 
-**Figure 5.1.** [FIGURE] Dispatch screen during a replayed flight with a simulated link outage.
+![**Figure 5.1.** Dispatch screen during a simulated link outage: the status pill and the UAV card show the lost link and the time since the last message, while alerts wait on board to be resent. Captured from `scripts/demo_bao_ve.sh chay hotay_quet orin_nano_super 60 90` (simulated flight over a synthetic flood scene, outage from 60 s to 90 s of flight time); the interface is in Vietnamese for local operators.](figures/fig5_1_dispatch_outage.png){width=100%}
 
 ## Chapter Summary
 

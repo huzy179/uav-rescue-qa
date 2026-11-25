@@ -78,9 +78,9 @@ The system has two sides connected by an unreliable link (Figure 3.1).
 
 **At the ground station**, alerts are merged into incidents, prioritised and shown on a map for the operator and the rescue team.
 
-**Figure 3.1.** [FIGURE] Two-sided architecture: camera and telemetry → sampling → detection → geolocation → confirmation → outbox → (unreliable link) → ground station: incident merging, priority, map and rescue tools.
+![**Figure 3.1.** Two-sided architecture. On the UAV, five stages turn video and telemetry into alerts stored in an outbox; over an unreliable link, the ground station stores alerts, merges them into incidents, ranks them and shows them on the dispatch screen. Stages 1 and 2 have altitude-based options that are off by default.](figures/fig3_1_architecture.png){width=100%}
 
-**Figure 3.2.** [FIGURE] Package view: `edge/` (UAV), `ground/` (ground station), `shared/` (message schema and configuration), `sim/` (simulators), `eval/` (metrics computed from logs), with the rule that `edge/` and `ground/` never import each other.
+![**Figure 3.2.** Packages and their imports, measured from the import statements in the code. `edge/` and `ground/` depend on `shared/` and never on each other; the dashed imports exist only in the main loop, for replaying flights and drawing the saved video.](figures/fig3_2_packages.png){width=100%}
 
 **Table 3.4.** Components and responsibilities.
 
