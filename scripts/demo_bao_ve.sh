@@ -30,7 +30,7 @@ if [ "$CMD" = kiem-tra ]; then
     else echo "  (chưa) $what"; fi
   }
   nonempty_dir() { [ -n "$(find "$1" -type f 2>/dev/null | head -n 1)" ]; }
-  port_free() { $PY -c "import socket,sys; s=socket.socket(); s.bind((\"127.0.0.1\", int(sys.argv[1])))" "$1"; }
+  port_free() { $PY -c "import socket,sys; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); s.bind((\"127.0.0.1\", int(sys.argv[1])))" "$1"; }
   echo "Dữ liệu phát lại (chuan-bi):"
   for n in sds_v21_goc sds_v21_px10 hotay_quet; do
     check 1 "$n: phát hiện" test -s "runs/edge/demo_cache/$n/detections.jsonl"
@@ -92,7 +92,7 @@ case "$CMD" in
     LIVE=8001
     # Trạm của lần chạy trước còn sống thì dừng: xoá file dữ liệu dưới chân nó làm bản đồ hỏng.
     for p in $PORT $LIVE; do
-      if ! $PY -c "import socket,sys; s=socket.socket(); s.bind((\"127.0.0.1\", int(sys.argv[1])))" "$p" 2>/dev/null; then
+      if ! $PY -c "import socket,sys; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); s.bind((\"127.0.0.1\", int(sys.argv[1])))" "$p" 2>/dev/null; then
         echo "Cổng $p đang bận (lần demo trước chưa tắt?). Tắt nó trước: ss -ltnp | grep $p"; exit 1
       fi
     done
