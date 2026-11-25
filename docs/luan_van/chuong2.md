@@ -38,7 +38,7 @@ Các mục 2.2 và chương 3 lần lượt xét các cách chống lại từng
 
 **Tăng độ phân giải đầu vào.** Cách trực tiếp nhất là đưa ảnh vào mạng ở cỡ lớn hơn (1280 thay vì 640 px). Chi phí tính tăng theo bình phương cạnh ảnh.
 
-**Cắt ô (tiling, slicing).** Chia ảnh lớn thành các ô chồng nhau, phát hiện trên từng ô ở độ phân giải gốc, rồi ghép kết quả. SAHI [SAHI] đóng gói cách làm này thành thư viện dùng được với nhiều bộ phát hiện, cho cả lúc suy luận và lúc tinh chỉnh; trên VisDrone và xView, các tác giả báo AP tăng đáng kể với ba bộ phát hiện khác nhau [ĐỌC TOÀN VĂN để chép số]. Mặc định SAHI còn chạy thêm một lượt trên toàn ảnh để bắt vật to bị cắt đôi giữa các ô, và ghép box giữa các ô bằng cách hợp nhất toạ độ. SAHI chạy mô hình lần lượt từng ô; luận văn viết một bộ cắt ô riêng chạy mọi ô trong một lô để hợp với GPU và với xuất TensorRT (chương 3, mục 3.3).
+**Cắt ô (tiling, slicing).** Chia ảnh lớn thành các ô chồng nhau, phát hiện trên từng ô ở độ phân giải gốc, rồi ghép kết quả. SAHI [SAHI] đóng gói cách làm này thành thư viện dùng được với nhiều bộ phát hiện, cho cả lúc suy luận và lúc tinh chỉnh; trên VisDrone và xView, các tác giả báo cắt ô lúc suy luận tăng AP 6,8%, 5,1% và 5,3% với các bộ phát hiện FCOS, VFNet và TOOD, và 12,7%, 13,4%, 14,5% khi thêm tinh chỉnh trên ô. Mặc định SAHI còn chạy thêm một lượt trên toàn ảnh để bắt vật to bị cắt đôi giữa các ô, và ghép box giữa các ô bằng cách hợp nhất toạ độ. SAHI chạy mô hình lần lượt từng ô; luận văn viết một bộ cắt ô riêng chạy mọi ô trong một lô để hợp với GPU và với xuất TensorRT (chương 3, mục 3.3).
 
 **Thêm tầng phát hiện mịn hơn.** Thêm đầu dự đoán ở tầng P2 (stride 4) để người 8 px chiếm 2 × 2 ô thay vì một ô, đổi lại tốn thêm tính toán ở neck và head và phải huấn luyện lại phần mới. Luận văn đã thử (chương 5, mục 5.1.3).
 
@@ -64,7 +64,7 @@ Các mục 2.2 và chương 3 lần lượt xét các cách chống lại từng
 
 **Bù chuyển động camera.** Khi camera chuyển động, vị trí của mọi đối tượng trên ảnh trôi theo camera. BoT-SORT [BoT-SORT] ước lượng chuyển động camera giữa hai khung từ chính ảnh rồi dời các track trước khi ghép. Trên UAV có thể tính phép dời này từ telemetry thay vì từ ảnh (chương 3, mục 3.6.1).
 
-**Định vị và ghép theo toạ độ thế giới.** Đổi vị trí phát hiện trên ảnh sang toạ độ mặt đất bằng mô hình camera lỗ kim và vị trí, hướng của camera là kỹ thuật hình học cơ bản [HZ]. Rudol và Doherty [Rudol08] đã định vị người phát hiện từ UAV (ảnh màu và ảnh nhiệt) lên bản đồ cho tìm kiếm cứu nạn. Gần đây, Wang và cộng sự [MIDDTD] dựng tập theo dõi từ drone (MIDDTD) có ghi tham số của drone và bệ quang điện tử, rồi dùng các tham số bay này cho theo dõi nhiều đối tượng từ drone [ĐỌC TOÀN VĂN: có đổi sang toạ độ thế giới không, tần số khung, loại mục tiêu]. Luật xác nhận một track khi nó được ghép với phát hiện ít nhất M lần trong N lần nhìn liên tiếp (luật M trên N) là luật xác nhận chuẩn trong theo dõi mục tiêu [MathWorks-MOT].
+**Định vị và ghép theo toạ độ thế giới.** Đổi vị trí phát hiện trên ảnh sang toạ độ mặt đất bằng mô hình camera lỗ kim và vị trí, hướng của camera là kỹ thuật hình học cơ bản [HZ]. Rudol và Doherty [Rudol08] đã định vị người phát hiện từ UAV (ảnh màu và ảnh nhiệt) lên bản đồ cho tìm kiếm cứu nạn. Gần đây, Wang và cộng sự [MIDDTD] chiếu mỗi phát hiện xuống mặt đất phẳng từ vị trí GPS, độ cao của drone và góc pitch, yaw của bệ camera, rồi ghép track qua các khung trên toạ độ thế giới này cùng với đặc trưng ngoại hình; trên tập của họ (MIDDTD: phần lớn là xe, ít người, bay 50–600 m, 30 khung/giây), thêm toạ độ thế giới làm giảm số lần đổi mã track ở cả sáu bộ theo dõi, ví dụ ByteTrack từ 1198 xuống 1095. Các bộ theo dõi xử lý video từng khung; bài không xét trường hợp chỉ xử lý vài khung mỗi giây và không có luật xác nhận để phát cảnh báo. Luật xác nhận một track khi nó được ghép với phát hiện ít nhất M lần trong N lần nhìn liên tiếp (luật M trên N) là luật xác nhận chuẩn trong theo dõi mục tiêu [MathWorks-MOT].
 
 ## 2.5. Thiết bị biên và nén mô hình
 
@@ -76,10 +76,10 @@ Các mục 2.2 và chương 3 lần lượt xét các cách chống lại từng
 
 ## 2.6. Khoảng trống nghiên cứu
 
-[Viết theo đề xuất của quyết định #19, chờ cô duyệt. Đã đọc [AdaptiveResize], [AltTiling] (10/11); còn [MIDDTD].]
+[Viết theo đề xuất của quyết định #19, chờ cô duyệt. Đã đọc [AdaptiveResize], [AltTiling] (10/11), [MIDDTD] (26/11).]
 
 Từ các mục trên, ba khoảng trống mà luận văn nhắm tới:
 
 1. **Chưa có đánh giá phát hiện người theo cỡ người trong cảnh lũ chụp từ UAV.** Các bộ dữ liệu cứu nạn hiện có là cảnh đô thị, biển, hoặc thảm hoạ có ghép người; chưa có tập ảnh lũ thật có nhãn người, và kết quả thường báo theo AP chung chứ không theo cỡ người, trong khi bỏ sót tập trung ở người vài pixel.
-2. **Xác nhận người khi chỉ xử lý vài khung mỗi giây.** Các phương pháp theo dõi thông dụng được thiết kế cho tần số khung đầy đủ. Trên thiết bị biên chỉ xử lý được vài khung mỗi giây, khi UAV bay nhanh, một người dịch hàng trăm pixel giữa hai khung xử lý; tham số bay đã được dùng cho theo dõi nhiều đối tượng từ drone, nhưng chưa thấy công trình nào đo việc ghép theo toạ độ mặt đất so với ghép trên ảnh ở tần số thấp như vậy, cho bài toán xác nhận người trước khi cảnh báo cứu nạn.
+2. **Xác nhận người khi chỉ xử lý vài khung mỗi giây.** Các phương pháp theo dõi thông dụng được thiết kế cho tần số khung đầy đủ. Trên thiết bị biên chỉ xử lý được vài khung mỗi giây, khi UAV bay nhanh, một người dịch hàng trăm pixel giữa hai khung xử lý; ghép theo toạ độ thế giới đã được dùng để theo dõi xe từ drone ở tần số khung đầy đủ, nhưng chưa thấy công trình nào đo nó so với ghép trên ảnh ở tần số thấp như vậy, cho bài toán xác nhận người trước khi cảnh báo cứu nạn.
 3. **Dùng dữ liệu bay ở nhiều khâu trong cùng một hệ thống trên thiết bị biên.** Đổi cỡ ảnh theo độ cao đã được đề xuất và đo cho độ chính xác và tốc độ phát hiện; luận văn đặt nó trong một pipeline chạy theo telemetry từng khung, đo cùng lúc tác dụng lên độ chính xác theo cỡ người và lên số ô phải tính trên thiết bị yếu, cạnh việc dùng chính telemetry đó để định vị và xác nhận.
