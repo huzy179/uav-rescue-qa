@@ -212,7 +212,7 @@ Common parameters unless varied: 60 s flight, 10 m/s, 2 frames per second, 4K im
 
 **Reproducibility.** Every run writes a provenance file with the command, parameters, library versions, SHA-256 hash of the weights, device and time (Chapter 5, Section 5.4). Each experiment has its own configuration file, never edited after it has produced results. The training notebook only checks out the code at a fixed commit and calls the training script, so all logic lives in versioned code. The pipeline never reads the computer clock: time comes from frame timestamps, and every random element (GPS noise, network, retry jitter) uses a fixed seed, so a simulation re-run gives exactly the same result. The automated test suite (Chapter 5, Section 5.5) checks the metrics against hand-computed examples, the coordinate projection with pixel → GPS → pixel round trips, and the system metrics.
 
-**Seeds.** Most training experiments have a single seed because of the GPU budget; the final configuration is trained with two more seeds if time allows, otherwise this is recorded as a limitation (Chapter 8). [UPDATE: seeds]
+**Seeds.** Every training experiment was run with a single seed (seed 0) because of the GPU budget; the planned two extra seeds for the final configuration were not run, and this is recorded as a limitation (Chapter 8). Differences between models are therefore tested with the paired bootstrap over images or videos, which captures variation in the test data but not variation between training runs.
 
 ## Chapter Summary
 

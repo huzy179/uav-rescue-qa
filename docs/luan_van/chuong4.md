@@ -212,7 +212,7 @@ Tham số chung khi không thay đổi: chuyến bay 60 s, 10 m/s, 2 khung/giây
 
 **Tái lập.** Mỗi lần chạy ghi một tệp cấu hình kèm theo: lệnh, tham số, phiên bản thư viện, mã băm SHA-256 của trọng số, thiết bị, thời điểm. Mỗi thí nghiệm có một tệp cấu hình riêng, không sửa sau khi đã có kết quả. Notebook huấn luyện chỉ lấy mã nguồn ở một commit cố định rồi gọi script huấn luyện, nên mọi logic nằm trong mã có phiên bản. Pipeline không đọc đồng hồ máy: thời gian lấy từ dấu thời gian của khung hình, mọi ngẫu nhiên (nhiễu GPS, mạng, thời gian chờ gửi lại) dùng seed cố định, nên một lần mô phỏng chạy lại cho đúng cùng kết quả. Bộ kiểm thử tự động (hơn 200 trường hợp, chạy không cần GPU hay dữ liệu) kiểm tra công thức đo bằng ví dụ tính tay, phép chiếu toạ độ bằng phép đi một vòng pixel → GPS → pixel, và chỉ số của khâu hệ thống.
 
-**Seed.** Phần lớn thí nghiệm huấn luyện mới có một seed do giới hạn GPU; cấu hình cuối được huấn luyện thêm hai seed nếu kịp, nếu không thì ghi vào giới hạn (chương 6). **[CẬP NHẬT sau tuần 14–20/11]**
+**Seed.** Mọi thí nghiệm huấn luyện chỉ chạy một seed (seed 0) do giới hạn GPU; hai seed thêm cho cấu hình cuối theo kế hoạch không chạy, ghi vào giới hạn (chương 6). Vì vậy chênh lệch giữa các mô hình được kiểm bằng bootstrap cặp theo ảnh hoặc theo video: cách này bắt được dao động do dữ liệu kiểm tra, không bắt được dao động giữa các lần huấn luyện.
 
 ## Tóm tắt chương
 
