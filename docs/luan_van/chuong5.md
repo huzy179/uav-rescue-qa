@@ -242,7 +242,7 @@ Thứ hạng trên tập lũ **giống SeaDronesSee hơn VisDrone**: mô hình g
 
 Dự đoán trước khi chấm, ghi lại để đối chiếu: người trong 188 khung lũ có cả người nhỏ trên mái lẫn người cỡ vừa dưới nước, nên mô hình chính được kỳ vọng hơn mô hình gốc ở người nhỏ và không kém ở người dưới nước. Nếu kết quả trái dự đoán thì việc đầu tiên là kiểm tra cấu hình và nhãn, chưa kết luận ngay.
 
-## 5.2. Câu hỏi 2: chạy kịp trên thiết bị biên
+## 5.2. Câu hỏi 2: tốc độ trên thiết bị biên
 
 Câu hỏi 2 đo trên GPU Tesla T4 của Kaggle với TensorRT, vì đề tài không có Jetson (chương 4). Số đo trên T4 không phải số của Jetson; điều nó cho biết là **thứ hạng tương đối** giữa các cấu hình trên cùng phần cứng và **khâu nào tốn thời gian nhất**. Thời gian đo trên máy cá nhân trong các mục trước (Mac, RTX 5060) chỉ dùng để so sánh tương đối và không xuất hiện trong mục này.
 
@@ -319,7 +319,7 @@ Không có Jetson, nên câu hỏi này trả lời bằng **giả lập thời 
 | 100 m | T4 (hồ sơ đo) | 136,783 | 240 | 0,000 |
 | 100 m | Orin Nano Super | 367,915 | 160 | 0,000 |
 
-**Trả lời RQ2c.** Theo ước lượng, Orin NX và Orin Nano Super chỉ xử lý được 4 trong 8 khung mỗi giây khi bay 30–50 m, nên bỏ sót 0,067 ở 30 m, bằng đúng mức của việc chỉ xin 4 khung mỗi giây; ở 100 m mọi thiết bị đều không bỏ sót vì 2 khung mỗi giây đã đủ (Bảng 5.10). Thiết bị yếu thiếu sức đúng lúc bay thấp, khi tần số cần cao nhất. Cũng lúc đó mỗi khung chỉ có 2 ô, nên độ trễ chủ yếu nằm ở khâu thu nhỏ khung 4K chứ không ở suy luận: nén thêm mô hình (INT8) giúp ít, còn đổi cỡ khung trên GPU hoặc lấy video ở độ phân giải thấp hơn khi bay thấp mới là hướng đúng (chưa làm, chương 6). Các số này phụ thuộc vào một giả định chưa kiểm chứng, rằng phần chạy trên CPU của Jetson chậm hơn T4 theo cùng tỉ lệ với phần suy luận.
+**Trả lời RQ2c.** Theo ước lượng, Orin NX và Orin Nano Super chỉ xử lý được 4 trong 8 khung mỗi giây khi bay 30–50 m, nên bỏ sót 0,067 ở 30 m, bằng đúng mức của việc chỉ xin 4 khung mỗi giây; ở 100 m mọi thiết bị đều không bỏ sót vì 2 khung mỗi giây đã đủ (Bảng 5.10). Thiết bị yếu thiếu sức đúng lúc bay thấp, khi tần số cần cao nhất. Cũng lúc đó mỗi khung chỉ có 2 ô, nên độ trễ chủ yếu nằm ở khâu thu nhỏ khung 4K chứ không ở suy luận: nén thêm mô hình (INT8) giúp ít, còn đổi cỡ khung trên GPU hoặc lấy video ở độ phân giải thấp hơn khi bay thấp mới là hướng đúng. Đổi cỡ trên GPU đã cài (mục 5.2.1) nhưng mới đo trên máy cá nhân; hồ sơ thiết bị vẫn giả định đổi cỡ trên CPU, nên bảng này chưa tính phần lợi đó (chương 6). Các số này phụ thuộc vào một giả định chưa kiểm chứng, rằng phần chạy trên CPU của Jetson chậm hơn T4 theo cùng tỉ lệ với phần suy luận.
 
 ## 5.3. Câu hỏi 3: báo đúng về trạm mặt đất
 

@@ -76,7 +76,7 @@ Section 2.2 and Chapter 4 discuss ways to counter each mechanism.
 
 ## 2.6 Research Gap
 
-[PENDING #19: written according to the current proposal. @messmer2022adaptive and @ahmed2025altitude read in full on 10/11; @wang2025middtd read in full on 26/11 (Sections 3.3 and 4.1, Tables 1 and 2).]
+[PENDING #19: written according to the current proposal. @messmer2022adaptive and @ahmed2025altitude read in full on 10/11; @wang2025middtd read in full on 26/11, including its method for world coordinates and its ablation on them.]
 
 The sections above leave three gaps that this thesis addresses:
 

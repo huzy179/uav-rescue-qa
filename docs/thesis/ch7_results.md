@@ -240,7 +240,7 @@ The ranking on the flood set **resembles SeaDronesSee more than VisDrone**: the 
 
 The prediction recorded before evaluation, kept here for comparison: the 188 flood frames contain both small people on roofs and medium-sized people in water, so the main model was expected to beat the base model on small people and not to be worse on people in water. If the result contradicted the prediction, the first step would be to check configurations and labels before drawing conclusions (done in Section 7.1.1).
 
-## 7.2 Research Question 2: Keeping Up on the Edge Device
+## 7.2 Research Question 2: Speed on the Edge Device
 
 Research question 2 is measured on a Kaggle Tesla T4 GPU with TensorRT, because no Jetson was available (Chapter 6). T4 numbers are not Jetson numbers; what they show is the **relative ranking** of configurations on the same hardware and **which stage takes the most time**. Timings measured on the development machine in earlier sections (Mac, RTX 5060) are only for relative comparison and do not appear in this section.
 
@@ -318,7 +318,7 @@ Without a Jetson, this question is answered with the **device timing simulation*
 | 100 m | T4 (measured profile) | 136.783 | 240 | 0.000 |
 | 100 m | Orin Nano Super | 367.915 | 160 | 0.000 |
 
-**Answer to RQ2c.** By estimate, the Orin NX and Orin Nano Super process only 4 of 8 frames per second at 30–50 m, so they miss 0.067 at 30 m, exactly the level of requesting only 4 frames per second; at 100 m no device misses anyone because 2 frames per second are enough (Table 7.18). Weak devices fall short exactly when flying low, when the required rate is highest. At that point each frame has only 2 tiles, so latency is dominated by downscaling the 4K frame, not by inference: further model compression (INT8) helps little, while resizing on the GPU or taking lower-resolution video when flying low is the right direction (not done, Chapter 8). These numbers depend on an untested assumption: that the CPU part of a Jetson is slower than the T4 machine by the same ratio as inference.
+**Answer to RQ2c.** By estimate, the Orin NX and Orin Nano Super process only 4 of 8 frames per second at 30–50 m, so they miss 0.067 at 30 m, exactly the level of requesting only 4 frames per second; at 100 m no device misses anyone because 2 frames per second are enough (Table 7.18). Weak devices fall short exactly when flying low, when the required rate is highest. At that point each frame has only 2 tiles, so latency is dominated by downscaling the 4K frame, not by inference: further model compression (INT8) helps little, while resizing on the GPU or taking lower-resolution video when flying low is the right direction. GPU resizing is implemented (Section 7.2.1) but measured only on the development machine; the device profiles still assume CPU resizing, so this table does not include its benefit (Chapter 8). These numbers depend on an untested assumption: that the CPU part of a Jetson is slower than the T4 machine by the same ratio as inference.
 
 ## 7.3 Research Question 3: Reporting Correctly to the Ground Station
 
