@@ -33,3 +33,14 @@ def test_bo_qua_so_bang_va_so_muc(tmp_path: Path) -> None:
     assert labels == {"7.3", "7.11", "7.12"}
     missing, _ = check([ch], "", labels)
     assert [n for _, _, n in missing] == ["0.999"]
+
+
+def test_bao_tham_chieu_hong(tmp_path: Path) -> None:
+    from tools.check_thesis_numbers import broken_references
+
+    ch = tmp_path / "ch7.md"
+    ch.write_text("# Chapter 7. Results\n\n## 7.1 First\n\n**Table 7.1.** A.\n\n![**Figure 7.1.** B.](f.png)\n\n"
+                  "As Tables 7.1 and 7.2 show (Section 7.1, Figure 7.1, Chapter 8, Appendix B).\n"
+                  "> Draft note: Table 9.9 ignored.\n", encoding="utf-8")
+    refs = [r for _, _, r in broken_references([ch], [ch])]
+    assert refs == ["Table 7.2", "Chapter 8", "Chapter B"]

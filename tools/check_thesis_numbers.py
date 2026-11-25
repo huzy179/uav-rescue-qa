@@ -4,7 +4,8 @@ Quyển dùng dấu chấm (0.497), tài liệu kết quả dùng dấu phẩy (
 đổi sang dạng dấu phẩy rồi tìm trong các nguồn (mặc định `docs/results/`, `configs/`, `runs/gsd`, `runs/qa`, `data/processed/*/stats*.json`,
 `docs/TECHNICAL.md` và danh mục tài liệu tham khảo; không lấy nháp tiếng Việt vì nó cũng là bản chép). Số không tìm thấy được liệt kê kèm file và dòng để kiểm tay: có thể là số chép sai,
 số tính tay (phải thay bằng số trong file), hoặc số lấy từ bài báo khác (giữ, đã có trích dẫn). Cũng báo các từ
-tiếng Việt còn sót trong quyển (chữ có dấu tiếng Việt ngoài ghi chú bản nháp).
+tiếng Việt còn sót trong quyển (chữ có dấu tiếng Việt ngoài ghi chú bản nháp), và tham chiếu hỏng: "Table 7.3",
+"Figure 3.1", "Section 4.6.1", "Chapter 8", "Appendix B" trỏ tới bảng, hình, mục, chương không có trong quyển.
 
 Ví dụ:
     .venv/bin/python tools/check_thesis_numbers.py
@@ -97,6 +98,45 @@ def check(chapters: list[Path], sources: str, labels: set[str] | None = None,
     return missing, vietnamese
 
 
+REF_ID = r"(?:\d+|[A-D])(?:\.\d+)*"
+DEFINED = {
+    "Table": re.compile(rf"^!?\[?(?::\s*)?\*\*Table ({REF_ID})\.\*\*"),
+    "Figure": re.compile(rf"^!?\[?(?::\s*)?\*\*Figure ({REF_ID})\.\*\*"),
+    "Section": re.compile(rf"^#+ ({REF_ID}\.\d+) "),
+    "Chapter": re.compile(rf"^# (?:Chapter|Appendix) ({REF_ID})\."),
+}
+REFERENCE = re.compile(rf"\b(Tables?|Figures?|Sections?|Chapters?|Appendix|Appendices)\s+"
+                       rf"({REF_ID}(?:(?:,\s*|\s+and\s+|\s*[–-]\s*){REF_ID}\b)*)\b")
+REF_SPLIT = re.compile(r",\s*|\s+and\s+|\s*[–-]\s*")
+
+
+def broken_references(chapters: list[Path], all_files: list[Path]) -> list[tuple[Path, int, str]]:
+    """Tham chiếu tới bảng, hình, mục, chương hay phụ lục không được định nghĩa ở bất kỳ file nào của quyển.
+
+    Bỏ qua ghi chú bản nháp. Tham chiếu tới bảng của bài báo khác phải viết khác đi ("the paper's Table 2"),
+    nếu không sẽ bị báo.
+    """
+    defined: dict[str, set[str]] = {kind: set() for kind in DEFINED}
+    for path in all_files:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            for kind, pattern in DEFINED.items():
+                m = pattern.match(line)
+                if m:
+                    defined[kind].add(m.group(1))
+    broken = []
+    for path in chapters:
+        for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if in_draft_note(line):
+                continue
+            for m in REFERENCE.finditer(line):
+                word = m.group(1)
+                kind = "Chapter" if word.startswith("Append") else word.rstrip("s")
+                for ref in REF_SPLIT.split(m.group(2)):
+                    if ref and ref not in defined[kind]:
+                        broken.append((path, i, f"{kind} {ref}"))
+    return broken
+
+
 def main() -> None:
     args = parse_args_with_config(build_parser())
     chapters = args.thesis or sorted(Path("docs/thesis").glob("*.md"))
@@ -105,7 +145,11 @@ def main() -> None:
         print(f"{path}:{line}: {number} không có trong nguồn")
     for path, line, text in vietnamese:
         print(f"{path}:{line}: còn tiếng Việt: {text}")
-    print(f"{len(chapters)} file; {len(missing)} số cần kiểm tay; {len(vietnamese)} dòng còn tiếng Việt")
+    broken = broken_references(chapters, sorted(Path("docs/thesis").glob("*.md")))
+    for path, line, ref in broken:
+        print(f"{path}:{line}: tham chiếu hỏng: {ref}")
+    print(f"{len(chapters)} file; {len(missing)} số cần kiểm tay; {len(vietnamese)} dòng còn tiếng Việt; "
+          f"{len(broken)} tham chiếu hỏng")
 
 
 if __name__ == "__main__":
