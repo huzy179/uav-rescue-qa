@@ -62,7 +62,7 @@ def in_draft_note(line: str) -> bool:
     return line.lstrip().startswith(">")
 
 
-LABEL = re.compile(r"^\*\*(?:Table|Figure) (\d+\.\d+)\.\*\*|^#+ (\d+\.\d+) ")
+LABEL = re.compile(r"^!?\[?\*\*(?:Table|Figure) (\d+\.\d+)\.\*\*|^#+ (\d+\.\d+) ")
 
 
 def labels_in(chapters: list[Path]) -> set[str]:

@@ -26,9 +26,10 @@ def test_bo_qua_so_bang_va_so_muc(tmp_path: Path) -> None:
     from tools.check_thesis_numbers import labels_in
 
     ch = tmp_path / "ch7.md"
-    ch.write_text("## 7.3 Results\n\n**Table 7.11.** Recall by tag.\n\nAs Tables 7.11 and 7.3 show, AP50 0.999.\n",
+    ch.write_text("## 7.3 Results\n\n**Table 7.11.** Recall by tag.\n\n![**Figure 7.12.** Plot.](f.png)\n\n"
+                  "As Tables 7.11 and 7.3 and Figure 7.12 show, AP50 0.999.\n",
                   encoding="utf-8")
     labels = labels_in([ch])
-    assert labels == {"7.3", "7.11"}
+    assert labels == {"7.3", "7.11", "7.12"}
     missing, _ = check([ch], "", labels)
     assert [n for _, _, n in missing] == ["0.999"]
